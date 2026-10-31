@@ -1,0 +1,212 @@
+# Próxima actualización — Inicio sencillo
+
+## 0.1.13 (14) — Inicio inmediato y activación del fantasma al entrar en el circuito, 31/10/2026
+
+Inicio de ruta guardada sin esperas en primer plano: al pulsar «Estoy parado · iniciar», la grabación GPS y el servicio en segundo plano se activan de inmediato, permitiendo bloquear la pantalla o guardar el móvil. El fantasma y el cronómetro de la ruta permanecen en espera hasta que el usuario se incorpora físicamente al circuito marcado (routeEntry). En ese instante se registra circuitStartedAt, se activa el cálculo de diferencias en directo con la referencia y se emite un aviso por voz («Entrando en la ruta. Fantasma activado.»).
+
+En la interfaz, mientras se acerca al circuito, el panel y el mapa informan de que la grabación está activa en dirección al circuito y de que el fantasma se activará al entrar. Al finalizar, la duración del circuito se contabiliza desde la entrada (circuitStartedAt) y la comparación (sameCourse) evalúa el tramo real recorrido sobre el circuito.
+
+Validación: 94 pruebas de lógica + 164 pruebas de interfaz (258 pruebas totales), typecheck (tsc --noEmit), comprobación de tipos de pruebas (tsconfig.tests.json), lint (expo lint) y exportación bundle Android (Hermes) superados sin errores.
+
+## 0.1.12 (13) — protección e incorporación a ruta, 27/10/2026
+
+Inicio preparado de ruta guardada: con la app abierta espera a reconocer el camino y comienza el cronómetro al incorporarse, sin exigir cercanía a A. Puede reconocer dos posiciones precisas coherentes en movimiento; la espera fuera de la ruta no cuenta. Referencia/ghost alineados desde el punto de entrada; un tramo intermedio no sustituye récords completos. La detección se puede cancelar y se pausa si se cierra o bloquea la app antes del inicio; la grabación ya activa continúa en segundo plano como antes.
+
+Llegada: cinco segundos parado/estable dentro de 50 m de B, utilizando velocidad nativa cuando está disponible y una zona de estabilidad. Pasar en coche no basta. Finalizar manualmente sigue disponible lejos de A/B. Voz, parada nativa del GPS y recuperación GPS no bloquean la cola de guardado ni impiden mostrar el resultado ya guardado.
+
+Salir conserva ahora el intento en pendientes, de forma atómica, antes de liberar la grabación. Inicio permite recuperarlo sin perder puntos; no se limita el número de pendientes ni se borran los anteriores. No se han recuperado las dos rutas que el usuario ya descartó con una versión anterior.
+
+Detalles, límites y comprobaciones en RECUPERACION-E-INICIO.md. Pruebas: 92 de lógica + 163 de interfaz, tipos y lint correctos. Exportación Android correcta antes de la última alineación de parches Expo; se repetirá la comprobación final antes de enviar a EAS. Prueba física pendiente.
+
+## Corrección de llegada y finalización — 26/10/2026 (0.1.11 / 12)
+
+Mensaje reproducido a partir del informe del usuario: el guardado manual rechazaba intentos que no superaban sameCourse y detenía el servicio GPS antes de validar o escribir. Ahora se guarda primero, en la transacción existente, y se detiene el servicio después. Una excepción al detener un servicio ya finalizado no se presenta como fallo de guardado. Los errores reales de escritura mantienen el borrador y el GPS para reintentar.
+
+Radio de salida y llegada ampliado a 50 m. La comparación admite variaciones al aparcar en los extremos, conservando el emparejamiento estricto del interior. La llegada automática sigue requiriendo progreso en la ruta, una posición precisa y cinco segundos en la zona; ya no usa la coincidencia de toda la geometría como condición para guardar. Si el recorrido no es comparable, se guarda sin tiempo final comparado.
+
+Finalizar ruta funciona fuera de la meta y sin exigir recuperar GPS reciente: conserva las posiciones disponibles y etiqueta el registro no comparable. No añade un control de meta ficticio ni sustituye la referencia. Nuevo atributo opcional incomplete compatible con registros anteriores, validación y copias de seguridad. Los registros sin al menos dos posiciones no se guardan como viaje terminado; el GPS no se detiene por esa validación. Sin cambios en adquisición GPS, mapa o permisos nativos, salvo el radio de salida y el manejo de guardado en tracking.ts.
+
+## Paquete pendiente — Google y mapa fluido (25/10/2026)
+
+Movimiento visual interpolado del marcador y fantasma, cámara con easeTo nativo en lugar de jumpTo en cada avance; sin extrapolar ni rellenar pérdidas GPS. Sin modificar grabación ni datos guardados. Acceso con Google implementado mediante navegador del sistema y PKCE S256; proyecto Google GHOVO creado y cliente creado por el usuario. Pendiente conectar la credencial en Supabase desde la cuenta con acceso a GHOVO (la sesión actual solo muestra TRUKA). Detalles en GOOGLE-Y-MAPA.md. 85 pruebas de lógica + 154 de interfaz, tipos/lint y exportación Android correctos. No se ha generado APK ni enviado OTA; requiere nuevo binario y prueba física.
+
+Implementado el 22/10/2026. Mantener sin nueva compilación APK hasta que el usuario la solicite.
+
+- Inicio con Nueva ruta visible y última actividad secundaria. No restaurar automáticamente el último resultado al abrir.
+- Navegación Inicio / Mis rutas con Expo Router; estado de grabación compartido en el layout.
+- Formulario sin mapa, comprobación de GPS precisa y reciente antes de habilitar Empezar. Revalidación nativa al iniciar; ubicación en segundo plano se solicita al iniciar, no en Inicio.
+- Observador de preparación eliminado al salir o pasar a segundo plano; una posición vieja, imprecisa, futura o simulada no habilita la salida.
+- Grabación interrumpida con Continuar / Descartar y sin borrar puntos. No reiniciar silenciosamente el servicio interrumpido detectado al arrancar.
+- Aviso de pérdida GPS y confirmación breve al recuperar señal.
+- Resultado con Ver recorrido / Volver a Inicio. En coche, mensajes neutros sin celebrar tiempos inferiores.
+- Herramientas de prueba secundarias; simulador excluido de navegación final. Copias y opciones agrupadas en biblioteca.
+
+Validación: 37 pruebas de lógica y 69 de interfaz, typecheck, lint, Expo doctor 20/20 y exportación Android/Hermes. La exportación no es una APK ni una prueba física. Vista web con datos y GPS de ejemplo; comprobar permisos, navegación nativa y recuperación en POCO F5 Pro en la próxima APK.
+
+Dependencias Expo alineadas a sus correcciones compatibles. Auditoría npm tras la instalación: 49 avisos transitivos (18 moderados, 31 altos); no se aplicaron correcciones forzadas. Revisar antes de distribución pública.
+## Puntos de control y llegada — 22/10/2026
+
+Intervalo editable por ruta: 2, 5, 10, 20 o 50 km, además de desactivar puntos. Generación por distancia acumulada del trazado, interpolación de posición y exclusión de la meta; una ruta exacta de 20 km a intervalos de 5 km tiene 3 puntos. Un trazado con interrupciones no genera puntos de distancia inventada. Ajuste conservado en metadatos, copias y recuperación; no altera posiciones grabadas.
+
+Marcadores en el mapa del recorrido y editor en su detalle. Mensaje final Felicidades, has llegado y diferencia respecto a la mejor referencia previa del mismo modo, identificada con fecha y duración. Sin comparación si no hay referencia o el intento tiene interrupciones conocidas. Es mensaje en pantalla al finalizar manualmente, no voz ni llegada automática.
+
+Validación: 41 pruebas de lógica y 70 de interfaz (111), typecheck y lint. Falta detección de paso por puntos, comparación en directo y avisos sonoros: la colocación de puntos no implementa esas funciones por sí sola. Sin nueva APK.
+## Comparación en directo y llegada — 22/10/2026
+
+Este apartado sustituye el pendiente anterior de comparación al cruzar controles.
+
+Implementado: rutas habituales compactas en Inicio con Iniciar y acceso al detalle; referencia por ruta (último viaje por defecto, mejor tiempo o viaje concreto), fijada por ID al iniciar. No mezcla modos conocidos; rutas antiguas sin referencia compatible pueden repetirse sin comparación. Editor de intervalo y preferencia de llegada automática conservados en copias.
+
+La tarea nativa procesa cada posición aceptada, proyecta sobre un tramo cercano y ordenado de la referencia, conserva avance y parciales y oculta diferencias si el ajuste no es fiable. Los controles cruzados durante una interrupción se marcan sin tiempo estimado. El fantasma se reproduce en el mapa durante la grabación y la diferencia aparece como segundos más/menos en ese punto. Los parciales incluyen tiempo detenido.
+
+Llegada automática en repeticiones: avance hasta los últimos 8 m de la referencia, posición a menos de 20 m de la meta con precisión de hasta 20 m, permanencia de 5 s y coincidencia del trazado completo. Guardado atómico de viaje/resultado y limpieza de borrador antes de detener GPS. Si falla el guardado, no se detiene el servicio ni se modifica el borrador persistido. Puede desactivarse; las rutas nuevas sin meta conocida se finalizan manualmente. Confirmación en pantalla; sin avisos sonoros aún.
+
+Simulador: referencias más rápida/igual/más lenta, parciales y confirmación de llegada en memoria; nunca escribe rutas reales ni comprueba batería/permisos físicos. Vista previa utiliza datos ficticios.
+
+Verificación: 47 pruebas de lógica y 75 de interfaz (122), comprobaciones de tipos de app y tests, lint y exportación Android/Hermes. Cubren selección por modo, paradas, pérdida de señal, controles sin tiempos inventados, necesidad de permanencia en meta, guardado en segundo plano, duplicados, fallo de disco y simulación. Falta prueba física de GPS y llegada en POCO. Sin nueva compilación APK.
+
+## Avisos por voz y pantalla — versión 0.1.4
+
+Avisos en español al cruzar controles y llegar a meta, con segundos más o menos respecto a la referencia. Aviso destacado en pantalla durante 12 segundos. Preferencia de voz por ruta y cambio durante la grabación, además de botón para probar el sonido. Sin tiempos inventados cuando falta una comparación fiable.
+
+Los avisos se emiten después de guardar; posiciones duplicadas no repiten audio. Se descartan avisos antiguos y se evita acumular mensajes. Simulador con voz opcional; la vista web solo muestra el diseño.
+
+Verificación: 50 pruebas de lógica y 82 de interfaz (132), tipos, lint, Expo doctor 20/20 y exportación Android/Hermes correctos. Pendiente comprobar volumen, voz española y funcionamiento con pantalla bloqueada en el POCO F5 Pro. APK 0.1.4 (5) enviada a compilación; consultar estado antes de darla por terminada.
+
+## Corrección de preparación GPS y teclado — 22/10/2026
+
+Tras informe físico: Nueva ruta busca GPS en la calle sin avanzar; editar nombre bloquea la pantalla. Causa del cierre nativo todavía sin confirmar: no hay registro Android del móvil conectado.
+
+Cambios: búsqueda inicial limitada a 20 segundos con retirada del observador y reintento explícito; errores nativos atendidos; posiciones tardías ignoradas; observador que termina de registrarse después de salir se elimina. Al perder señal precisa se detiene la preparación y se permite reintentar. Preparación compartida con mapa de ruta guardada y suspendida durante el inicio para evitar observadores duplicados. Búsqueda sin ventanas automáticas de ajustes del proveedor Android. Teclado Android usa resize nativo sin aplicar simultáneamente KeyboardAvoidingView height.
+
+Verificado: 87 pruebas de interfaz, incluidos timeout, error del proveedor, registro tardío, observador compartido y edición/navegación sin GPS. Comprobaciones físicas pendientes; pruebas con mocks no demuestran que el cierre nativo esté resuelto. Estos cambios no están incluidos en la APK 0.1.4 ya enviada.
+
+Prueba de voz: se elimina el bloqueo previo por lista de voces vacía y se comprueba onStart/onError/onStopped del motor, con timeout de 8 segundos. Mensaje ya no atribuye el fallo a volumen o idioma sin evidencia. Cambio local, sin generar APK.
+
+Barra de Android: contenedor nativo SafeAreaView en el layout raíz, con bordes inferior/laterales. Reserva el espacio real de navegación del sistema para todas las pantallas, incluido simulador y controles de grabación. Conserva el margen visual del contenido. No oculta los tres botones ni genera APK; pendiente prueba física con navegación de tres botones y gestos.
+
+## Revisión GPS / Nueva ruta e Inicio desde cabecera — 22/10/2026
+
+Inicio bloqueado hasta posición precisa (hasta 25 m) y reciente (hasta 15 s). Segunda adquisición al confirmar y comprobación adicional de permisos, GPS habilitado y antigüedad justo antes de guardar borrador. No crea ruta ni servicio al fallar adquisición o desactivarse el GPS. Pruebas del formulario con hook de preparación real y proveedor nativo simulado: editar nombre mientras busca, timeout, reintento, descarte de posiciones tardías, habilitar inicio tras fix preciso, nombre al iniciar y salir a Inicio sin arrancar GPS de grabación. Mantener pruebas físicas pendientes; no atribuir el cierre previo a una causa sin registros del móvil.
+
+Fantasma y texto GHOVO comparten acceso accesible a Inicio. Durante una ruta muestra una tarjeta para volver; conserva el borrador y servicio, mantiene opción de pantalla encendida y no ofrece iniciar otra ruta simultánea. No cambia la biblioteca al navegar. Sin compilación APK ni publicación.
+
+## Paquete 0.1.6 (7) — GPS y detalle de rutas
+
+GPS: exige tres observaciones precisas, distintas y coherentes que cubran al menos dos segundos, al preparar y al confirmar. Duplicados, ráfagas, señal aproximada y saltos no habilitan inicio. Precisión estimada en metros; no garantiza el error real.
+
+Recuperación: monitor cada 10 segundos en primer plano. Si el servicio se detiene o último fix supera 30 segundos, hasta tres intentos espaciados, sin solicitar permisos automáticamente ni perder puntos. Solo un fix válido confirma recuperación. Segundo plano depende del servicio nativo y Android; al volver se comprueba otra vez.
+
+Diagnóstico: hasta 200 eventos locales (vista de 12), sin coordenadas ni nombres. Permisos, GPS apagado, imprecisión/saltos, timeout, proveedor y recuperación. Repetidos limitados; errores de diagnóstico no bloquean GPS.
+
+Detalle reorganizado: título y pestañas Resumen / Ajustes / Viajes fuera del desplazamiento. Resumen compacto, mapa opcional, inicio fijo. Ajustes agrupa referencia, voz, controles, notas y gestión. Viajes muestra historial y reproducción opcional. Eliminado selector más/menos mapa del detalle. Incluye área segura Android, cabecera GHOVO a Inicio, corrección de teclado y prueba de voz real del motor.
+
+Verificación: 52 pruebas de lógica y 104 de interfaz (156), tipos, lint, Expo doctor 20/20 y exportación Android/Hermes correctos. Resumen y Ajustes comprobados en vista previa con datos ficticios. Prueba física pendiente en POCO F5 Pro. No se ha implementado ajuste del trazado a la carretera.
+
+Usuario autoriza expresamente enviar código fuente, imágenes y configuración a Expo/EAS, proyecto ghovo de skacristian, para compilar la APK. .env, pruebas, cachés, exportaciones y work excluidos por .easignore; no hay rutas del móvil en el proyecto.
+
+APK 0.1.6 (7) terminada correctamente (FINISHED): https://expo.dev/accounts/skacristian/projects/ghovo/builds/40e463cf-26da-4564-bae0-e35083e3f3c6 . QR local: outputs/GHOVO-0.1.6-QR.png. Prueba física pendiente.
+
+## Reestructuración tras prueba física de 0.1.6 — 22/10/2026 (solo código, sin APK)
+
+El usuario informa GPS sin preparar, teclado parpadeante y mapa que oculta opciones. No hay registro nativo del cierre ni confirmación del proveedor GPS del móvil; no dar estos fallos por resueltos físicamente.
+
+Navegación: AppProvider conserva estado por encima del Slot de Expo Router; cada ruta dibuja GhovoScreen dentro del contenedor activo. Se elimina la app dibujada en paralelo a Slot. Rutas /gps y /map reales. El mapa se abre con push y vuelve con back; no comparte el panel de opciones. Pruebas de una única pantalla/formulario y permanencia del mismo campo mientras llegan posiciones.
+
+Nombre: componente independiente mantiene el texto local, nombre enviado al inicio mediante referencia estable; eliminado KeyboardAvoidingView del formulario Android. Nueva ruta: nombre, estado GPS y acción fija; sin mascota explicativa ni bloques secundarios repetidos.
+
+Inicio mantiene su estructura con ubicación al lado de GHOVO. La localización se inicia al abrir la app en primer plano, compartida con Nueva ruta. Nombre de zona obtenido mediante geocodificador del móvil; si falla, coordenadas y precisión estimada. Nunca presenta una posición antigua como actual ni inventa una ciudad. No se registra el nombre/las coordenadas en el diagnóstico. Tocar ubicación abre estado GPS aun sin señal, con reintento, permisos y diagnóstico. Solo el inicio de grabación exige GPS, no consultar menús.
+
+GPS: la ventana de estabilidad conserva hasta cinco muestras y permite alcanzar dos segundos aunque las actualizaciones lleguen a 999 ms. Descarta duplicados, separaciones excesivas e imprecisión. Reintento explícito puede solicitar activar el proveedor de alta precisión de Android; no se abre automáticamente mientras se escribe.
+
+Detalle de rutas: Resumen sencillo con accesos directos a Ajustes, Historial y Mapa en pantallas separadas. Eliminadas pestañas y acción redundante Nueva ruta dentro de ajustes. Inicio y Mis rutas siguen disponibles cuando no hay grabación.
+
+Verificación: 53 pruebas de lógica y 108 de interfaz (161), tipos de app/tests, lint y exportación Android/Hermes correctos. Vista web con datos ficticios: mapa abre y vuelve conservando opciones. Falta prueba física en POCO F5 Pro. No se ha enviado código a Expo ni generado APK de esta reestructuración.
+
+Ajuste visual final: resumen compacto, referencia en una línea y botones Ajustes/Viajes en fila; Mapa e Iniciar visibles sin desplazar el resumen en la vista de 390×844. Verificado visualmente en la vista previa y 108 pruebas de interfaz vuelven a pasar. Captura: outputs/GHOVO-reestructura-vista.png. No se ha compilado APK nueva.
+
+APK 0.1.7 (8) terminada correctamente (FINISHED), con la reestructuración de navegación, GPS en Inicio y formularios/mapa separados: https://expo.dev/accounts/skacristian/projects/ghovo/builds/c2b30799-9288-4b00-b19e-7f1a75481e34 . APK: https://expo.dev/artifacts/eas/YHri8w7RT7gHvTB_ymc4kdjsBeHHwsNWtfd3d15ayfo.apk . QR: outputs/GHOVO-0.1.7-QR.png. Prueba física de GPS/teclado/mapa pendiente en POCO F5 Pro.
+
+## 0.1.8 (9) — bucle de permisos localizado por USB
+
+El POCO confirma permisos precisos y ubicación activada. Registro de Android: GHOVO lanza REQUEST_PERMISSIONS cada 100–160 ms; la Activity de permisos interrumpe MainActivity. Al perder primer plano se cancela preparación GPS y al recuperarlo se vuelve a pedir permiso, repitiendo el ciclo. También se registra la retirada de la Activity coincidiendo con el cierre comunicado; no se observa una excepción fatal ni muerte del proceso en esa reproducción.
+
+Corrección compartida: consultar antes de solicitar permisos, una sola solicitud pendiente, no repetir automáticamente tras volver a primer plano o denegar. Reintento explícito sigue disponible. Al comenzar grabación tampoco se solicita de nuevo el permiso de segundo plano si está concedido. Timeout de búsqueda incluye consultas de permisos bloqueadas. Se conserva el bloqueo de inicio sin GPS preciso y reciente.
+
+Validación: 53 pruebas de lógica y 116 de interfaz (169), tipos de app y tests, lint correctos. Prueba que simula la Activity de permisos falla con la solicitud incondicional anterior y pasa con la corrección. Los tests con proveedores simulados no validan recepción física. Detalles en GPS-REGRESSION-0.1.7.md y RELEASE-0.1.8.md.
+
+APK 0.1.8 enviada a Expo/EAS: https://expo.dev/accounts/skacristian/projects/ghovo/builds/81961c2c-a128-4a4e-89cc-7c730a663267 . Esperando compilación. No se instala por USB ni se borran datos del teléfono.
+
+
+## Resumen de viajes y favoritas — 23/10/2026 (pendiente de APK)
+
+Copia previa del código: outputs/GHOVO-0.1.8-base-antes-resumen-favoritos.zip. El usuario confirma tres rutas reales satisfactorias; no se identifica desde ese mensaje la versión instalada.
+
+Favoritas: sección propia en Inicio, sin duplicarlas entre habituales y sin limitar a cuatro las favoritas. Añadir/quitar disponible en cabecera de detalle de ruta, visible sin entrar en Ajustes. Conserva el almacenamiento existente y el inicio ya implementado.
+
+Viajes: acceso Ver detalles para cada intento del historial. Resumen conserva distancia, duración, comparación y tramos existentes; añade salida/llegada, modo, velocidad media incluyendo paradas, precisión GPS estimada e interrupciones. Media no disponible con cortes conocidos, discontinuidades geométricas, datos insuficientes o duración inválida. No se deducen paradas ni velocidades máximas a partir de ruido GPS.
+
+Comprobado: 55 pruebas de lógica y 118 de interfaz (173), tipos de app/tests y lint correctos. Vista previa local revisada con datos ficticios: favoritas y detalles de un viaje. No se cambian captura GPS, permisos, servicio de grabación, esquema de datos ni puntos guardados. Cambios solo locales; no se genera otra APK.
+
+
+## Información acumulada por ruta — 23/10/2026 (sin APK)
+
+Bloque desplegable Información de la ruta situado después de los accesos principales, con número de viajes, tiempo habitual (mediana), mejor tiempo, kilómetros acumulados y fechas de primer/último viaje. Filtrado estricto por ruta y modo; borradores fuera. Cálculos de tiempo excluyen cortes y trazados insuficientes; distancia acumulada se etiqueta como registrada y potencialmente incompleta. No se modifica el GPS ni el almacenamiento.
+
+Verificación: 57 pruebas de lógica y 119 de interfaz (176), tipos de app/tests y lint correctos; vista previa reconstruida. La vista previa utiliza datos ficticios. No se ha creado otra APK.
+
+
+## Primer paquete premium — 24/10/2026 (sin APK)
+
+Pantalla propia Análisis premium (/insights): periodos 7/30/90/todo, evolución mensual, mediana/P80 y regularidad, días y horarios, comparación entre viajes y controles comunes, planificación de salida con margen, alternativas de rutas guardadas con extremos próximos, estimación de combustible/coste e informe CSV del periodo sin coordenadas. Todas las funciones están abiertas para pruebas, sin activar compras ni límites de plan. Detalles y pendientes en PREMIUM-PAQUETE-1.md.
+
+Validación final: 66 pruebas de lógica y 126 de interfaz (192), tipos de app y tests, lint correctos. Exportación Android/Hermes correcta en dist-premium-check. Comparación con copia previa confirma intactos GPS, permisos, grabación, core, almacenamiento, validación de datos y configuración nativa. La vista previa se ha reconstruido con historial ficticio; revisión visual pendiente porque el navegador bloqueó el acceso de automatización. Falta prueba física y no se genera otra APK.
+
+
+## APK acumulada 0.1.9 (10) — 24/10/2026
+
+El usuario solicita reunir las mejoras y crear APK. Incluye favoritas, resúmenes de viajes, información acumulada por ruta y primer paquete de análisis premium. Se conservan las funciones de 0.1.8. Versión incrementada a 0.1.9, código Android 10, misma firma remota y paquete.
+
+Preflight repetido: 66 pruebas de lógica + 126 de interfaz = 192, tipos de app/tests y lint correctos. Fuente archivada en outputs/GHOVO-0.1.9-fuentes-2026-10-24.zip; copias ZIP organizadas fuera de la app y excluidas de futuros envíos EAS.
+
+Build enviado con la autorización existente a Expo/EAS: https://expo.dev/accounts/skacristian/projects/ghovo/builds/54e97475-9bfa-4cda-8b40-290c9cb48071 . En compilación. No se instala automáticamente en el móvil.
+
+APK 0.1.9 (10) terminada correctamente (FINISHED). Descarga comprobada HTTP 200: https://expo.dev/artifacts/eas/pEPvZwdAHdwgI38XEblRYLbQQPtpOrnNKezzxZ3LYlo.apk . QR local outputs/GHOVO-0.1.9-QR.png. Instalar como actualización sobre la versión existente. No se ha instalado automáticamente ni se han tocado datos del teléfono; prueba física pendiente.
+
+
+## Monetización local — 25/10/2026
+
+Nueva especificación: 3 créditos por cuenta confirmada, 1 por inicio correcto, máximo 50 sin caducidad; anuncios voluntarios con límite inicial 10/día y Premium de pago único previsto de 4,99 €. Sustituye propuestas anteriores de suscripción o límites de rutas guardadas.
+
+Preparado backend independiente en ../ghovo-monetization con esquema privado Postgres, ledger, reservas idempotentes, verificación SSV de Google, compras verificadas pendientes de adaptador real y administración protegida. No se ha tocado el proyecto Supabase «My Project»: el usuario eligió preparación local.
+
+App: acceso Créditos en navegación, pantallas Créditos/Premium y envoltorio de inicio/recuperación/liquidación con diario persistente. Monetización desactivada por defecto y URL sin configurar: los inicios usan directamente la grabación estable. No se han cambiado tracking.ts, location-permission.ts, core.ts ni storage.ts respecto a fuentes 0.1.9. No se han añadido SDK nativos ni generado APK.
+
+Anuncios, compra y restauración permanecen deshabilitados explícitamente. No hay saldos inventados, pagos simulados ni activación remota. Faltan cuentas reales identificadas, SDK/consentimiento, pruebas SSV de consola, producto no consumible y verificación/revocación de tienda. Antes de activar, seguir README del backend; el precio previsto de administración no altera el precio de la tienda.
+
+Validación: 75 pruebas de lógica, 130 de interfaz y 16 de backend (221). Tipos de app y pruebas, lint y exportación Android/Hermes correctos. Pruebas SQL en PGlite embebido: no sustituyen concurrencia multi-conexión Postgres ni pruebas físicas. Compilación local sin publicar.
+
+
+## Base independiente GHOVO y permisos — 25/10/2026
+
+Organización ghovo (Free), proyecto bzblxznukhkyqrpmqbni, separado de DesdeCasa/Truka. Esquema privado con nueve tablas y verificación de sesiones instalado. Las nueve tablas tienen RLS forzado; cero cuentas de prueba retenidas. Prueba SQL real de concesión, consumo y duplicado de créditos revertida al terminar. Ajuste adicional de permisos de la función automática RLS verificado: sin ejecución pública ni para clientes autenticados. Security Advisor: 0 errores, 0 avisos, 0 sugerencias.
+
+La app sigue sin conectar al backend remoto: quedan sus credenciales mínimas y despliegue/configuración. No se han activado monetización ni proveedores reales, ni creado otra APK. Estado y pasos pendientes en ../ghovo-monetization/supabase-setup.json y README.md.
+
+## Cuenta y créditos conectados — 25/10/2026
+
+Pantalla Cuenta con registro, acceso, confirmación, recuperación y sesión cifrada; SDK Supabase real, SecureStore y Crypto nativos compatibles con Expo 58. API remota instalada y acceso limitado al propio usuario; administración requiere autorización explícita. Saldo e historial proceden del servidor. Tres créditos iniciales una sola vez. No se activa consumo obligatorio, publicidad o compra Premium.
+
+Retorno de correo ghovo://auth/callback configurado. Falta SMTP propio para destinatarios públicos y prueba física del enlace, reinicio y recuperación. La APK actual no contiene los cambios: requieren un nuevo binario, todavía no generado ni publicado. Guía y estado en ../ghovo-monetization/CUENTAS-ESTADO.md. Los archivos de GPS y almacenamiento estable se conservan sin cambios.
+
+Verificación: tipos de app/pruebas, lint y exportación Android/Hermes correctos; asesor remoto cero avisos y comprobación real de API anónima rechazada. Auditoría npm conserva seis avisos altos existentes en Expo/MapLibre/herramientas; no se aplican cambios incompatibles automáticamente.
+
+Validación de cierre de este paquete: 80 pruebas de lógica, 148 de interfaz y 25 de backend (253); tipos de app y pruebas, lint y exportación Android/Hermes correctos. Suite completa de interfaz repetida tras los últimos ajustes. Comprobación binaria con la copia estable 0.1.9: tracking.ts, location-permission.ts, core.ts y storage.ts intactos. Copia de fuentes: ../GHOVO-cuentas-fuentes-2026-10-25.zip, sin dependencias instaladas, .env o binarios nativos. Falta prueba física con la próxima APK.
+
+Validación de la corrección: 90 pruebas de lógica y 157 de interfaz acumuladas. La suite completa pasó con 156 y, tras añadir la regresión de llegada con desvío, pasaron las 60 pruebas de las dos suites afectadas. Tipos de app/pruebas, lint y exportación Android/Hermes correctos. Fuentes archivadas en ../GHOVO-0.1.11-fuentes-2026-10-26.zip. Prueba física pendiente.
+
+APK 0.1.11 (12) enviada al mismo proyecto y con la misma firma remota. Build: https://expo.dev/accounts/skacristian/projects/ghovo/builds/2e8d93e6-f224-4000-8768-e48201b8214e . Estado inicial: IN_QUEUE. No se ha instalado automáticamente ni se han borrado rutas del móvil.
+
+Prueba en POCO: iniciar a unos 40 m de A; llegar y permanecer cinco segundos a unos 40 m de B; verificar un único guardado. En otro intento, finalizar a más de 50 m de B: debe guardarse sin comparación final ni cambio de referencia. También comprobar finalización sin GPS reciente: se conservan las posiciones disponibles, con indicación no comparable. Instalar encima de la app actual, sin desinstalar.
+
+Cierre de preparación 0.1.12: 92 pruebas de lógica + 163 de interfaz (255), tipos de app/pruebas y lint correctos. Expo Doctor 20/20 tras alinear los parches compatibles de hoy; exportación Android/Hermes correcta en ../ghovo-0.1.12-android-check. No se ha generado ni enviado otra APK en este turno. Los cambios requieren una nueva APK para llegar al teléfono. Fuentes: ../GHOVO-0.1.12-fuentes-2026-10-27.zip.

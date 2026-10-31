@@ -1,0 +1,8 @@
+import React from 'react';import {render,screen,waitFor,userEvent} from '@testing-library/react-native';import AuthCallback from '../src/app/auth/callback';import {completeAuthCode} from '../src/account-client';import {router} from 'expo-router';
+let mockParams:Record<string,unknown>={};
+jest.mock('expo-router',()=>({useLocalSearchParams:()=>mockParams,router:{replace:jest.fn()}}));
+jest.mock('../src/account-client',()=>({completeAuthCode:jest.fn(async()=>{}),accountError:()=> 'El enlace ha caducado.'}));
+beforeEach(()=>{mockParams={};});
+test('callback passes the PKCE flow identifier and then opens the account screen',async()=>{mockParams={code:'one-use-code',sb_flow_id:'validFlow1234'};await render(<AuthCallback/>);await waitFor(()=>expect(router.replace).toHaveBeenCalledWith('/credits'));expect(completeAuthCode).toHaveBeenCalledWith('one-use-code','validFlow1234');});
+test('tokens and array parameters cannot be accepted as an authentication link',async()=>{mockParams={access_token:'untrusted',code:['a','b']};await render(<AuthCallback/>);expect(await screen.findByText('El enlace no es válido. Solicita uno nuevo desde la app.')).toBeOnTheScreen();expect(completeAuthCode).not.toHaveBeenCalled();await userEvent.setup().press(screen.getByRole('button',{name:'Ir a mi cuenta'}));expect(router.replace).toHaveBeenCalledWith('/credits');});
+test('callback errors stay readable and do not reflect raw provider data',async()=>{mockParams={code:'expired'};jest.mocked(completeAuthCode).mockRejectedValueOnce(Error('private-provider-data'));await render(<AuthCallback/>);expect(await screen.findByText('El enlace ha caducado.')).toBeOnTheScreen();expect(screen.queryByText('private-provider-data')).not.toBeOnTheScreen();});

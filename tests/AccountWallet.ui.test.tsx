@@ -1,0 +1,14 @@
+import React from 'react';import {render,screen,waitFor} from '@testing-library/react-native';import {CreditsScreen} from '../src/CreditsScreen';import {billingRequest} from '../src/monetization-api';
+const mockAccount={status:'signedIn',user:{id:'owner-a',email:'owner@example.invalid'},recovery:false};
+jest.mock('../src/AccountPanel',()=>({useAccount:()=>mockAccount,AccountPanel:()=>null}));
+jest.mock('../src/account-client',()=>({refreshAccount:jest.fn(async()=>{})}));
+jest.mock('../src/monetization-api',()=>({monetizationEnforced:false,billingRequest:jest.fn(),billingError:()=> 'No se pudo verificar el saldo.'}));
+jest.mock('../src/monetized-tracking',()=>({pendingBilling:jest.fn(async()=>null),recoverBilling:jest.fn(async()=>{})}));
+const wallet={userId:'owner-a',credits:3,available:3,reserved:0,premium:false,config:{priceMinor:499,dailyAdLimit:10},adsRemaining:10};
+beforeEach(()=>{jest.mocked(billingRequest).mockImplementation(async path=>path==='/v1/account'?wallet:{entries:[]});});
+test('a signed-in account displays only its server-verified wallet',async()=>{await render(<CreditsScreen premiumPage={false} active={false} onHome={jest.fn()} onPremium={jest.fn()}/>);expect(await screen.findByText('3 créditos disponibles')).toBeOnTheScreen();expect(screen.getByRole('button',{name:'Ver anuncio para conseguir 1 crédito'})).toBeDisabled();});
+test('a wallet response for another user never appears in the account',async()=>{jest.mocked(billingRequest).mockImplementation(async path=>path==='/v1/account'?{...wallet,userId:'other',available:49}:{entries:[]});await render(<CreditsScreen premiumPage={false} active={false} onHome={jest.fn()} onPremium={jest.fn()}/>);await waitFor(()=>expect(screen.getByText('No se pudo verificar el saldo.')).toBeOnTheScreen());expect(screen.queryByText('49 créditos disponibles')).not.toBeOnTheScreen();expect(screen.getByText('Saldo sin verificar')).toBeOnTheScreen();});
+test('backend failure leaves the balance unverified instead of inventing initial credits',async()=>{jest.mocked(billingRequest).mockRejectedValue(Error('offline'));await render(<CreditsScreen premiumPage={false} active={false} onHome={jest.fn()} onPremium={jest.fn()}/>);expect(await screen.findByText('No se pudo verificar el saldo.')).toBeOnTheScreen();expect(screen.queryByText('3 créditos disponibles')).not.toBeOnTheScreen();});
+
+
+test('malformed ledger data is rejected without crashing the account screen',async()=>{jest.mocked(billingRequest).mockImplementation(async path=>path==='/v1/account'?wallet:{entries:[{id:'1',kind:'initial',delta:3,created_at:'not-a-date'}]});await render(<CreditsScreen premiumPage={false} active={false} onHome={jest.fn()} onPremium={jest.fn()}/>);expect(await screen.findByText('No se pudo verificar el saldo.')).toBeOnTheScreen();expect(screen.getByText('Saldo sin verificar')).toBeOnTheScreen();});

@@ -65,10 +65,61 @@ export async function refreshAccount(){
 }
 export async function loginAccount(email:string,password:string){const {error}=await accountClient().auth.signInWithPassword({email:email.trim(),password});fail(error);await encryptedStorage.removeItem(recoveryKey);publish({...state,recovery:false});await refreshAccount();}
 let googleLogin:Promise<void>|undefined;
+let googleNativeConfigured=false;
+function getGoogleSignin():{GoogleSignin:any,statusCodes:any}|null{
+ try{
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const mod=require('@react-native-google-signin/google-signin');
+  if(mod?.GoogleSignin&&typeof mod.GoogleSignin.hasPlayServices==='function'){
+   if(!googleNativeConfigured){
+    mod.GoogleSignin.configure({
+     webClientId:'788483892284-amkurou5m6mhr8ctv8om0abfik2ikds3.apps.googleusercontent.com',
+     scopes:['email','profile'],
+    });
+    googleNativeConfigured=true;
+   }
+   return mod;
+  }
+ }catch{}
+ return null;
+}
 export function loginWithGoogle():Promise<void>{
  if(googleLogin)return googleLogin;
  googleLogin=(async()=>{
   if(Platform.OS==='web')throw Error('GOOGLE_NATIVE_REQUIRED');
+  const googleMod=getGoogleSignin();
+  if(googleMod){
+   try{
+    await googleMod.GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog:true});
+    const response=await googleMod.GoogleSignin.signIn();
+    const idToken=response.data?.idToken??(response as any).idToken;
+    if(!idToken)throw Error('GOOGLE_ACCESS_DENIED');
+    const {data,error}=await accountClient().auth.signInWithIdToken({
+     provider:'google',
+     token:idToken,
+    });
+    fail(error);
+    if(!data.user)throw Error('GOOGLE_ACCESS_DENIED');
+    await encryptedStorage.removeItem(recoveryKey);
+    publish({...state,recovery:false});
+    await refreshAccount();
+    return;
+   }catch(nativeError:any){
+    if(nativeError?.code===googleMod.statusCodes?.SIGN_IN_CANCELLED){
+     throw Error('GOOGLE_CANCELLED');
+    }
+    if(nativeError?.code===googleMod.statusCodes?.IN_PROGRESS){
+     throw Error('over_request_rate_limit');
+    }
+    if(nativeError?.code===googleMod.statusCodes?.PLAY_SERVICES_NOT_AVAILABLE){
+     throw Error('GOOGLE_NOT_CONFIGURED');
+    }
+    if(nativeError instanceof Error&&(nativeError.message==='GOOGLE_CANCELLED'||nativeError.message==='GOOGLE_ACCESS_DENIED')){
+     throw nativeError;
+    }
+    throw nativeError;
+   }
+  }
   const {data,error}=await accountClient().auth.signInWithOAuth({provider:'google',options:{redirectTo:authRedirect,skipBrowserRedirect:true,scopes:'openid email profile'}});
   fail(error);if(!data.url)throw Error('GOOGLE_NOT_CONFIGURED');
   const result=await WebBrowser.openAuthSessionAsync(googleAuthorizationUrl(data.url,cloudConfig.url,authRedirect),authRedirect);

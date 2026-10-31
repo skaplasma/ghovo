@@ -1,5 +1,9 @@
 # Próxima actualización — Inicio sencillo
 
+## 0.1.14 (15) — Acceso nativo con Google (Google Play Services), 01/11/2026
+
+Sustitución del flujo por navegador web externo por inicio de sesión nativo oficial con @react-native-google-signin/google-signin y signInWithIdToken de Supabase. El acceso se realiza directamente mediante la hoja modal nativa de Google Play Services en Android sin abrir pestañas de Chrome, sin riesgo de bloqueos por redirecciones 302 a esquemas personalizados ni dependencias de permisos de ventanas emergentes en capas de fabricantes (MIUI/HyperOS). En entornos sin servicios nativos o pruebas se mantiene el soporte alternativo seguro. Credencial de cliente OAuth Android configurada en Google Cloud con paquete app.ghovo.mobile y huella SHA-1 de la clave de firma EAS.
+
 ## 0.1.13 (14) — Inicio inmediato y activación del fantasma al entrar en el circuito, 31/10/2026
 
 Inicio de ruta guardada sin esperas en primer plano: al pulsar «Estoy parado · iniciar», la grabación GPS y el servicio en segundo plano se activan de inmediato, permitiendo bloquear la pantalla o guardar el móvil. El fantasma y el cronómetro de la ruta permanecen en espera hasta que el usuario se incorpora físicamente al circuito marcado (routeEntry). En ese instante se registra circuitStartedAt, se activa el cálculo de diferencias en directo con la referencia y se emite un aviso por voz («Entrando en la ruta. Fantasma activado.»).

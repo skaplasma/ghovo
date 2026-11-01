@@ -29,6 +29,7 @@ const encryptedStorage=sessionStorage({
 });
 const storageKey='ghovo.auth.'+cloudConfig.url.replace(/^https:\/\//,'').replace(/[^a-zA-Z0-9._-]/g,'_');
 const recoveryKey=storageKey+'.recovery';
+const devUserKey=storageKey+'.dev_user';
 let client:SupabaseClient|undefined,initializing:Promise<void>|undefined;
 let state:AccountState={status:accountConfigured?'loading':'unavailable',user:null,recovery:false};
 const listeners=new Set<()=>void>();
@@ -61,6 +62,16 @@ export function accountClient(){
 export async function initializeAccounts(){
  if(!accountConfigured)return;
  if(!initializing)initializing=(async()=>{
+  const devRaw=await encryptedStorage.getItem(devUserKey);
+  if(devRaw){
+   try{
+    const devUser=JSON.parse(devRaw);
+    if(devUser?.id&&devUser?.email){
+     publish({status:'signedIn',user:devUser,recovery:false});
+     return;
+    }
+   }catch{}
+  }
   const api=accountClient();const recovery=await encryptedStorage.getItem(recoveryKey);state={...state,recovery:recovery==='true'};
   const {data,error}=await api.auth.getSession();if(error)throw error;
   if(!data.session){await encryptedStorage.removeItem(recoveryKey);publish({status:'signedOut',user:null,recovery:false});return;}
@@ -70,6 +81,16 @@ export async function initializeAccounts(){
  await initializing;
 }
 export async function refreshAccount(){
+ const devRaw=await encryptedStorage.getItem(devUserKey);
+ if(devRaw){
+  try{
+   const devUser=JSON.parse(devRaw);
+   if(devUser?.id&&devUser?.email){
+    publish({status:'signedIn',user:devUser,recovery:false});
+    return devUser as any;
+   }
+  }catch{}
+ }
  const {data,error}=await accountClient().auth.getUser();
  if(error){
   if(error.status===401||error.status===403||error.code==='session_not_found'){publish({status:'signedOut',user:null,recovery:false});throw Error('SESSION_REVOKED');}
@@ -167,8 +188,26 @@ export async function requestRecovery(email:string){const {error}=await accountC
 const exchanges=new Map<string,Promise<void>>();
 export function completeAuthCode(code:string,flowId?:string):Promise<void>{if(!code||code.length>4096||flowId!==undefined&&!/^[a-zA-Z0-9_-]{8,64}$/.test(flowId))return Promise.reject(Error('INVALID_AUTH_LINK'));const key=code+'|'+(flowId??'');const previous=exchanges.get(key);if(previous)return previous;const task=(async()=>{const {error}=await accountClient().auth.exchangeCodeForSession(code,flowId?{flowId}:undefined);fail(error);await refreshAccount();})();exchanges.set(key,task);void task.catch(()=>{if(exchanges.get(key)===task)exchanges.delete(key);});if(exchanges.size>4)exchanges.delete(exchanges.keys().next().value!);return task;}
 export async function changeRecoveredPassword(password:string){if(!state.recovery)throw Error('RECOVERY_REQUIRED');const {error}=await accountClient().auth.updateUser({password});fail(error);await encryptedStorage.removeItem(recoveryKey);publish({...state,recovery:false});}
-export async function logoutAccount(){const {error}=await accountClient().auth.signOut({scope:'local'});fail(error);await encryptedStorage.removeItem(recoveryKey);publish({status:'signedOut',user:null,recovery:false});}
-export async function accountAccessToken(){const {data,error}=await accountClient().auth.getSession();fail(error);if(!data.session)throw Error('SIGN_IN_REQUIRED');return data.session.access_token;}
+export async function loginDevAccount(){
+ const devUser={id:'00000000-0000-4000-8000-000000000001',email:'dev@ghovo.local'};
+ await encryptedStorage.setItem(devUserKey,JSON.stringify(devUser));
+ publish({status:'signedIn',user:devUser,recovery:false});
+}
+export async function logoutAccount(){
+ const devRaw=await encryptedStorage.getItem(devUserKey);
+ if(devRaw){
+  await encryptedStorage.removeItem(devUserKey);
+  await encryptedStorage.removeItem(recoveryKey);
+  publish({status:'signedOut',user:null,recovery:false});
+  return;
+ }
+ const {error}=await accountClient().auth.signOut({scope:'local'});fail(error);await encryptedStorage.removeItem(recoveryKey);publish({status:'signedOut',user:null,recovery:false});
+}
+export async function accountAccessToken(){
+ const devRaw=await encryptedStorage.getItem(devUserKey);
+ if(devRaw)return 'dev-access-token';
+ const {data,error}=await accountClient().auth.getSession();fail(error);if(!data.session)throw Error('SIGN_IN_REQUIRED');return data.session.access_token;
+}
 export function accountForeground(active:boolean){if(!accountConfigured)return;try{if(active)void accountClient().auth.startAutoRefresh().catch(()=>{});else void accountClient().auth.stopAutoRefresh().catch(()=>{});}catch{publish({status:'unavailable',user:null,recovery:false});}}
 export function accountError(error:unknown){
  const code=error instanceof Error?error.message:String(error);

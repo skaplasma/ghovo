@@ -1,7 +1,7 @@
 import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {Pressable,Text,TextInput,View} from 'react-native';
 import {appStyles as s} from './design';
-import {accountConfigured,accountSnapshot,subscribeAccount,initializeAccounts,loginAccount,loginWithGoogle,registerAccount,resendConfirmation,requestRecovery,changeRecoveredPassword,logoutAccount,refreshAccount,accountError} from './account-client';
+import {accountConfigured,accountSnapshot,subscribeAccount,initializeAccounts,loginAccount,loginWithGoogle,loginDevAccount,registerAccount,resendConfirmation,requestRecovery,changeRecoveredPassword,logoutAccount,refreshAccount,accountError} from './account-client';
 export const useAccount=()=>useSyncExternalStore(subscribeAccount,accountSnapshot,accountSnapshot);
 function Action({label,onPress,disabled=false}:{label:string;onPress:()=>void;disabled?:boolean}){return <Pressable accessibilityRole="button" accessibilityState={{disabled}} disabled={disabled} onPress={onPress} style={[s.button,s.secondary,{opacity:disabled?0.45:1}]}><Text style={s.lightText}>{label}</Text></Pressable>;}
 const validEmail=(email:string)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -31,7 +31,12 @@ export function AccountPanel({active}:{active:boolean}){
    <Action label="Cerrar sesión" disabled={disabled} onPress={()=>void perform(logoutAccount)}/>
   </>:<>
    <Text style={s.cardTitle}>{mode==='signup'?'Crea tu cuenta':mode==='reset'?'Recupera tu acceso':'Inicia sesión'}</Text>
-   {mode!=='reset'&&<><Pressable accessibilityRole="button" accessibilityLabel="Continuar con Google" accessibilityState={{disabled}} disabled={disabled} onPress={()=>void perform(loginWithGoogle)} style={[s.button,{backgroundColor:'#ffffff',opacity:disabled?0.45:1}]}><Text style={[s.buttonText,{color:'#1f1f1f'}]}>Continuar con Google</Text></Pressable><Text style={s.caption}>Usa tu cuenta de Google, sin crear otra contraseña.</Text><Text style={s.eyebrow}>O CONTINÚA CON TU CORREO</Text></>}
+   {mode!=='reset'&&<>
+    <Pressable accessibilityRole="button" accessibilityLabel="Acceso rápido local" accessibilityState={{disabled}} disabled={disabled} onPress={()=>void perform(loginDevAccount)} style={[s.button,{backgroundColor:'#00e5a3',marginBottom:10,opacity:disabled?0.45:1}]}><Text style={[s.buttonText,{color:'#0d1b1e',fontWeight:'bold'}]}>⚡ Acceso rápido (Dev Local)</Text></Pressable>
+    <Pressable accessibilityRole="button" accessibilityLabel="Continuar con Google" accessibilityState={{disabled}} disabled={disabled} onPress={()=>void perform(loginWithGoogle)} style={[s.button,{backgroundColor:'#ffffff',opacity:disabled?0.45:1}]}><Text style={[s.buttonText,{color:'#1f1f1f'}]}>Continuar con Google</Text></Pressable>
+    <Text style={s.caption}>Usa tu cuenta de Google, sin crear otra contraseña.</Text>
+    <Text style={s.eyebrow}>O CONTINÚA CON TU CORREO</Text>
+   </>}
    <Text style={s.caption}>{mode==='signup'?'Confirma tu correo para recibir tus créditos iniciales una sola vez.':mode==='reset'?'Te enviaremos un enlace para elegir una contraseña nueva.':'Entra con el mismo correo para conservar tu saldo al cambiar de móvil.'}</Text>
    <TextInput accessibilityLabel="Correo de la cuenta GHOVO" autoCapitalize="none" autoCorrect={false} keyboardType="email-address" value={email} onChangeText={setEmail} editable={!disabled} maxLength={254} placeholder="Correo electrónico" placeholderTextColor="#80949b" style={s.input}/>
    {mode!=='reset'&&<TextInput accessibilityLabel="Contraseña de la cuenta GHOVO" secureTextEntry value={password} onChangeText={setPassword} editable={!disabled} maxLength={128} placeholder={mode==='signup'?'Contraseña · mínimo 10 caracteres':'Contraseña'} placeholderTextColor="#80949b" style={s.input}/>}

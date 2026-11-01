@@ -11,10 +11,21 @@ import {accountConfigured,authRedirect,cloudConfig} from './cloud-config';
 export {accountConfigured};
 export type AccountState={status:'loading'|'signedOut'|'signedIn'|'offline'|'unavailable';user:{id:string;email:string}|null;recovery:boolean};
 const memory=new Map<string,string>();
+const webStorage={
+ get:(key:string)=>Promise.resolve(typeof window!=='undefined'&&window.localStorage?window.localStorage.getItem(key):memory.get(key)??null),
+ set:async(key:string,value:string)=>{
+  if(typeof window!=='undefined'&&window.localStorage){try{window.localStorage.setItem(key,value);return;}catch{}}
+  memory.set(key,value);
+ },
+ remove:async(key:string)=>{
+  if(typeof window!=='undefined'&&window.localStorage){try{window.localStorage.removeItem(key);return;}catch{}}
+  memory.delete(key);
+ }
+};
 const encryptedStorage=sessionStorage({
- get:key=>Platform.OS==='web'?Promise.resolve(memory.get(key)??null):SecureStore.getItemAsync(key),
- set:async(key,value)=>{if(Platform.OS==='web')memory.set(key,value);else await SecureStore.setItemAsync(key,value,{keychainAccessible:SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY});},
- remove:async key=>{if(Platform.OS==='web')memory.delete(key);else await SecureStore.deleteItemAsync(key);}
+ get:key=>Platform.OS==='web'?webStorage.get(key):SecureStore.getItemAsync(key),
+ set:async(key,value)=>{if(Platform.OS==='web')await webStorage.set(key,value);else await SecureStore.setItemAsync(key,value,{keychainAccessible:SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY});},
+ remove:async key=>{if(Platform.OS==='web')await webStorage.remove(key);else await SecureStore.deleteItemAsync(key);}
 });
 const storageKey='ghovo.auth.'+cloudConfig.url.replace(/^https:\/\//,'').replace(/[^a-zA-Z0-9._-]/g,'_');
 const recoveryKey=storageKey+'.recovery';
@@ -30,14 +41,19 @@ export function accountClient(){
  if(!client){
   if(Platform.OS!=='web')installPkceCrypto(globalThis as unknown as Parameters<typeof installPkceCrypto>[0],{random:array=>ExpoCrypto.getRandomValues(array),sha256:data=>ExpoCrypto.digest(ExpoCrypto.CryptoDigestAlgorithm.SHA256,data)});
   if(typeof globalThis.crypto?.getRandomValues!=='function'||typeof globalThis.crypto?.subtle?.digest!=='function'||typeof TextEncoder==='undefined')throw Error('SECURE_AUTH_UNAVAILABLE');
-  client=createClient(cloudConfig.url,cloudConfig.publishableKey,{auth:{storage:encryptedStorage,storageKey,autoRefreshToken:true,persistSession:true,detectSessionInUrl:false,flowType:'pkce',experimental:{appendPkceFlowIdToRedirects:true},lock:processLock},global:{fetch:async(input,options)=>{
+  client=createClient(cloudConfig.url,cloudConfig.publishableKey,{auth:{storage:encryptedStorage,storageKey,autoRefreshToken:true,persistSession:true,detectSessionInUrl:Platform.OS==='web',flowType:'pkce',experimental:{appendPkceFlowIdToRedirects:true},lock:Platform.OS==='web'?undefined:processLock},global:{fetch:async(input,options)=>{
    const controller=new AbortController(),signal=options?.signal,abort=()=>controller.abort();if(signal?.aborted)abort();else signal?.addEventListener('abort',abort,{once:true});const timer=setTimeout(abort,12000);
    try{return await fetch(input,{...options,signal:controller.signal});}finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);}
   }}});
   client.auth.onAuthStateChange((event,session)=>{
    if(event==='PASSWORD_RECOVERY'){state={...state,recovery:true};void encryptedStorage.setItem(recoveryKey,'true').catch(()=>{});}
    if(event==='SIGNED_OUT'){publish({status:'signedOut',user:null,recovery:false});void encryptedStorage.removeItem(recoveryKey).catch(()=>{});}
-   else if(session?.user){publish({status:'signedIn',user:{id:session.user.id,email:session.user.email??''},recovery:state.recovery});}
+   else if(session?.user){
+    publish({status:'signedIn',user:{id:session.user.id,email:session.user.email??''},recovery:state.recovery});
+    if(Platform.OS==='web'&&typeof window!=='undefined'&&window.history?.replaceState&&(window.location.search.includes('code=')||window.location.hash.includes('access_token='))){
+     window.history.replaceState({},document.title,window.location.pathname);
+    }
+   }
   });
  }
  return client;
@@ -92,6 +108,7 @@ export function loginWithGoogle():Promise<void>{
     options:{
      redirectTo:typeof window!=='undefined'?window.location.origin:'http://localhost:8081',
      scopes:'openid email profile',
+     skipBrowserRedirect:true,
     },
    });
    fail(error);

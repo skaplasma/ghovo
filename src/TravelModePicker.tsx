@@ -12,21 +12,43 @@ const MODES: readonly { mode: TravelMode; label: string; icon: string; title: st
 
 export function TravelModePicker({ value, onChange, disabled }: { value: TravelMode; onChange: (mode: TravelMode) => void; disabled: boolean }) {
   return (
-    <View style={s.modePicker} accessibilityLabel="Modo de recorrido">
-      {MODES.map(({ mode, label, icon, title }) => (
-        <Pressable
-          key={mode}
-          accessibilityRole="button"
-          accessibilityLabel={label}
-          accessibilityState={{ selected: mode === value, disabled }}
-          disabled={disabled}
-          onPress={() => onChange(mode)}
-          style={[s.modeChoice, mode === value && s.modeChoiceSelected]}
-        >
-          <Text style={{ fontSize: 16 }}>{icon}</Text>
-          <Text style={[s.modeText, mode === value && { color: '#D9F5BB', fontWeight: '700' }]}>{title}</Text>
-        </Pressable>
-      ))}
+    <View style={{ gap: 10, paddingVertical: 6 }} accessibilityLabel="Modo de recorrido">
+      <Text style={{ textAlign: 'center', fontSize: 12, fontWeight: '700', color: '#7a889b', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2 }}>Route Details</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+        {MODES.map(({ mode, label, icon, title }) => {
+          const selected = mode === value;
+          return (
+            <Pressable
+              key={mode}
+              accessibilityRole="button"
+              accessibilityLabel={label}
+              accessibilityState={{ selected, disabled }}
+              disabled={disabled}
+              onPress={() => onChange(mode)}
+              style={[
+                {
+                  flexBasis: '47%',
+                  flexGrow: 1,
+                  minHeight: 82,
+                  borderRadius: 18,
+                  backgroundColor: '#151c24',
+                  borderWidth: 1,
+                  borderColor: selected ? '#38485a' : '#222b37',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 5,
+                  paddingVertical: 10,
+                },
+                selected && { backgroundColor: '#1a232e' }
+              ]}
+            >
+              <Text style={{ fontSize: 28 }}>{icon}</Text>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: selected ? '#ffffff' : '#7a889b' }}>{title}</Text>
+              {selected && <View style={{ width: 36, height: 3, borderRadius: 2, backgroundColor: '#ffffff', marginTop: 2 }} />}
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }

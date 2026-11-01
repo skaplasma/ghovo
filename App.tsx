@@ -41,7 +41,7 @@ const noPoints: Point[] = [];
 const km = (r: Run) => `${(length(r.points) / 1000).toFixed(2)} km`;
 const date = (r: Run) => new Date(r.startedAt).toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 function Button({ label, onPress, secondary = false, danger = false, disabled = false, finish=false }: { label: string; onPress: () => void; secondary?: boolean; danger?: boolean; disabled?: boolean; finish?:boolean }) {
-  return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={({ pressed }) => [s.button, secondary && s.secondary, danger && s.danger, finish&&s.finishButton, { opacity: disabled ? 0.4 : pressed ? 0.7 : 1 }]}>
+  return <Pressable accessibilityRole="button" accessibilityLabel={label === 'CONFIRMAR Y EMPEZAR' ? 'Empezar ruta' : label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={({ pressed }) => [s.button, secondary && s.secondary, danger && s.danger, finish&&s.finishButton, { opacity: disabled ? 0.4 : pressed ? 0.7 : 1 }]}>
     <Text style={[s.buttonText, secondary && s.lightText, danger && s.dangerText]}>{label}</Text>
   </Pressable>;
 }
@@ -58,7 +58,7 @@ const AttemptList=memo(function AttemptList({attempts,bestId,onOpen}:{attempts:R
 });
 function RouteNameField({onChange,initialName}:{onChange:(value:string)=>void;initialName:string}){
   const [value,setValue]=useState(initialName);
-  return <TextInput accessibilityLabel="Nombre de la ruta" style={s.input} value={value} onChangeText={text=>{setValue(text);onChange(text);}} maxLength={60} placeholder="Ej. Casa → Trabajo" placeholderTextColor="#80949b" autoCorrect={false} returnKeyType="done" onSubmitEditing={()=>Keyboard.dismiss()}/>;
+  return <TextInput accessibilityLabel="Nombre de la ruta" style={s.input} value={value} onChangeText={text=>{setValue(text);onChange(text);}} maxLength={60} placeholder="Nombre (Opcional)" placeholderTextColor="#80949b" autoCorrect={false} returnKeyType="done" onSubmitEditing={()=>Keyboard.dismiss()}/>;
 }
 const ScreenContent=createContext<React.ReactNode>(null);
 export function GhovoScreen(){return <>{useContext(ScreenContent)}</>;}
@@ -534,8 +534,8 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     </View>
     {!loadError&&<View style={s.actionDock}>
       {!run&&!result&&section==='route'&&(!selected||!routeMode)&&<TravelModePicker value={travelMode} onChange={setTravelMode} disabled={disabled}/>}
-      <Button finish={!!run} label={run?(busy?'Guardando…':'Finalizar ruta'):section==='library'?'Nueva ruta':result?'Ver recorrido':(busy?'Preparando GPS…':selected?(comparisonReference?'Iniciar esta ruta':'Iniciar sin comparación'):'Empezar ruta')} disabled={disabled||(!run&&!result&&section==='route'&&(!gps.ready&&!comparisonReference))} onPress={run?()=>void act(finish):section==='library'?()=>choose(null):result?()=>{setResultId(null);setShowGhost(false);setReplay(resetReplay);}:start}/>
-      {section==='route'&&!result&&<Text style={s.dockHint}>{run?'Detente antes de finalizar.':'Inicia cuando estés parado.'}</Text>}
+      <Button finish={!!run} label={run?(busy?'Guardando…':'Finalizar ruta'):section==='library'?'Nueva ruta':result?'Ver recorrido':(busy?'Preparando GPS…':selected?(comparisonReference?'Iniciar esta ruta':'Iniciar sin comparación'):'CONFIRMAR Y EMPEZAR')} disabled={disabled||(!run&&!result&&section==='route'&&(!gps.ready&&!comparisonReference))} onPress={run?()=>void act(finish):section==='library'?()=>choose(null):result?()=>{setResultId(null);setShowGhost(false);setReplay(resetReplay);}:start}/>
+      {section==='route'&&!result&&<Text style={s.dockHint}>{run?'Detente antes de finalizar.':'🕒 Asegurando señal GPS...'}</Text>}
     </View>}
     {!run&&navigation}
   </View>;

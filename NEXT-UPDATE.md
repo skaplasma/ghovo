@@ -1,4 +1,11 @@
-# Próxima actualización — Inicio sencillo
+## 0.1.15 (16) — Sistema de anuncios bonificados (Rewarded Ads) AdMob y créditos, 01/11/2026
+
+Implementación del flujo de monetización voluntario basado en anuncios bonificados (Rewarded Video Ads): 1 anuncio visto completo = +1 crédito en la cuenta para gastar en rutas dentro de la app.
+- **Integración nativa**: Configurado react-native-google-mobile-ads con los identificadores de prueba oficiales de Google AdMob (App ID ca-app-pub-3940256099942544~3347511713 y Rewarded Ad Unit ca-app-pub-3940256099942544/5224354917).
+- **Control y seguridad de visualización**: src/ads.ts gestiona precarga, eventos LOADED, EARNED_REWARD, CLOSED y errores, con fallback seguro para entornos sin SDK nativo.
+- **Interfaz en Tu cuenta**: Botón «Ver anuncio para conseguir 1 crédito» activado en CreditsScreen.tsx. El botón valida que la app esté en primer plano, el usuario esté detenido, sin ruta activa, con anuncios disponibles hoy (máximo 10 diarios) y saldo menor de 50.
+- **Acreditación en servidor**: Conexión a la función RPC ghovo_claim_reward para insertar el movimiento en monetization.ledger (+1 crédito reward), actualizar la cuenta y refrescar el saldo automáticamente al completar la visualización.
+- **Validación**: 94 pruebas de lógica + 169 pruebas de interfaz (263 pruebas totales), tsc --noEmit, expo lint y exportación Android Hermes superados con 0 errores.
 
 ## 0.1.14 (15) — Acceso nativo con Google (Google Play Services), 01/11/2026
 

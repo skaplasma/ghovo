@@ -1,5 +1,5 @@
 import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
-import {Pressable,Text,TextInput,View} from 'react-native';
+import {Image,Pressable,Text,TextInput,View} from 'react-native';
 import {appStyles as s} from './design';
 import {accountConfigured,accountSnapshot,subscribeAccount,initializeAccounts,loginAccount,loginWithGoogle,loginDevAccount,registerAccount,resendConfirmation,requestRecovery,changeRecoveredPassword,logoutAccount,refreshAccount,accountError} from './account-client';
 export const useAccount=()=>useSyncExternalStore(subscribeAccount,accountSnapshot,accountSnapshot);
@@ -24,11 +24,18 @@ export function AccountPanel({active}:{active:boolean}){
    <Action label="Guardar nueva contraseña" disabled={disabled||password.length<10||password!==repeat} onPress={()=>void perform(()=>changeRecoveredPassword(password),'Contraseña actualizada.')}/>
    <Action label="Cerrar sesión" disabled={disabled} onPress={()=>void perform(logoutAccount)}/>
   </>:account.user?<>
-   <Text style={s.cardTitle}>Tu sesión</Text><Text style={s.lightText}>{account.user.email}</Text>
+   <View style={{alignItems:'center',gap:6,paddingBottom:12}}>
+    <View style={{width:80,height:80,borderRadius:40,backgroundColor:'#162029',borderWidth:1,borderColor:'#263544',alignItems:'center',justifyContent:'center',marginBottom:4}}>
+     <Image source={require('../assets/ghovo-mascot-2d-v1.png')} style={{width:52,height:52}} resizeMode="contain" />
+    </View>
+    <Text style={{color:'#ffffff',fontSize:17,fontWeight:'700',letterSpacing:-0.3}}>{account.user.email}</Text>
+    <View style={{backgroundColor:'#162029',borderRadius:12,paddingHorizontal:12,paddingVertical:4,borderWidth:1,borderColor:'#263544'}}>
+     <Text style={{fontSize:11,color:'#7a889b',fontWeight:'700',letterSpacing:0.5}}>Miembro Premium</Text>
+    </View>
+   </View>
+   <Text style={s.eyebrow}>TU CUENTA</Text>
    <Text style={s.caption}>{account.status==='offline'?'Sin conexión: no se ha podido comprobar la sesión con el servidor.':'La sesión se conserva de forma segura en este dispositivo.'}</Text>
-   <Text style={s.caption}>Tu cuenta conserva créditos y Premium. Las rutas siguen guardadas en este móvil.</Text>
    <Action label="Comprobar cuenta" disabled={disabled} onPress={()=>void perform(async()=>{await refreshAccount();},'Cuenta comprobada.')}/>
-   <Action label="Cerrar sesión" disabled={disabled} onPress={()=>void perform(logoutAccount)}/>
   </>:<>
    <Text style={s.cardTitle}>{mode==='signup'?'Crea tu cuenta':mode==='reset'?'Recupera tu acceso':'Inicia sesión'}</Text>
    {mode!=='reset'&&<>

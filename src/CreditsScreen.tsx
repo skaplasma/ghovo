@@ -2,7 +2,7 @@ import React,{useCallback,useEffect,useRef,useState} from 'react';
 import {Pressable,ScrollView,Text,View} from 'react-native';
 import {appStyles as s} from './design';
 import {AccountPanel,useAccount} from './AccountPanel';
-import {refreshAccount} from './account-client';
+import {refreshAccount,logoutAccount} from './account-client';
 import {billingRequest,billingError,monetizationEnforced,claimAdReward,type WalletSnapshot} from './monetization-api';
 import {pendingBilling,recoverBilling} from './monetized-tracking';
 import {useRewardedAd} from './ads';
@@ -58,11 +58,18 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium}:{premiumPage
    {(!premiumPage||!account.user)&&<AccountPanel active={active}/>}
    {!monetizationEnforced&&<Text style={s.caption}>Monetización sin activar: esta versión de pruebas mantiene los recorridos disponibles.</Text>}
    {!premiumPage&&<View style={s.card}>
-    <Text style={s.eyebrow}>CRÉDITOS</Text><Text style={s.resultTitle}>{currentWallet?.premium?'Premium · rutas ilimitadas':currentWallet?`${currentWallet.available} créditos disponibles`:'Saldo sin verificar'}</Text>
+    <Text style={s.eyebrow}>CRÉDITOS</Text>
+    <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingVertical:2}}>
+     <Text style={{color:'#ffffff',fontSize:15,fontWeight:'600'}}>Estado de Saldo ℹ</Text>
+     <Text style={{color:currentWallet?.premium?'#00e5a3':'#ffffff',fontSize:16,fontWeight:'700',fontVariant:['tabular-nums']}}>
+      {currentWallet?.premium?'Premium · rutas ilimitadas':currentWallet?`${currentWallet.available} créditos disponibles`:'Saldo sin verificar'}
+     </Text>
+    </View>
     <Text style={s.caption}>{currentWallet?'Saldo consultado en el servidor. No caduca.':'Inicia sesión para consultar el saldo verificado de tu cuenta.'}</Text>
     {!!message&&<Text accessibilityLiveRegion="polite" style={s.muted}>{message}</Text>}
     {!!currentWallet?.reserved&&<Text style={s.muted}>{currentWallet.reserved} crédito reservado para un inicio pendiente; todavía no se ha consumido.</Text>}
     {!!account.user&&<Action label="Actualizar saldo" disabled={busy||account.recovery} onPress={()=>void run(refresh)}/>}
+    {!!account.user&&<Pressable accessibilityRole="button" accessibilityLabel="Cerrar sesión" disabled={busy} onPress={()=>void run(logoutAccount)} style={[s.button,s.danger,{marginTop:4}]}><Text style={[s.buttonText,s.dangerText]}>Cerrar sesión</Text></Pressable>}
     {pending&&<Action label="Revisar inicio pendiente" disabled={busy||account.recovery} onPress={()=>void run(async()=>{await recoverBilling();await refresh();})}/>}
    </View>}
    {!premiumPage&&<View style={s.card}>

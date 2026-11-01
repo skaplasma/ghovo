@@ -13,7 +13,7 @@ const MODES: readonly { mode: TravelMode; label: string; icon: string; title: st
 export function TravelModePicker({ value, onChange, disabled }: { value: TravelMode; onChange: (mode: TravelMode) => void; disabled: boolean }) {
   return (
     <View style={{ gap: 10, paddingVertical: 6 }} accessibilityLabel="Modo de recorrido">
-      <Text style={{ textAlign: 'center', fontSize: 12, fontWeight: '700', color: '#7a889b', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2 }}>Route Details</Text>
+      <Text style={{ textAlign: 'center', fontSize: 11, fontWeight: '800', color: '#AAA5C4', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2 }}>TIPO DE ACTIVIDAD</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
         {MODES.map(({ mode, label, icon, title }) => {
           const selected = mode === value;
@@ -30,21 +30,21 @@ export function TravelModePicker({ value, onChange, disabled }: { value: TravelM
                   flexBasis: '47%',
                   flexGrow: 1,
                   minHeight: 82,
-                  borderRadius: 18,
-                  backgroundColor: '#151c24',
-                  borderWidth: 1,
-                  borderColor: selected ? '#38485a' : '#222b37',
+                  borderRadius: 20,
+                  backgroundColor: '#211B3C',
+                  borderWidth: 1.5,
+                  borderColor: selected ? '#8B5CF6' : '#332959',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 5,
                   paddingVertical: 10,
                 },
-                selected && { backgroundColor: '#1a232e' }
+                selected && { backgroundColor: '#2E2254', shadowColor: '#8B5CF6', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.35, shadowRadius: 6 }
               ]}
             >
               <Text style={{ fontSize: 28 }}>{icon}</Text>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: selected ? '#ffffff' : '#7a889b' }}>{title}</Text>
-              {selected && <View style={{ width: 36, height: 3, borderRadius: 2, backgroundColor: '#ffffff', marginTop: 2 }} />}
+              <Text style={{ fontSize: 14, fontWeight: '700', color: selected ? '#ffffff' : '#AAA5C4' }}>{title}</Text>
+              {selected && <View style={{ width: 36, height: 3, borderRadius: 2, backgroundColor: '#8B5CF6', marginTop: 2 }} />}
             </Pressable>
           );
         })}

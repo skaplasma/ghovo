@@ -25,12 +25,12 @@ export function AccountPanel({active}:{active:boolean}){
    <Action label="Cerrar sesión" disabled={disabled} onPress={()=>void perform(logoutAccount)}/>
   </>:account.user?<>
    <View style={{alignItems:'center',gap:6,paddingBottom:12}}>
-    <View style={{width:80,height:80,borderRadius:40,backgroundColor:'#162029',borderWidth:1,borderColor:'#263544',alignItems:'center',justifyContent:'center',marginBottom:4}}>
+    <View style={{width:84,height:84,borderRadius:42,backgroundColor:'#2A1F4D',borderWidth:2,borderColor:'#8B5CF6',alignItems:'center',justifyContent:'center',marginBottom:4}}>
      <Image source={require('../assets/ghovo-mascot-2d-v1.png')} style={{width:52,height:52}} resizeMode="contain" />
     </View>
     <Text style={{color:'#ffffff',fontSize:17,fontWeight:'700',letterSpacing:-0.3}}>{account.user.email}</Text>
-    <View style={{backgroundColor:'#162029',borderRadius:12,paddingHorizontal:12,paddingVertical:4,borderWidth:1,borderColor:'#263544'}}>
-     <Text style={{fontSize:11,color:'#7a889b',fontWeight:'700',letterSpacing:0.5}}>Miembro Premium</Text>
+    <View style={{backgroundColor:'#2A1F4D',borderRadius:14,paddingHorizontal:12,paddingVertical:4,borderWidth:1,borderColor:'#6A0DAD',flexDirection:'row',alignItems:'center',gap:4}}>
+     <Text style={{fontSize:11}}>👑</Text><Text style={{fontSize:11,color:'#E2C8FF',fontWeight:'800',letterSpacing:0.5}}>Miembro Premium</Text>
     </View>
    </View>
    <Text style={s.eyebrow}>TU CUENTA</Text>

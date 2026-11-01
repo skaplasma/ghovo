@@ -29,7 +29,7 @@ import {RecordingPanel} from './src/RecordingPanel';
 import {RouteThumbnail, MascotMessage} from './src/RouteVisuals';
 import {TravelModePicker} from './src/TravelModePicker';
 import { exportGpx,exportRouteReport } from './src/data-transfer';
-import { appStyles as s } from './src/design';
+import { appStyles as s, palette } from './src/design';
 import { accepts,type Point, type Run, type TravelMode, clock, duration, ghostAt, isComparable, length, recordingQuality } from './src/core';
 import { active, history, read, serial, write, writeMany } from './src/storage';
 import { activityTotals, filterRoutes, resultFor, type RouteDetails, type RouteOrder } from './src/results';
@@ -50,39 +50,44 @@ function StartSliderButton({ disabled, onPress }: { disabled: boolean; onPress: 
       onPress={onPress}
       style={({ pressed }) => [
         {
-          minHeight: 56,
-          borderRadius: 28,
-          backgroundColor: '#121820',
-          borderWidth: 1,
-          borderColor: '#24303e',
+          minHeight: 64,
+          borderRadius: 32,
+          backgroundColor: '#8B5CF6',
           flexDirection: 'row',
           alignItems: 'center',
-          paddingHorizontal: 4,
-          paddingVertical: 4,
-          gap: 12,
-          opacity: disabled ? 0.45 : pressed ? 0.8 : 1,
+          paddingHorizontal: 8,
+          paddingVertical: 6,
+          gap: 14,
+          opacity: disabled ? 0.45 : pressed ? 0.85 : 1,
           overflow: 'hidden',
-          marginBottom: 8,
+          marginBottom: 10,
+          shadowColor: '#8B5CF6',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.45,
+          shadowRadius: 14,
+          elevation: 8,
         }
       ]}
     >
       <View
         style={{
-          width: 48,
-          height: 48,
-          borderRadius: 24,
-          backgroundColor: '#263442',
-          borderWidth: 2,
-          borderColor: '#4d657d',
+          width: 50,
+          height: 50,
+          borderRadius: 25,
+          backgroundColor: '#FFFFFF',
           alignItems: 'center',
           justifyContent: 'center',
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 4,
         }}
       >
-        <Text style={{ fontSize: 20 }}>🔘</Text>
+        <Text style={{ fontSize: 22, color: '#6A0DAD', marginLeft: 3 }}>▶</Text>
       </View>
-      <View style={{ flex: 1, alignItems: 'center', paddingRight: 24 }}>
-        <Text style={{ color: '#00e5a3', fontSize: 13, fontWeight: '800', letterSpacing: 1.5 }}>
-          DESLIZAR PARA EMPEZAR »»
+      <View style={{ flex: 1, alignItems: 'center', paddingRight: 28 }}>
+        <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 }}>
+          Comenzar ruta
         </Text>
       </View>
     </Pressable>
@@ -356,8 +361,10 @@ export function AppProvider({children}:{children:React.ReactNode}) {
   }
   const tabsList = [
     { label: 'Inicio', display: 'Inicio', path: '/', icon: '⚡' },
-    { label: 'Mis rutas', display: 'Mis Rutas', path: '/library', icon: '🗺️' },
-    { label: 'Cuenta', display: 'Cuenta', path: '/credits', icon: '👤' },
+    { label: 'Mis rutas', display: 'Rutas', path: '/library', icon: '🗺️' },
+    { label: 'Desafíos', display: 'Desafíos', path: '/challenges', icon: '🏆' },
+    { label: 'Eventos', display: 'Eventos', path: '/events', icon: '🚩' },
+    { label: 'Cuenta', display: 'Perfil', path: '/credits', icon: '👤' },
   ] as const;
 
   const navigation = (
@@ -412,6 +419,90 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     }
   }
   else if(simulator)content= <View style={s.root}><StatusBar style="light"/><Simulator onClose={()=>setSimulator(false)} origin={reference?.points[0]}/></View>;
+  else if(pathname==='/challenges'||pathname==='/events')content=<View style={s.root}><StatusBar style="light"/>
+    <View style={s.header}>
+      <Button label="← Inicio" secondary onPress={goHome}/>
+      <Text style={s.cardTitle}>{pathname==='/challenges'?'Desafíos':'Eventos'}</Text>
+    </View>
+    <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+      {/* Tarjeta Mi Fantasma (Maqueta Desafios) */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Mi Fantasma: Compite contra tu mejor tiempo"
+        onPress={() => router.replace('/library')}
+        style={({pressed})=>[s.card,{padding:20,backgroundColor:'#2A1F4D',borderColor:'#8B5CF6',borderWidth:1.5,opacity:pressed?0.8:1}]}
+      >
+        <View style={{flexDirection:'row',alignItems:'center',gap:14}}>
+          <View style={{width:54,height:54,borderRadius:27,backgroundColor:'#3C2A6E',alignItems:'center',justifyContent:'center'}}>
+            <Text style={{fontSize:26}}>👻</Text>
+          </View>
+          <View style={{flex:1,gap:3}}>
+            <Text style={{color:'#FFFFFF',fontSize:18,fontWeight:'800'}}>Mi Fantasma</Text>
+            <Text style={{color:'#E2C8FF',fontSize:13,fontWeight:'600'}}>Compite contra tu mejor tiempo personal</Text>
+          </View>
+          <Text style={{color:'#FFFFFF',fontSize:22}}>›</Text>
+        </View>
+      </Pressable>
+
+      {/* Tarjeta Desafios Online */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Desafíos online: Reta a otros usuarios"
+        onPress={() => router.replace('/library')}
+        style={({pressed})=>[s.card,{padding:20,backgroundColor:'#211B3C',borderColor:'#332959',opacity:pressed?0.8:1}]}
+      >
+        <View style={{flexDirection:'row',alignItems:'center',gap:14}}>
+          <View style={{width:54,height:54,borderRadius:27,backgroundColor:'#2D2352',alignItems:'center',justifyContent:'center'}}>
+            <Text style={{fontSize:24}}>👥</Text>
+          </View>
+          <View style={{flex:1,gap:3}}>
+            <Text style={{color:'#FFFFFF',fontSize:17,fontWeight:'800'}}>Desafíos online</Text>
+            <Text style={{color:'#AAA5C4',fontSize:13,fontWeight:'500'}}>Reta a otros usuarios en tus tramos habituales</Text>
+          </View>
+          <Text style={{color:'#AAA5C4',fontSize:22}}>›</Text>
+        </View>
+      </Pressable>
+
+      {/* Tarjeta Eventos y Retos Especiales */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Eventos: Rutas especiales y retos temporales"
+        onPress={() => router.replace('/library')}
+        style={({pressed})=>[s.card,{padding:20,backgroundColor:'#211B3C',borderColor:'#332959',opacity:pressed?0.8:1}]}
+      >
+        <View style={{flexDirection:'row',alignItems:'center',gap:14}}>
+          <View style={{width:54,height:54,borderRadius:27,backgroundColor:'#2D2352',alignItems:'center',justifyContent:'center'}}>
+            <Text style={{fontSize:24}}>🚩</Text>
+          </View>
+          <View style={{flex:1,gap:3}}>
+            <Text style={{color:'#FFFFFF',fontSize:17,fontWeight:'800'}}>Eventos</Text>
+            <Text style={{color:'#AAA5C4',fontSize:13,fontWeight:'500'}}>Rutas especiales y retos temporales de la comunidad</Text>
+          </View>
+          <Text style={{color:'#AAA5C4',fontSize:22}}>›</Text>
+        </View>
+      </Pressable>
+
+      {/* Tarjeta Tu Progreso */}
+      <View style={[s.card,{backgroundColor:'#15112D',borderColor:'#282046',gap:12}]}>
+        <View style={{flexDirection:'row',alignItems:'center',gap:10}}>
+          <Text style={{fontSize:22}}>🏆</Text>
+          <Text style={{color:'#FFFFFF',fontSize:17,fontWeight:'800'}}>Tu progreso</Text>
+        </View>
+        <View style={{gap:6}}>
+          <Text style={{color:'#AAA5C4',fontSize:14}}>
+            • <Text style={{color:'#FFFFFF',fontWeight:'700'}}>{summaries.length}</Text> rutas registradas en tu historial
+          </Text>
+          <Text style={{color:'#AAA5C4',fontSize:14}}>
+            • <Text style={{color:'#FFFFFF',fontWeight:'700'}}>{favoriteRoutes.length}</Text> trazados guardados como favoritos
+          </Text>
+          <Text style={{color:'#AAA5C4',fontSize:14}}>
+            • <Text style={{color:'#FFFFFF',fontWeight:'700'}}>{(activity.meters/1000).toFixed(1)} km</Text> recorridos en tus salidas
+          </Text>
+        </View>
+      </View>
+    </ScrollView>
+    {!run&&navigation}
+  </View>;
   else if(pathname==='/credits'||pathname==='/premium')content=<View style={s.root}><StatusBar style="light"/><CreditsScreen premiumPage={pathname==='/premium'} active={!!run} onHome={goHome} onPremium={()=>router.push('/premium')}/>{!run&&navigation}</View>;
   else if((section==='home'&&!run||homeDuringRun&&run&&pathname!=='/gps')&&!loadError)content= <View style={s.root}><StatusBar style="light"/>{run&&foreground&&keepScreenOn&&<RecordingAwake/>}
     <View style={s.header}>
@@ -419,38 +510,136 @@ export function AppProvider({children}:{children:React.ReactNode}) {
         <View style={s.brandMark}><Image source={require('./assets/ghovo-mascot-2d-v1.png')} style={s.brandMascot} resizeMode="contain" accessible={false}/></View>
         <Text style={s.brand}>GHOVO</Text>
       </Pressable>
-      <View style={{flexDirection:'row',alignItems:'center',gap:8,flexShrink:1}}>
-        <CurrentLocation point={run?.points.at(-1)??gps.observedPoint} now={now} message={gps.message} onRetry={()=>router.push('/gps')}/>
-        <Pressable accessibilityRole="button" accessibilityLabel="Perfil y cuenta" onPress={()=>router.push('/credits')} style={{width:40,height:40,borderRadius:20,backgroundColor:'#182029',borderWidth:1,borderColor:'#263544',alignItems:'center',justifyContent:'center'}}>
-          <Text style={{fontSize:18}}>👤</Text>
+      <View style={{flexDirection:'row',alignItems:'center',gap:10,flexShrink:1}}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Avisos" onPress={()=>router.push('/gps')} style={{width:40,height:40,borderRadius:20,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959',alignItems:'center',justifyContent:'center'}}>
+          <Text style={{fontSize:17}}>🔔</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Perfil y cuenta" onPress={()=>router.push('/credits')} style={{width:40,height:40,borderRadius:20,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959',alignItems:'center',justifyContent:'center'}}>
+          <Text style={{fontSize:17}}>👤</Text>
         </Pressable>
       </View>
     </View>
-    <View style={{marginHorizontal:16,marginBottom:8,paddingVertical:10,paddingHorizontal:16,backgroundColor:'#151c24',borderRadius:18,borderWidth:1,borderColor:'#24303e',flexDirection:'row',alignItems:'center',justifyContent:'space-between',overflow:'hidden'}}>
-      <View style={{flexDirection:'row',alignItems:'center',gap:8}}>
-        <Text style={{fontSize:15}}>🛰️</Text>
-        <Text style={{color:'#ffffff',fontSize:13,fontWeight:'700',letterSpacing:0.5}}>{gps.ready?'GPS OK · ALTA PRECISIÓN':gps.message}</Text>
+
+    <ScrollView contentContainerStyle={[s.content,{paddingTop:8}]} showsVerticalScrollIndicator={false}>
+      {/* Saludo y subtitulo */}
+      <View style={{gap:4,marginBottom:4}}>
+        <Text style={{color: '#FFFFFF', fontSize: 28, fontWeight: '900', letterSpacing: -0.5}}>¡A rodar! 🤙</Text>
+        <Text style={s.eyebrow}>TU PRÓXIMA HUELLA</Text>
+        <Text style={[s.homeTitle,{fontSize:22,lineHeight:28,color:'#AAA5C4'}]}>¿Dónde vamos hoy?</Text>
       </View>
-      <Text style={{fontSize:14,color:'#00e5a3'}}>📶</Text>
-      <View style={{position:'absolute',bottom:0,left:0,right:0,height:2.5,backgroundColor:gps.ready?'#00f2fe':'#e2a336'}}/>
-    </View>
-    <View style={[s.mapArea,{flex:1.1,minHeight:200}]}>
-      <RouteMap points={points} reference={reference?.points} previewPosition={gps.point} recording={false} preparing={false} checkpoints={checkpoints.points}/>
-    </View>
-    <ScrollView contentContainerStyle={[s.content,{paddingTop:12}]}>
-      <Text style={s.eyebrow}>TU PRÓXIMA HUELLA</Text>
-      <Text style={[s.homeTitle,{fontSize:32,lineHeight:38}]}>¿Dónde vamos hoy?</Text>
-      <Text style={s.muted}>Tu ruta empieza con un toque.</Text>
-      {run?<View style={s.card}><Text style={s.eyebrow}>{serviceRunning?'GRABACIÓN EN CURSO':'RUTA PENDIENTE'}</Text><Text style={s.cardTitle}>{run.name}</Text><Text style={s.muted}>{serviceRunning?'Tu ruta sigue grabándose.':'Vuelve a tu ruta para revisar el GPS o reanudarla.'}</Text><Button label="Volver a mi ruta" onPress={()=>{setHomeDuringRun(false);router.replace('/route');}}/></View>:<>
-      <StartSliderButton disabled={disabled} onPress={()=>choose(null)}/>
-      <Text style={s.caption}>{busy?'Preparando GPS preciso…':gps.ready?'Ubicación preparada para empezar.':gps.message}</Text>
-      {!!pendingRecordings.length&&<View style={s.card}><Text style={s.cardTitle}>Recorridos pendientes</Text><Text style={s.caption}>Sus puntos están guardados. Puedes recuperarlos para finalizar o continuar.</Text>{pendingRecordings.map(item=><Button key={item.id} label={`Recuperar ${item.name}`} secondary disabled={disabled} onPress={()=>void act(()=>restorePending(item.id))}/>)}</View>}
-      {[{title:'Favoritas',routes:favoriteRoutes},{title:'Tus rutas habituales',routes:habits}].map(group=>group.routes.length>0&&<View key={group.title} style={{gap:12}}><Text style={s.sectionTitle}>{group.title}</Text>
-      {group.routes.map(habit=><View key={habit.reference.routeId} style={[s.card,{flexDirection:'row',alignItems:'center',padding:14,gap:12}]}><View style={{flex:1,gap:5}}><Text style={[s.cardTitle,{fontSize:16}]} numberOfLines={2}>{habit.reference.name}</Text><Text style={s.caption}>{km(habit.reference)} · {habit.attempts.length} {habit.attempts.length===1?'viaje':'viajes'}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Iniciar ${habit.reference.name}`} accessibilityState={{disabled}} disabled={disabled} onPress={()=>startHabit(habit.reference.routeId)} style={[s.button,{minHeight:44,paddingVertical:10,paddingHorizontal:14}]}><Text style={s.buttonText}>Iniciar</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Ver ${habit.reference.name}`} disabled={disabled} onPress={()=>choose(habit.reference.routeId)} style={{minHeight:44,minWidth:32,justifyContent:'center',alignItems:'center'}}><Text style={s.tabSelected}>›</Text></Pressable></View>)}</View>)}
-      {!summaries.length&&<MascotMessage title="Tu primera huella" message="Graba de A a B. Tus rutas aparecerán aquí para volver a utilizarlas."/>}
-      <Button label={moreOptions?'Ocultar herramientas de prueba':'Herramientas de prueba'} secondary onPress={()=>setMoreOptions(value=>!value)}/>
-      {moreOptions&&<Button label="Abrir simulador" secondary disabled={disabled} onPress={()=>setSimulator(true)}/>}
-      </>}
+
+      {/* GPS Status Card */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Consultar señal GPS"
+        onPress={()=>router.push('/gps')}
+        style={{
+          paddingVertical:12,
+          paddingHorizontal:16,
+          backgroundColor:'#211B3C',
+          borderRadius:20,
+          borderWidth:1,
+          borderColor:'#332959',
+          flexDirection:'row',
+          alignItems:'center',
+          justifyContent:'space-between',
+        }}
+      >
+        <View style={{flexDirection:'row',alignItems:'center',gap:12,flex:1}}>
+          <View style={{width:36,height:36,borderRadius:18,backgroundColor:'#162A29',alignItems:'center',justifyContent:'center',borderWidth:1.5,borderColor:gps.ready?'#10B981':'#EAB308'}}>
+            <View style={{width:10,height:10,borderRadius:5,backgroundColor:gps.ready?'#10B981':'#EAB308'}} />
+          </View>
+          <View style={{flex:1}}>
+            <Text style={{color:'#FFFFFF',fontSize:14,fontWeight:'700'}}>Ubicación actual</Text>
+            <Text style={{color:gps.ready?'#A78BFA':'#FBBF24',fontSize:12,fontWeight:'600'}}>
+              {gps.ready ? `GPS estable (±${Math.round(gps.accuracy ?? 4)} m)` : gps.message}
+            </Text>
+          </View>
+        </View>
+        <CurrentLocation point={run?.points.at(-1)??gps.observedPoint} now={now} message={gps.message} onRetry={()=>router.push('/gps')}/>
+      </Pressable>
+
+      {/* Mini mapa con marco violeta */}
+      <View style={[s.mapArea,{flex:0,height:170,marginHorizontal:0,borderRadius:22,borderColor:'#332959'}]}>
+        <RouteMap points={points} reference={reference?.points} previewPosition={gps.point} recording={false} preparing={false} checkpoints={checkpoints.points}/>
+      </View>
+
+      {/* Boton de inicio */}
+      {run ? (
+        <View style={s.card}>
+          <Text style={s.eyebrow}>{serviceRunning?'GRABACIÓN EN CURSO':'RUTA PENDIENTE'}</Text>
+          <Text style={s.cardTitle}>{run.name}</Text>
+          <Text style={s.muted}>{serviceRunning?'Tu ruta sigue grabándose.':'Vuelve a tu ruta para revisar el GPS o reanudarla.'}</Text>
+          <Button label="Volver a mi ruta" onPress={()=>{setHomeDuringRun(false);router.replace('/route');}}/>
+        </View>
+      ) : (
+        <>
+          <StartSliderButton disabled={disabled} onPress={()=>choose(null)}/>
+
+          {/* Quick Access Pills: Mis Rutas, Desafios, Eventos */}
+          <View style={{flexDirection:'row',gap:10,marginVertical:4}}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Ir a Mis Rutas"
+              onPress={()=>router.replace('/library')}
+              style={{flex:1,paddingVertical:12,paddingHorizontal:10,borderRadius:18,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959',alignItems:'center',gap:4}}
+            >
+              <Text style={{fontSize:20}}>🗺️</Text>
+              <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>Mis Rutas</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Ir a Desafíos"
+              onPress={()=>router.push('/challenges')}
+              style={{flex:1,paddingVertical:12,paddingHorizontal:10,borderRadius:18,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959',alignItems:'center',gap:4}}
+            >
+              <Text style={{fontSize:20}}>🏆</Text>
+              <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>Desafíos</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Ir a Eventos"
+              onPress={()=>router.push('/events')}
+              style={{flex:1,paddingVertical:12,paddingHorizontal:10,borderRadius:18,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959',alignItems:'center',gap:4}}
+            >
+              <Text style={{fontSize:20}}>🚩</Text>
+              <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>Eventos</Text>
+            </Pressable>
+          </View>
+
+          {/* Tarjeta Mi Actividad Real */}
+          <View style={[s.card,{gap:10,backgroundColor:'#15112D',borderColor:'#282046'}]}>
+            <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
+              <Text style={{color:palette.purpleLight,fontSize:12,fontWeight:'800',letterSpacing:1.2}}>📊 MI ACTIVIDAD</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="Ver historial" onPress={()=>router.replace('/library')}>
+                <Text style={{color:palette.purpleBright,fontSize:12,fontWeight:'700'}}>Ver todo ›</Text>
+              </Pressable>
+            </View>
+            <View style={{flexDirection:'row',gap:8}}>
+              <View style={{flex:1,backgroundColor:'#211B3C',borderRadius:16,padding:12,borderWidth:1,borderColor:'#332959',alignItems:'center'}}>
+                <Text style={{color:'#FFFFFF',fontSize:20,fontWeight:'800'}}>{summaries.length}</Text>
+                <Text style={{color:'#AAA5C4',fontSize:11,fontWeight:'600'}}>Rutas</Text>
+              </View>
+              <View style={{flex:1.2,backgroundColor:'#211B3C',borderRadius:16,padding:12,borderWidth:1,borderColor:'#332959',alignItems:'center'}}>
+                <Text style={{color:'#FFFFFF',fontSize:20,fontWeight:'800'}}>{(activity.meters/1000).toFixed(1)} km</Text>
+                <Text style={{color:'#AAA5C4',fontSize:11,fontWeight:'600'}}>Recorridos</Text>
+              </View>
+              <View style={{flex:1,backgroundColor:'#211B3C',borderRadius:16,padding:12,borderWidth:1,borderColor:'#332959',alignItems:'center'}}>
+                <Text style={{color:'#FFFFFF',fontSize:20,fontWeight:'800'}}>{favoriteRoutes.length}</Text>
+                <Text style={{color:'#AAA5C4',fontSize:11,fontWeight:'600'}}>Destacadas</Text>
+              </View>
+            </View>
+          </View>
+
+          <Text style={s.caption}>{busy?'Preparando GPS preciso…':gps.ready?'Ubicación preparada para empezar.':gps.message}</Text>
+          {!!pendingRecordings.length&&<View style={s.card}><Text style={s.cardTitle}>Recorridos pendientes</Text><Text style={s.caption}>Sus puntos están guardados. Puedes recuperarlos para finalizar o continuar.</Text>{pendingRecordings.map(item=><Button key={item.id} label={`Recuperar ${item.name}`} secondary disabled={disabled} onPress={()=>void act(()=>restorePending(item.id))}/>)}</View>}
+          {[{title:'Favoritas',routes:favoriteRoutes},{title:'Tus rutas habituales',routes:habits}].map(group=>group.routes.length>0&&<View key={group.title} style={{gap:12}}><Text style={s.sectionTitle}>{group.title}</Text>
+          {group.routes.map(habit=><View key={habit.reference.routeId} style={[s.card,{flexDirection:'row',alignItems:'center',padding:14,gap:12}]}><View style={{flex:1,gap:5}}><Text style={[s.cardTitle,{fontSize:16}]} numberOfLines={2}>{habit.reference.name}</Text><Text style={s.caption}>{km(habit.reference)} · {habit.attempts.length} {habit.attempts.length===1?'viaje':'viajes'}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Iniciar ${habit.reference.name}`} accessibilityState={{disabled}} disabled={disabled} onPress={()=>startHabit(habit.reference.routeId)} style={[s.button,{minHeight:44,paddingVertical:10,paddingHorizontal:14}]}><Text style={s.buttonText}>Iniciar</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Ver ${habit.reference.name}`} disabled={disabled} onPress={()=>choose(habit.reference.routeId)} style={{minHeight:44,minWidth:32,justifyContent:'center',alignItems:'center'}}><Text style={s.tabSelected}>›</Text></Pressable></View>)}</View>)}
+          {!summaries.length&&<MascotMessage title="Tu primera huella" message="Graba de A a B. Tus rutas aparecerán aquí para volver a utilizarlas."/>}
+          <Button label={moreOptions?'Ocultar herramientas de prueba':'Herramientas de prueba'} secondary onPress={()=>setMoreOptions(value=>!value)}/>
+          {moreOptions&&<Button label="Abrir simulador" secondary disabled={disabled} onPress={()=>setSimulator(true)}/>}
+        </>
+      )}
     </ScrollView>{!run&&navigation}
   </View>;
 
@@ -500,19 +689,86 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           <DataTools disabled={busy} onChanged={refresh}/>
         </> : run ? <>{pendingRecovery&&<View style={s.card}><Text style={s.cardTitle}>Tienes un recorrido sin terminar</Text><Text style={s.muted}>Los puntos guardados siguen aquí. El tiempo incluye la interrupción.</Text><Button label="Continuar recorrido" disabled={disabled} onPress={()=>void act(recover)}/><Button label="Guardar pendiente y volver a Inicio" secondary disabled={disabled} onPress={discard}/></View>}<RecordingPanel run={run} now={now} distance={currentDistance} serviceRunning={serviceRunning} keepScreenOn={keepScreenOn} disabled={disabled} onToggleScreen={()=>setKeepScreenOn(value=>!value)} onRecover={()=>void act(recover)} onDiscard={discard} comparisonReference={comparisonReference} onToggleVoice={()=>void act(toggleVoice)} onHelp={()=>Alert.alert('Grabación con pantalla bloqueada','Revisa el permiso de ubicación precisa y en segundo plano. En el POCO, comprueba también que GHOVO puede trabajar en segundo plano y que su batería no esté restringida. Los nombres de estos ajustes cambian según MIUI/HyperOS.',[{text:'Cerrar'},{text:'Abrir ajustes de GHOVO',onPress:()=>{void Linking.openSettings();}}])}/></> : section === 'library' ? <>
           <Text style={s.title}>Mis rutas</Text>
-          <View style={s.row}><View style={{flex:1}}><TextInput accessibilityLabel="Buscar rutas por nombre" value={query} onChangeText={setQuery} placeholder="Buscar una ruta…" placeholderTextColor="#80949b" style={s.input} maxLength={80} /></View><Pressable accessibilityRole="button" accessibilityLabel="Filtros de rutas" accessibilityState={{expanded:filterOptions}} onPress={()=>setFilterOptions(value=>!value)} style={[s.secondary,{minHeight:52,paddingHorizontal:14,justifyContent:'center'}]}><Text style={s.tabSelected}>{favoritesOnly?'★ Filtros':'Filtros'}</Text></Pressable></View>
+          <View style={s.row}>
+          <View style={{flex:1}}>
+            <TextInput accessibilityLabel="Buscar rutas por nombre" value={query} onChangeText={setQuery} placeholder="Buscar una ruta…" placeholderTextColor="#80949b" style={s.input} maxLength={80} />
+          </View>
+          <Pressable accessibilityRole="button" accessibilityLabel="Filtros de rutas" accessibilityState={{expanded:filterOptions}} onPress={()=>setFilterOptions(value=>!value)} style={[s.secondary,{minHeight:52,paddingHorizontal:14,justifyContent:'center'}]}>
+            <Text style={s.tabSelected}>{favoritesOnly?'★ Filtros':'Filtros'}</Text>
+          </Pressable>
+        </View>
+
+        {/* Maqueta Quick Filters: Todas, Récords, Favoritas */}
+        <View style={{flexDirection:'row',gap:8,paddingVertical:4}}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Ver todas las rutas"
+            onPress={() => { setFavoritesOnly(false); setOrder('recent'); }}
+            style={[
+              {paddingVertical:8,paddingHorizontal:16,borderRadius:16,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959'},
+              !favoritesOnly && order==='recent' && {backgroundColor:'#8B5CF6',borderColor:'#8B5CF6'}
+            ]}
+          >
+            <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>Todas</Text>
+          </Pressable>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Filtrar por récords"
+            onPress={() => { setFavoritesOnly(false); setOrder('distance'); }}
+            style={[
+              {paddingVertical:8,paddingHorizontal:16,borderRadius:16,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959'},
+              !favoritesOnly && order==='distance' && {backgroundColor:'#8B5CF6',borderColor:'#8B5CF6'}
+            ]}
+          >
+            <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>Récords</Text>
+          </Pressable>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Filtrar por favoritas"
+            onPress={() => setFavoritesOnly(value => !value)}
+            style={[
+              {paddingVertical:8,paddingHorizontal:16,borderRadius:16,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959'},
+              favoritesOnly && {backgroundColor:'#8B5CF6',borderColor:'#8B5CF6'}
+            ]}
+          >
+            <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>Favoritas</Text>
+          </Pressable>
+        </View>
           {filterOptions&&<>
           <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: favoritesOnly }} onPress={() => setFavoritesOnly(value => !value)} style={s.secondary}><Text style={[s.lightText, { padding: 14 }]}>{favoritesOnly ? '★ Mostrando solo favoritas' : '☆ Mostrar solo favoritas'}</Text></Pressable>
           <View style={s.row}>{([['recent', 'Recientes'], ['name', 'Nombre'], ['distance', 'Distancia']] as const).map(([value, label]) => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: order === value }} onPress={() => setOrder(value)} style={[s.tab, order === value && s.tabActive]}><Text style={order === value ? s.tabSelected : s.caption}>{label}</Text></Pressable>)}</View>
           </>}
           {!!summaries.length && !visibleRoutes.length && <Text style={s.muted}>{favoritesOnly ? 'No hay favoritas que coincidan. Marca una ruta con la estrella o desactiva este filtro.' : 'No hay rutas con ese nombre. Prueba otra búsqueda.'}</Text>}
           {!summaries.length && <View style={s.card}><MascotMessage title="Tu primera huella empieza aquí" message="Graba un recorrido. Aquí guardarás su trazado y los tiempos de cada salida."/></View>}
-          {visibleRoutes.map(({ reference: r, attempts, best: b, latest }) => <Pressable key={r.routeId} accessibilityRole="button" accessibilityLabel={`${r.name}, ${km(r)}, ${isComparable(b)?'mejor tiempo':'tiempo de referencia'} ${clock(duration(b))}`} onPress={() => choose(r.routeId)} style={({pressed})=>[s.card,{opacity:pressed?0.75:1}]}>
-            <View style={s.routeCardHeading}><RouteThumbnail points={r.points}/><View style={{flex:1,gap:7}}>
-              <Text style={s.routeMode}>{modeLabel(r.mode).toUpperCase()}{routeDetails[r.routeId]?.favorite?' · ★':''}</Text>
-              <Text style={s.cardTitle} numberOfLines={2}>{r.name}</Text><Text style={s.caption}>{km(r)} · {attempts.length} {attempts.length===1?'intento':'intentos'}</Text>
-            </View><Text style={s.routeChevron}>›</Text></View>
-            <View style={s.routeCardFooter}><View style={{flex:1,gap:3}}><Text style={s.caption}>{isComparable(b)?'Mejor tiempo':'Tiempo de referencia'}</Text><Text style={s.routeBest}>{clock(duration(b))}</Text></View><View style={{flex:1,gap:3,alignItems:'flex-end'}}><Text style={s.caption}>Última salida</Text><Text style={s.lightText}>{date(latest)}</Text></View></View>
+          {visibleRoutes.map(({ reference: r, attempts, best: b, latest }) => <Pressable key={r.routeId} accessibilityRole="button" accessibilityLabel={`${r.name}, ${km(r)}, ${isComparable(b)?'mejor tiempo':'tiempo de referencia'} ${clock(duration(b))}`} onPress={() => choose(r.routeId)} style={({pressed})=>[s.card,{opacity:pressed?0.75:1,borderRadius:22,borderColor:'#332959',padding:16}]}>
+            <View style={s.routeCardHeading}>
+              <RouteThumbnail points={r.points}/>
+              <View style={{flex:1,gap:5}}>
+                <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
+                  <Text style={s.routeMode}>{modeLabel(r.mode).toUpperCase()}</Text>
+                  <Text style={{fontSize:16}}>{routeDetails[r.routeId]?.favorite ? '❤️' : '🤍'}</Text>
+                </View>
+                <Text style={[s.cardTitle,{fontSize:17}]} numberOfLines={1}>{r.name}</Text>
+                <Text style={s.caption}>{date(latest)} · {km(r)}</Text>
+                <View style={{flexDirection:'row',alignItems:'center',gap:6,marginTop:2}}>
+                  <Text style={{fontSize:14}}>👑</Text>
+                  <Text style={{color:'#FBBF24',fontSize:15,fontWeight:'800',fontVariant:['tabular-nums']}}>{clock(duration(b))}</Text>
+                </View>
+              </View>
+              <Text style={s.routeChevron}>›</Text>
+            </View>
+            <View style={s.routeCardFooter}>
+              <View style={{flex:1,gap:2}}>
+                <Text style={s.caption}>{isComparable(b)?'Mejor tiempo':'Tiempo referencia'}</Text>
+                <Text style={s.routeBest}>{clock(duration(b))}</Text>
+              </View>
+              <View style={{flex:1,gap:2,alignItems:'flex-end'}}>
+                <Text style={s.caption}>Total viajes</Text>
+                <Text style={s.lightText}>{attempts.length} {attempts.length===1?'salida':'salidas'}</Text>
+              </View>
+            </View>
             {!!routeDetails[r.routeId]?.note && <Text style={s.caption} numberOfLines={2}>{routeDetails[r.routeId].note}</Text>}
           </Pressable>)}
           <Button label={activityOpen?'Ocultar actividad acumulada':`Tu actividad · ${activity.routes} rutas · ${(activity.meters/1000).toFixed(2)} km`} secondary onPress={()=>setActivityOpen(value=>!value)}/>
@@ -607,6 +863,64 @@ export function AppProvider({children}:{children:React.ReactNode}) {
       </ScrollView>
     </View>
     {!loadError&&<View style={s.actionDock}>
+      {run&&<View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-around',paddingBottom:4}}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Añadir hito de ruta"
+          onPress={() => Alert.alert('Hito registrado', 'Punto de interés guardado en este tramo.', [{ text: 'Aceptar' }])}
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            backgroundColor: '#211B3C',
+            borderWidth: 1.5,
+            borderColor: '#332959',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ fontSize: 20 }}>📷</Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={serviceRunning ? 'Pausar grabación' : 'Reanudar grabación'}
+          onPress={() => void act(serviceRunning ? discard : recover)}
+          style={{
+            width: 58,
+            height: 58,
+            borderRadius: 29,
+            backgroundColor: '#8B5CF6',
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#8B5CF6',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.45,
+            shadowRadius: 8,
+            elevation: 6,
+          }}
+        >
+          <Text style={{ fontSize: 24, color: '#FFFFFF' }}>{serviceRunning ? '⏸' : '▶'}</Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Finalizar recorrido rápido"
+          onPress={() => void act(finish)}
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            backgroundColor: '#261220',
+            borderWidth: 1.5,
+            borderColor: '#5C223C',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ fontSize: 18, color: '#F472B6' }}>⏹</Text>
+        </Pressable>
+      </View>}
       {!run&&!result&&section==='route'&&(!selected||!routeMode)&&<TravelModePicker value={travelMode} onChange={setTravelMode} disabled={disabled}/>}
       <Button finish={!!run} label={run?(busy?'Guardando…':'Finalizar ruta'):section==='library'?'Nueva ruta':result?'Ver recorrido':(busy?'Preparando GPS…':selected?(comparisonReference?'Iniciar esta ruta':'Iniciar sin comparación'):'CONFIRMAR Y EMPEZAR')} disabled={disabled||(!run&&!result&&section==='route'&&(!gps.ready&&!comparisonReference))} onPress={run?()=>void act(finish):section==='library'?()=>choose(null):result?()=>{setResultId(null);setShowGhost(false);setReplay(resetReplay);}:start}/>
       {section==='route'&&!result&&<Text style={s.dockHint}>{run?'Detente antes de finalizar.':'🕒 Asegurando señal GPS...'}</Text>}

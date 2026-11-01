@@ -40,6 +40,55 @@ const resetReplay: Replay = { offset: 0, startedAt: null };
 const noPoints: Point[] = [];
 const km = (r: Run) => `${(length(r.points) / 1000).toFixed(2)} km`;
 const date = (r: Run) => new Date(r.startedAt).toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+function StartSliderButton({ disabled, onPress }: { disabled: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Nueva ruta"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        {
+          minHeight: 56,
+          borderRadius: 28,
+          backgroundColor: '#121820',
+          borderWidth: 1,
+          borderColor: '#24303e',
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 4,
+          paddingVertical: 4,
+          gap: 12,
+          opacity: disabled ? 0.45 : pressed ? 0.8 : 1,
+          overflow: 'hidden',
+          marginBottom: 8,
+        }
+      ]}
+    >
+      <View
+        style={{
+          width: 48,
+          height: 48,
+          borderRadius: 24,
+          backgroundColor: '#263442',
+          borderWidth: 2,
+          borderColor: '#4d657d',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text style={{ fontSize: 20 }}>🔘</Text>
+      </View>
+      <View style={{ flex: 1, alignItems: 'center', paddingRight: 24 }}>
+        <Text style={{ color: '#00e5a3', fontSize: 13, fontWeight: '800', letterSpacing: 1.5 }}>
+          DESLIZAR PARA EMPEZAR »»
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
 function Button({ label, onPress, secondary = false, danger = false, disabled = false, finish=false }: { label: string; onPress: () => void; secondary?: boolean; danger?: boolean; disabled?: boolean; finish?:boolean }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label === 'CONFIRMAR Y EMPEZAR' ? 'Empezar ruta' : label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={({ pressed }) => [s.button, secondary && s.secondary, danger && s.danger, finish&&s.finishButton, { opacity: disabled ? 0.4 : pressed ? 0.7 : 1 }]}>
     <Text style={[s.buttonText, secondary && s.lightText, danger && s.dangerText]}>{label}</Text>
@@ -365,11 +414,36 @@ export function AppProvider({children}:{children:React.ReactNode}) {
   else if(simulator)content= <View style={s.root}><StatusBar style="light"/><Simulator onClose={()=>setSimulator(false)} origin={reference?.points[0]}/></View>;
   else if(pathname==='/credits'||pathname==='/premium')content=<View style={s.root}><StatusBar style="light"/><CreditsScreen premiumPage={pathname==='/premium'} active={!!run} onHome={goHome} onPremium={()=>router.push('/premium')}/>{!run&&navigation}</View>;
   else if((section==='home'&&!run||homeDuringRun&&run&&pathname!=='/gps')&&!loadError)content= <View style={s.root}><StatusBar style="light"/>{run&&foreground&&keepScreenOn&&<RecordingAwake/>}
-    <View style={s.header}><Pressable accessibilityRole="button" accessibilityLabel="GHOVO · Ir a Inicio" onPress={goHome} style={s.identity}><View style={s.brandMark}><Image source={require('./assets/ghovo-mascot-2d-v1.png')} style={s.brandMascot} resizeMode="contain" accessible={false}/></View><Text style={s.brand}>GHOVO</Text></Pressable><CurrentLocation point={run?.points.at(-1)??gps.observedPoint} now={now} message={gps.message} onRetry={()=>router.push('/gps')}/></View>
-    <ScrollView contentContainerStyle={[s.content,{paddingTop:28}]}>
-      <Text style={s.eyebrow}>TU PRÓXIMA HUELLA</Text><Text style={[s.homeTitle,{fontSize:32,lineHeight:38}]}>¿Dónde vamos hoy?</Text><Text style={s.muted}>Tu ruta empieza con un toque.</Text>
+    <View style={s.header}>
+      <Pressable accessibilityRole="button" accessibilityLabel="GHOVO · Ir a Inicio" onPress={goHome} style={s.identity}>
+        <View style={s.brandMark}><Image source={require('./assets/ghovo-mascot-2d-v1.png')} style={s.brandMascot} resizeMode="contain" accessible={false}/></View>
+        <Text style={s.brand}>GHOVO</Text>
+      </Pressable>
+      <View style={{flexDirection:'row',alignItems:'center',gap:8,flexShrink:1}}>
+        <CurrentLocation point={run?.points.at(-1)??gps.observedPoint} now={now} message={gps.message} onRetry={()=>router.push('/gps')}/>
+        <Pressable accessibilityRole="button" accessibilityLabel="Perfil y cuenta" onPress={()=>router.push('/credits')} style={{width:40,height:40,borderRadius:20,backgroundColor:'#182029',borderWidth:1,borderColor:'#263544',alignItems:'center',justifyContent:'center'}}>
+          <Text style={{fontSize:18}}>👤</Text>
+        </Pressable>
+      </View>
+    </View>
+    <View style={{marginHorizontal:16,marginBottom:8,paddingVertical:10,paddingHorizontal:16,backgroundColor:'#151c24',borderRadius:18,borderWidth:1,borderColor:'#24303e',flexDirection:'row',alignItems:'center',justifyContent:'space-between',overflow:'hidden'}}>
+      <View style={{flexDirection:'row',alignItems:'center',gap:8}}>
+        <Text style={{fontSize:15}}>🛰️</Text>
+        <Text style={{color:'#ffffff',fontSize:13,fontWeight:'700',letterSpacing:0.5}}>{gps.ready?'GPS OK · ALTA PRECISIÓN':gps.message}</Text>
+      </View>
+      <Text style={{fontSize:14,color:'#00e5a3'}}>📶</Text>
+      <View style={{position:'absolute',bottom:0,left:0,right:0,height:2.5,backgroundColor:gps.ready?'#00f2fe':'#e2a336'}}/>
+    </View>
+    <View style={[s.mapArea,{flex:1.1,minHeight:200}]}>
+      <RouteMap points={points} reference={reference?.points} previewPosition={gps.point} recording={false} preparing={false} checkpoints={checkpoints.points}/>
+    </View>
+    <ScrollView contentContainerStyle={[s.content,{paddingTop:12}]}>
+      <Text style={s.eyebrow}>TU PRÓXIMA HUELLA</Text>
+      <Text style={[s.homeTitle,{fontSize:32,lineHeight:38}]}>¿Dónde vamos hoy?</Text>
+      <Text style={s.muted}>Tu ruta empieza con un toque.</Text>
       {run?<View style={s.card}><Text style={s.eyebrow}>{serviceRunning?'GRABACIÓN EN CURSO':'RUTA PENDIENTE'}</Text><Text style={s.cardTitle}>{run.name}</Text><Text style={s.muted}>{serviceRunning?'Tu ruta sigue grabándose.':'Vuelve a tu ruta para revisar el GPS o reanudarla.'}</Text><Button label="Volver a mi ruta" onPress={()=>{setHomeDuringRun(false);router.replace('/route');}}/></View>:<>
-      <Button label="Nueva ruta" disabled={disabled} onPress={()=>choose(null)}/><Text style={s.caption}>{busy?'Preparando GPS preciso…':gps.ready?'Ubicación preparada para empezar.':gps.message}</Text>
+      <StartSliderButton disabled={disabled} onPress={()=>choose(null)}/>
+      <Text style={s.caption}>{busy?'Preparando GPS preciso…':gps.ready?'Ubicación preparada para empezar.':gps.message}</Text>
       {!!pendingRecordings.length&&<View style={s.card}><Text style={s.cardTitle}>Recorridos pendientes</Text><Text style={s.caption}>Sus puntos están guardados. Puedes recuperarlos para finalizar o continuar.</Text>{pendingRecordings.map(item=><Button key={item.id} label={`Recuperar ${item.name}`} secondary disabled={disabled} onPress={()=>void act(()=>restorePending(item.id))}/>)}</View>}
       {[{title:'Favoritas',routes:favoriteRoutes},{title:'Tus rutas habituales',routes:habits}].map(group=>group.routes.length>0&&<View key={group.title} style={{gap:12}}><Text style={s.sectionTitle}>{group.title}</Text>
       {group.routes.map(habit=><View key={habit.reference.routeId} style={[s.card,{flexDirection:'row',alignItems:'center',padding:14,gap:12}]}><View style={{flex:1,gap:5}}><Text style={[s.cardTitle,{fontSize:16}]} numberOfLines={2}>{habit.reference.name}</Text><Text style={s.caption}>{km(habit.reference)} · {habit.attempts.length} {habit.attempts.length===1?'viaje':'viajes'}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Iniciar ${habit.reference.name}`} accessibilityState={{disabled}} disabled={disabled} onPress={()=>startHabit(habit.reference.routeId)} style={[s.button,{minHeight:44,paddingVertical:10,paddingHorizontal:14}]}><Text style={s.buttonText}>Iniciar</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Ver ${habit.reference.name}`} disabled={disabled} onPress={()=>choose(habit.reference.routeId)} style={{minHeight:44,minWidth:32,justifyContent:'center',alignItems:'center'}}><Text style={s.tabSelected}>›</Text></Pressable></View>)}</View>)}

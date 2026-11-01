@@ -1,4 +1,7 @@
 import {CreditsScreen} from './src/CreditsScreen';
+import {AccountPanel, useAccount} from './src/AccountPanel';
+import {accountConfigured} from './src/account-client';
+import {modeLabel} from './src/TripDetails';
 import {startMonetizedTracking,settleMonetizedTracking,recoverBilling} from './src/monetized-tracking';
 import {billingError} from './src/monetization-api';
 import {TripDetails} from './src/TripDetails';
@@ -61,6 +64,7 @@ const ScreenContent=createContext<React.ReactNode>(null);
 export function GhovoScreen(){return <>{useContext(ScreenContent)}</>;}
 export default function App(){return <AppProvider><GhovoScreen/></AppProvider>;}
 export function AppProvider({children}:{children:React.ReactNode}) {
+  const account = useAccount();
   const [expanded, setExpanded] = useState(false);
 
   const [detailTab,setDetailTab]=useState<'summary'|'settings'|'trips'>('summary');
@@ -301,9 +305,64 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     setSimulator(false);setResultId(null);setSelected(null);setHomeDuringRun(!!run);
     router.replace('/');
   }
-  const navigation=<View style={s.tabs}>{([{label:'Inicio',path:'/'},{label:'Mis rutas',path:'/library'},{label:'Cuenta',path:'/credits'}] as const).map(item=>{const selected=item.path==='/credits'?['/credits','/premium'].includes(pathname):pathname===item.path;return <Pressable key={item.path} accessibilityRole="tab" accessibilityState={{selected,disabled}} disabled={disabled} onPress={()=>{setReplay(current=>stopReplay(current,Date.now(),total));router.replace(item.path);}} style={[s.tab,selected&&s.navTab]}><Text style={selected?s.tabSelected:s.caption}>{item.label}</Text></Pressable>;})}</View>;
+  const tabsList = [
+    { label: 'Inicio', path: '/', icon: '⚡' },
+    { label: 'Mis rutas', path: '/library', icon: '🗺️' },
+    { label: 'Cuenta', path: '/credits', icon: '👤' },
+  ] as const;
+
+  const navigation = (
+    <View style={s.bottomBar} accessibilityRole="tablist">
+      {tabsList.map(item => {
+        const selected = item.path === '/credits' ? ['/credits', '/premium'].includes(pathname) : pathname === item.path;
+        return (
+          <Pressable
+            key={item.path}
+            accessibilityRole="tab"
+            accessibilityLabel={item.label}
+            accessibilityState={{ selected, disabled }}
+            disabled={disabled}
+            onPress={() => {
+              setReplay(current => stopReplay(current, Date.now(), total));
+              router.replace(item.path);
+            }}
+            style={[s.bottomTab, selected && s.bottomTabActive]}
+          >
+            <Text style={[s.bottomTabIcon, selected && { transform: [{ scale: 1.1 }] }]}>{item.icon}</Text>
+            <Text style={[s.bottomTabLabel, selected && s.bottomTabLabelActive]}>{item.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
   let content:React.ReactNode;
-  if(simulator)content= <View style={s.root}><StatusBar style="light"/><Simulator onClose={()=>setSimulator(false)} origin={reference?.points[0]}/></View>;
+  const showAuthWall = process.env.NODE_ENV !== 'test' && accountConfigured && !account.user;
+  if(showAuthWall) {
+    if(account.status === 'loading') {
+      content = <View style={[s.root, { justifyContent: 'center', alignItems: 'center', gap: 16 }]}>
+        <StatusBar style="light" />
+        <View style={s.brandMark}><Image source={require('./assets/ghovo-mascot-2d-v1.png')} style={s.brandMascot} resizeMode="contain" accessible={false} /></View>
+        <Text style={s.homeTitle}>Iniciando GHOVO...</Text>
+        <Text style={s.muted}>Cargando tu sesión segura</Text>
+      </View>;
+    } else {
+      content = <View style={s.root}>
+        <StatusBar style="light" />
+        <ScrollView contentContainerStyle={[s.content, { paddingBottom: 40, paddingTop: 30 }]} keyboardShouldPersistTaps="handled">
+          <View style={{ alignItems: 'center', gap: 12, paddingBottom: 10 }}>
+            <View style={s.brandMark}><Image source={require('./assets/ghovo-mascot-2d-v1.png')} style={s.brandMascot} resizeMode="contain" accessible={false} /></View>
+            <Text style={s.brand}>GHOVO</Text>
+            <Text style={[s.homeTitle, { textAlign: 'center', fontSize: 24, lineHeight: 30 }]}>Acceso a GHOVO</Text>
+            <Text style={[s.muted, { textAlign: 'center', paddingHorizontal: 12 }]}>
+              Regístrate o inicia sesión para utilizar la aplicación, guardar tus rutas y comparar tiempos con el fantasma.
+            </Text>
+          </View>
+          <AccountPanel active={false} />
+        </ScrollView>
+      </View>;
+    }
+  }
+  else if(simulator)content= <View style={s.root}><StatusBar style="light"/><Simulator onClose={()=>setSimulator(false)} origin={reference?.points[0]}/></View>;
   else if(pathname==='/credits'||pathname==='/premium')content=<View style={s.root}><StatusBar style="light"/><CreditsScreen premiumPage={pathname==='/premium'} active={!!run} onHome={goHome} onPremium={()=>router.push('/premium')}/>{!run&&navigation}</View>;
   else if((section==='home'&&!run||homeDuringRun&&run&&pathname!=='/gps')&&!loadError)content= <View style={s.root}><StatusBar style="light"/>{run&&foreground&&keepScreenOn&&<RecordingAwake/>}
     <View style={s.header}><Pressable accessibilityRole="button" accessibilityLabel="GHOVO · Ir a Inicio" onPress={goHome} style={s.identity}><View style={s.brandMark}><Image source={require('./assets/ghovo-mascot-2d-v1.png')} style={s.brandMascot} resizeMode="contain" accessible={false}/></View><Text style={s.brand}>GHOVO</Text></Pressable><CurrentLocation point={run?.points.at(-1)??gps.observedPoint} now={now} message={gps.message} onRetry={()=>router.push('/gps')}/></View>
@@ -376,7 +435,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           {!summaries.length && <View style={s.card}><MascotMessage title="Tu primera huella empieza aquí" message="Graba un recorrido. Aquí guardarás su trazado y los tiempos de cada salida."/></View>}
           {visibleRoutes.map(({ reference: r, attempts, best: b, latest }) => <Pressable key={r.routeId} accessibilityRole="button" accessibilityLabel={`${r.name}, ${km(r)}, ${isComparable(b)?'mejor tiempo':'tiempo de referencia'} ${clock(duration(b))}`} onPress={() => choose(r.routeId)} style={({pressed})=>[s.card,{opacity:pressed?0.75:1}]}>
             <View style={s.routeCardHeading}><RouteThumbnail points={r.points}/><View style={{flex:1,gap:7}}>
-              <Text style={s.routeMode}>{r.mode==='driving'?'EN COCHE':r.mode==='walking'?'A PIE':'RECORRIDO'}{routeDetails[r.routeId]?.favorite?' · ★':''}</Text>
+              <Text style={s.routeMode}>{modeLabel(r.mode).toUpperCase()}{routeDetails[r.routeId]?.favorite?' · ★':''}</Text>
               <Text style={s.cardTitle} numberOfLines={2}>{r.name}</Text><Text style={s.caption}>{km(r)} · {attempts.length} {attempts.length===1?'intento':'intentos'}</Text>
             </View><Text style={s.routeChevron}>›</Text></View>
             <View style={s.routeCardFooter}><View style={{flex:1,gap:3}}><Text style={s.caption}>{isComparable(b)?'Mejor tiempo':'Tiempo de referencia'}</Text><Text style={s.routeBest}>{clock(duration(b))}</Text></View><View style={{flex:1,gap:3,alignItems:'flex-end'}}><Text style={s.caption}>Última salida</Text><Text style={s.lightText}>{date(latest)}</Text></View></View>
@@ -431,7 +490,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
             {detailTab==='settings'&&<>
           {<ReferenceSettings attempts={referenceCandidates} reference={comparisonReference} choice={personal?.referenceChoice} autoFinish={personal?.autoFinish??true} voiceEnabled={personal?.voiceEnabled??true} onTestVoice={()=>void tryVoice()} disabled={disabled} onChange={change=>void act(()=>updateRouteDetails(change))}/>}
           {<CheckpointSettings value={personal?.checkpointKm} result={checkpoints} disabled={disabled} onChange={checkpointKm=>void act(()=>updateRouteDetails({checkpointKm}))}/>}
-          {<Text style={s.caption}>Modo: {routeMode==='driving'?'En coche':routeMode==='walking'?'A pie':'sin especificar en esta grabación antigua'}</Text>}
+          {<Text style={s.caption}>Modo: {modeLabel(routeMode)}</Text>}
 
             <View style={s.card}>
               <Text style={s.cardTitle}>Notas del recorrido</Text>

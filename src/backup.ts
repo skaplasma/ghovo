@@ -43,7 +43,7 @@ export function parseBackup(text: string): Backup {
       return { latitude: p.latitude, longitude: p.longitude, timestamp: p.timestamp, accuracy: p.accuracy };
     });
     const run:Run={ id: raw.id, routeId: raw.routeId, name: raw.name.trim(), startedAt: start, endedAt: end, points };
-    if(raw.mode!==undefined){if(raw.mode!=='walking'&&raw.mode!=='driving')invalid('modo de desplazamiento incorrecto.');run.mode=raw.mode;}
+    if(raw.mode!==undefined){if(raw.mode!=='walking'&&raw.mode!=='driving'&&raw.mode!=='bicycling'&&raw.mode!=='running')invalid('modo de desplazamiento incorrecto.');run.mode=raw.mode;}
     for(const key of ['gpsGaps','maxGpsGapMs','rejectedFixes'] as const)if(raw[key]!==undefined){if(!finite(raw[key])||raw[key]<0||!Number.isInteger(raw[key]))invalid('calidad GPS incorrecta.');run[key]=raw[key];}
     if(raw.lastAccuracy!==undefined){if(!finite(raw.lastAccuracy)||raw.lastAccuracy<0||raw.lastAccuracy>25)invalid('precisión GPS incorrecta.');run.lastAccuracy=raw.lastAccuracy;}
     if(raw.referenceId!==undefined){if(!validId(raw.referenceId))invalid('referencia incorrecta.');run.referenceId=raw.referenceId;}

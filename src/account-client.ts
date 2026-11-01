@@ -86,7 +86,20 @@ function getGoogleSignin():{GoogleSignin:any,statusCodes:any}|null{
 export function loginWithGoogle():Promise<void>{
  if(googleLogin)return googleLogin;
  googleLogin=(async()=>{
-  if(Platform.OS==='web')throw Error('GOOGLE_NATIVE_REQUIRED');
+  if(Platform.OS==='web'){
+   const {data,error}=await accountClient().auth.signInWithOAuth({
+    provider:'google',
+    options:{
+     redirectTo:typeof window!=='undefined'?window.location.origin:'http://localhost:8081',
+     scopes:'openid email profile',
+    },
+   });
+   fail(error);
+   if(data.url&&typeof window!=='undefined'){
+    window.location.href=data.url;
+   }
+   return;
+  }
   const googleMod=getGoogleSignin();
   if(googleMod){
    try{

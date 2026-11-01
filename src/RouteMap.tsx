@@ -3,15 +3,39 @@ import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, AppState, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Location from 'expo-location';
 import {foregroundLocationPermission} from './location-permission';
-import { Camera, GeoJSONSource, Layer, Map, Marker, TransformRequestManager, type CameraRef, type LngLat, type StyleSpecification } from '@maplibre/maplibre-react-native';
 import { type Point } from './core';
 import { courseBounds } from './map-geometry';
 import { traceSegments } from './trace';
 import {motionDuration} from './map-motion';
 import {useDisplayPoint} from './useDisplayPoint';
 
-// Identify native tile requests; leave MapLibre's HTTP-aware disk cache enabled.
-TransformRequestManager.addHeader({ id: 'ghovo-osm-user-agent', match: '^https://tile\\.openstreetmap\\.org/', name: 'User-Agent', value: 'GHOVO/0.1.0 (app.ghovo.mobile)' });
+type LngLat = [number, number];
+type CameraRef = any;
+type StyleSpecification = any;
+
+let Camera: any = null;
+let GeoJSONSource: any = null;
+let Layer: any = null;
+let Map: any = null;
+let Marker: any = null;
+let mapLibreAvailable = false;
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const MapLibre = require('@maplibre/maplibre-react-native');
+  Camera = MapLibre.Camera;
+  GeoJSONSource = MapLibre.GeoJSONSource;
+  Layer = MapLibre.Layer;
+  Map = MapLibre.Map;
+  Marker = MapLibre.Marker;
+  if (MapLibre.TransformRequestManager?.addHeader) {
+    MapLibre.TransformRequestManager.addHeader({ id: 'ghovo-osm-user-agent', match: '^https://tile\\.openstreetmap\\.org/', name: 'User-Agent', value: 'GHOVO/0.1.0 (app.ghovo.mobile)' });
+  }
+  mapLibreAvailable = !!Map && !!Camera;
+} catch {
+  mapLibreAvailable = false;
+}
+
 const mapStyle: StyleSpecification = {
   version: 8,
   sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, maxzoom: 19, attribution: '© OpenStreetMap contributors' } },
@@ -104,6 +128,18 @@ export function RouteMap({ points, reference, ghost, recording,preparing=false,p
     else camera.current?.jumpTo({center:[longitude,latitude],zoom:15});
     previousCamera.current=next;
   }, [longitude,latitude,focus?.timestamp,focus?.accuracy,mapReady,recording,foreground]);
+
+  if (!mapLibreAvailable) {
+    return <View style={styles.container}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#121C23', padding: 24, gap: 12 }}>
+        <ActivityIndicator color="#C0ED8B" size="large" />
+        <Text style={{ color: '#D6E2E8', textAlign: 'center', fontSize: 13, lineHeight: 19 }}>
+          {recording ? 'Grabando recorrido GPS…' : 'Mapa listo. En la app compilada o en la versión web podrás ver el mapa interactivo.'}
+        </Text>
+      </View>
+    </View>;
+  }
+
   return <View style={styles.container}>
     {focus ? <Map mapStyle={mapStyle} dragPan={!recording} touchZoom={!recording} touchRotate={!recording} touchPitch={false} attribution={false} onDidFailLoadingMap={() => setFailed(true)} onDidFinishLoadingMap={() => { setFailed(false); setMapReady(true); }}>
       <Camera ref={camera} initialViewState={{ center: coordinate(focus), zoom: 15 }} maxZoom={19} />
@@ -135,4 +171,3 @@ export function RouteMap({ points, reference, ghost, recording,preparing=false,p
   </View>;
 }
 const styles = StyleSheet.create({ container: { flex: 1, minHeight: 160 }, pin: { borderRadius: 13, padding: 7, borderWidth: 2, borderColor: '#fff', minWidth: 34, alignItems: 'center', elevation: 5 }, label: { color: '#101b20', fontWeight: '900', fontSize: 12 }, credit: { position: 'absolute', bottom: 0, right: 0, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#ffffffee', borderTopLeftRadius: 8 }, creditText: { color: '#17303c', fontSize: 10 }, notice: { position: 'absolute', top: 12, left: 12, right: 12, padding: 12, borderRadius: 12, backgroundColor: '#30281fee', color: '#ffd28a' }, locationStatus: { alignSelf: 'flex-start', flexDirection:'row', alignItems:'center',gap:8, backgroundColor: '#0B1115ed', color: '#D6E2E8', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 12, fontSize: 11, lineHeight: 17, borderWidth: 1, borderColor: '#394852', maxWidth: '90%' }, locateButton: { alignSelf: 'flex-end', backgroundColor: '#F2F6F7', minHeight: 46, paddingHorizontal: 15, justifyContent: 'center', borderRadius: 14, elevation: 4 }, locateLabel: { color: '#17262E', fontWeight: '700', fontSize: 12 } });
-

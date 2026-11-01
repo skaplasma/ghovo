@@ -3,6 +3,7 @@ import {Pressable,ScrollView,Text,TextInput,View} from 'react-native';
 import {clock,duration,type Run} from './core';
 import {alternativesFor,compareTrips,estimatedCost,monthlyTrend,planDeparture,routeTrips,summarizeTrips,timeGroups,type Period} from './premium';
 import {appStyles as s} from './design';
+import {modeLabel} from './TripDetails';
 
 type Tab='Resumen'|'Horarios'|'Comparar'|'Planificar'|'Coste';
 const tabs:Tab[]=['Resumen','Horarios','Comparar','Planificar','Coste'];
@@ -35,7 +36,7 @@ export function PremiumInsights({reference,runs,onBack,onExport,disabled=false}:
     <View style={[s.header,{alignItems:'flex-start'}]}><Action label="← Volver a la ruta" onPress={onBack}/><View style={{flex:1,gap:4}}><Text style={s.eyebrow}>GHOVO PREMIUM</Text><Text style={s.cardTitle}>Análisis de ruta</Text></View></View>
     <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
       <Text style={s.cardTitle}>{reference.name}</Text>
-      <Text style={s.caption}>Historial de esta ruta · {reference.mode==='driving'?'En coche':reference.mode==='walking'?'A pie':'Modo sin especificar'}</Text>
+      <Text style={s.caption}>Historial de esta ruta · {modeLabel(reference.mode)}</Text>
       <View style={{flexDirection:'row',flexWrap:'wrap',gap:6}}>{([7,30,90,'all'] as const).map(value=><Action key={value} label={value==='all'?'Todo el historial':`${value} días`} selected={period===value} onPress={()=>periodChanged(value)}/>)}</View>
       <Text style={s.caption}>{stats.valid.length} viajes válidos · {stats.excluded} excluidos por datos incompletos. Los tiempos incluyen paradas.</Text>
       <View style={{flexDirection:'row',flexWrap:'wrap',gap:6}}>{tabs.map(value=><Action key={value} label={value} selected={tab===value} onPress={()=>setTab(value)}/>)}</View>

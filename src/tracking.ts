@@ -121,7 +121,7 @@ export async function startTracking(run:Run,_origin?:Point,prepared?:Point) {
     }
   }
   await serial(async()=>{if(await active())throw Error('Ya hay un recorrido en curso.');await write('active',run);});
-  try {await Location.startLocationUpdatesAsync(TASK,{...trackingOptions,timeInterval:run.mode==='driving'?1000:2000});}catch(e){await serial(async()=>{if((await active())?.id===run.id)await write('active',null);});throw e;}
+  try {await Location.startLocationUpdatesAsync(TASK,{...trackingOptions,timeInterval:run.mode==='driving'||run.mode==='bicycling'?1000:2000});}catch(e){await serial(async()=>{if((await active())?.id===run.id)await write('active',null);});throw e;}
   if(run.notice)void speakNotice(run.notice,run.voiceEnabled!==false).catch(()=>{});
 }
 export async function stopTracking(){if(await Location.hasStartedLocationUpdatesAsync(TASK))await Location.stopLocationUpdatesAsync(TASK);}
@@ -131,7 +131,7 @@ export async function resumeTracking() {
   const foreground=await foregroundLocationPermission(true);
   if(foreground.status!=='granted'||foreground.android?.accuracy==='coarse'||(await Location.getBackgroundPermissionsAsync()).status!=='granted')throw Error('Revisa los permisos de ubicación precisa y en segundo plano de GHOVO en Ajustes.');
   await stopTracking();
-  await Location.startLocationUpdatesAsync(TASK,{...trackingOptions,timeInterval:pending.mode==='driving'?1000:2000});
+  await Location.startLocationUpdatesAsync(TASK,{...trackingOptions,timeInterval:pending.mode==='driving'||pending.mode==='bicycling'?1000:2000});
 }
 export const trackingRunning=()=>Location.hasStartedLocationUpdatesAsync(TASK);
 export async function ensureTracking(){
@@ -162,7 +162,7 @@ export async function recoverTracking(){
       recordGpsEvent('recovery');
       if(running)await Location.stopLocationUpdatesAsync(TASK);
       if((await active())?.id!==run.id)return;
-      await Location.startLocationUpdatesAsync(TASK,{...trackingOptions,timeInterval:run.mode==='driving'?1000:2000});
+      await Location.startLocationUpdatesAsync(TASK,{...trackingOptions,timeInterval:run.mode==='driving'||run.mode==='bicycling'?1000:2000});
       // Only a new valid fix confirms recovery, never merely restarting the service.
       await recoveryMessage(run.id,'Intentando recuperar GPS. Esperando una posición precisa.');
     }catch{recordGpsEvent('recovery_failed');await recoveryMessage(run.id,'No se pudo recuperar el GPS. Revisa los permisos o reintenta manualmente.');}

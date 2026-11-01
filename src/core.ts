@@ -2,7 +2,7 @@ import type {RouteNotice} from './notices.ts';
 import type {ComparisonState} from './comparison.ts';
 import type {CheckpointInterval} from './checkpoints.ts';
 export type Point = { latitude: number; longitude: number; timestamp: number; accuracy: number };
-export type TravelMode = 'walking' | 'driving';
+export type TravelMode = 'walking' | 'driving' | 'bicycling' | 'running';
 export type Run = { id: string; routeId: string; name: string; mode?: TravelMode; points: Point[]; startedAt: number; circuitStartedAt?: number; endedAt?: number; referenceOffsetMs?:number;incomplete?:boolean;error?: string; referenceId?:string; checkpointKm?:CheckpointInterval|null; autoFinish?:boolean;autoCompleted?:boolean;voiceEnabled?:boolean;notice?:RouteNotice;comparison?:ComparisonState; lastAccuracy?:number; lastFixAt?: number; gpsGaps?: number; maxGpsGapMs?: number; rejectedFixes?: number };
 export const distance = (a: Point, b: Point) => {
   const r = Math.PI / 180;
@@ -29,7 +29,8 @@ export const isComparable=(run:Run)=>!run.incomplete&&!run.referenceOffsetMs&&(r
 export function accepts(points: Point[], p: Point, mode:TravelMode='walking') {
   if (![p.latitude,p.longitude,p.timestamp,p.accuracy].every(Number.isFinite) || Math.abs(p.latitude)>90 || Math.abs(p.longitude)>180 || p.accuracy < 0 || p.accuracy > 25) return false;
   const prev=points.at(-1);
-  return !prev || (p.timestamp > prev.timestamp && distance(prev,p)/((p.timestamp-prev.timestamp)/1000) <= (mode==='driving'?60:12));
+  const maxSpeed = mode === 'driving' ? 60 : mode === 'bicycling' ? 25 : 12;
+  return !prev || (p.timestamp > prev.timestamp && distance(prev,p)/((p.timestamp-prev.timestamp)/1000) <= maxSpeed);
 }
 export function recordingQuality(points: Point[]) {
   let gaps=0, longestGap=0;

@@ -13,7 +13,7 @@ function run(value: unknown, completed: boolean): boolean {
   if(value.referenceOffsetMs!==undefined&&(!finite(value.referenceOffsetMs)||value.referenceOffsetMs<0||value.referenceOffsetMs>8640000000000000))return false;
   if(value.circuitStartedAt!==undefined&&(!time(value.circuitStartedAt)||value.circuitStartedAt<value.startedAt))return false;
   if(value.referenceId!==undefined&&!id(value.referenceId)||value.checkpointKm!==undefined&&value.checkpointKm!==null&&!validCheckpointInterval(value.checkpointKm)||value.autoFinish!==undefined&&typeof value.autoFinish!=='boolean'||value.autoCompleted!==undefined&&typeof value.autoCompleted!=='boolean'||value.comparison!==undefined&&!validComparison(value.comparison))return false;
-  if(value.mode!==undefined&&value.mode!=='walking'&&value.mode!=='driving')return false;
+  if(value.mode!==undefined&&value.mode!=='walking'&&value.mode!=='driving'&&value.mode!=='bicycling'&&value.mode!=='running')return false;
   let previous = -1;
   for (const point of value.points) {
     if (!record(point) || !finite(point.latitude) || Math.abs(point.latitude) > 90 || !finite(point.longitude) || Math.abs(point.longitude) > 180 || !time(point.timestamp) || point.timestamp < value.startedAt || point.timestamp <= previous || (completed && point.timestamp > (value.endedAt as number)) || !finite(point.accuracy) || point.accuracy < 0 || point.accuracy > 10000) return false;

@@ -3,6 +3,7 @@ import {Pressable,Text,View} from 'react-native';
 import {clock,type Run} from './core';
 import {routeFacts} from './results';
 import {appStyles as s} from './design';
+import {modeLabel} from './TripDetails';
 
 const date=(timestamp:number|null)=>timestamp===null?'Sin viajes':new Date(timestamp).toLocaleString('es-ES',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 function Item({label,value}:{label:string;value:string}){
@@ -22,7 +23,7 @@ export function RouteInformation({reference,attempts}:{reference:Run;attempts:Ru
       <View style={s.row}><Item label="Viajes completados" value={String(facts.count)}/><Item label="Distancia acumulada" value={`${(facts.meters/1000).toFixed(2)} km`}/></View>
       <Text style={s.caption}>La distancia suma los trazados registrados; puede ser incompleta si hubo cortes.</Text>
       <Item label="Primer viaje guardado" value={date(facts.first)}/><Item label="Última salida guardada" value={date(facts.latest)}/>
-      <Item label="Modo de esta ruta" value={reference.mode==='driving'?'En coche':reference.mode==='walking'?'A pie':'Sin especificar'}/>
+      <Item label="Modo de esta ruta" value={modeLabel(reference.mode)}/>
       <Text style={s.caption}>Solo incluye esta ruta y este modo de viaje.</Text>
     </View>}
   </View>;

@@ -3,6 +3,12 @@ import assert from 'node:assert/strict';
 import {accepts,appendFix,distance,endPoints,ghostAt,length,recordingQuality,sameCourse,type Point,type Run} from './core.ts';
 const p=(x:number,t=0):Point=>({latitude:40+x/111195,longitude:-3,timestamp:t,accuracy:5});
 test('distance and GPS outliers',()=>{assert.ok(Math.abs(distance(p(0),p(100))-100)<1);assert.equal(accepts([p(0)],p(100,1000)),false);assert.equal(accepts([p(0)],p(3,1000)),true);assert.equal(accepts([], {...p(0),accuracy:80}),false);});
+test('travel modes speed acceptance', () => {
+  assert.equal(accepts([p(0)], p(20, 1000), 'bicycling'), true);
+  assert.equal(accepts([p(0)], p(30, 1000), 'bicycling'), false);
+  assert.equal(accepts([p(0)], p(10, 1000), 'running'), true);
+  assert.equal(accepts([p(0)], p(15, 1000), 'running'), false);
+});
 test('ghost interpolates timestamps and clamps to end',()=>{const r:Run={id:'1',routeId:'1',name:'test',startedAt:0,endedAt:10000,points:[p(0,0),p(100,10000)]};assert.ok(distance(ghostAt(r,5000)!,p(50))<1);assert.equal(ghostAt(r,20000),r.points[1]);});
 test('same course accepts different sampling and rejects reversal or omitted detours',()=>{
   const a=[p(0),p(50),p(100),p(150),p(200)];

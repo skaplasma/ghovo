@@ -1,6 +1,6 @@
 import { Platform, StatusBar, StyleSheet } from 'react-native';
 
-export const palette = { background: '#0B1115', surface: '#121C23', raised: '#19262F', border: '#2B3A44', text: '#F2F6F7', muted: '#A3B3BD', green: '#C0ED8B', violet: '#B9AEF5' };
+export const palette = { background: '#0e1217', surface: '#131921', raised: '#161c24', border: '#232c37', text: '#ffffff', muted: '#7a889b', green: '#00e5a3', violet: '#b9aef5' };
 export const appStyles = StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.background, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + 12 : 50, paddingBottom: 0 },
   header: { paddingHorizontal: 20, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
@@ -29,10 +29,10 @@ export const appStyles = StyleSheet.create({
   metric: { color: palette.text, fontSize: 25, letterSpacing: -0.8, fontWeight: '600', fontVariant: ['tabular-nums'] },
   button: { minHeight: 52, paddingVertical: 14, paddingHorizontal: 18, borderRadius: 16, backgroundColor: palette.green, alignItems: 'center', justifyContent: 'center' },
   buttonText: { color: '#172115', fontSize: 15, fontWeight: '700', textAlign: 'center', letterSpacing: 0.1 },
-  secondary: { backgroundColor: '#202D36', borderWidth: 1, borderColor: '#364650', borderRadius: 14 },
-  lightText: { color: '#DAE3E8', fontWeight: '500' }, danger: { backgroundColor: 'transparent', borderColor: '#583D45' }, dangerText: { color: '#E7A8B5' },
-  input: { backgroundColor: '#0D161C', color: palette.text, paddingHorizontal: 16, paddingVertical: 15, minHeight: 52, borderRadius: 14, borderWidth: 1, borderColor: '#3B4C58', fontSize: 15 },
-  card: { padding: 18, backgroundColor: palette.raised, borderRadius: 20, gap: 14, borderWidth: 1, borderColor: palette.border },
+  secondary: { backgroundColor: '#1b232e', borderWidth: 1, borderColor: '#2b3746', borderRadius: 16 },
+  lightText: { color: '#DAE3E8', fontWeight: '500' }, danger: { backgroundColor: '#181215', borderColor: '#4a2328', borderWidth: 1 }, dangerText: { color: '#ff6b6b' },
+  input: { backgroundColor: '#11171f', color: palette.text, paddingHorizontal: 16, paddingVertical: 15, minHeight: 52, borderRadius: 16, borderWidth: 1, borderColor: '#242f3d', fontSize: 15 },
+  card: { padding: 20, backgroundColor: '#151c24', borderRadius: 22, gap: 14, borderWidth: 1, borderColor: '#222b37' },
   cardTitle: { color: palette.text, fontSize: 18, lineHeight: 25, letterSpacing: -0.3, fontWeight: '600', flexShrink: 1 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   arrow: { fontSize: 22, color: palette.green, width: 34, height: 34, textAlign: 'center', lineHeight: 34, backgroundColor: '#2A3932', borderRadius: 10 },
@@ -80,12 +80,12 @@ export const appStyles = StyleSheet.create({
   resultEyebrow: {color:palette.green,fontSize:10,fontWeight:'700',letterSpacing:1},
   resultTitle: {color:palette.text,fontSize:25,lineHeight:31,fontWeight:'700',letterSpacing:-0.5},
   finishButton: {backgroundColor:'#E25C5C',minHeight:56,borderRadius:18},
-  bottomBar: {flexDirection:'row',backgroundColor:'#0E151A',borderTopWidth:1,borderTopColor:'#1F2B33',paddingVertical:6,paddingBottom:Platform.OS==='ios'?22:8,paddingHorizontal:12,justifyContent:'space-around',alignItems:'center'},
+  bottomBar: {flexDirection:'row',backgroundColor:'#0d1116',borderTopWidth:1,borderTopColor:'#1a222c',paddingVertical:8,paddingBottom:Platform.OS==='ios'?24:10,paddingHorizontal:16,justifyContent:'space-around',alignItems:'center'},
   bottomTab: {flex:1,alignItems:'center',justifyContent:'center',paddingVertical:6,borderRadius:12,gap:2},
-  bottomTabActive: {backgroundColor:'#18251E'},
+  bottomTabActive: {backgroundColor:'#182029'},
   bottomTabIcon: {fontSize:18},
   bottomTabLabel: {fontSize:11,fontWeight:'600',color:'#7E919C'},
-  bottomTabLabelActive: {color:palette.green,fontWeight:'700'},
+  bottomTabLabelActive: {color:'#ffffff',fontWeight:'700'},
 
   // Cockpit / HUD styles
   hudSpeedContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#091014', borderRadius: 22, borderWidth: 1, borderColor: '#1C2B34', gap: 2 },

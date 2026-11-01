@@ -306,9 +306,9 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     router.replace('/');
   }
   const tabsList = [
-    { label: 'Inicio', path: '/', icon: '⚡' },
-    { label: 'Mis rutas', path: '/library', icon: '🗺️' },
-    { label: 'Cuenta', path: '/credits', icon: '👤' },
+    { label: 'Inicio', display: 'Inicio', path: '/', icon: '⚡' },
+    { label: 'Mis rutas', display: 'Mis Rutas', path: '/library', icon: '🗺️' },
+    { label: 'Cuenta', display: 'Cuenta', path: '/credits', icon: '👤' },
   ] as const;
 
   const navigation = (
@@ -328,8 +328,8 @@ export function AppProvider({children}:{children:React.ReactNode}) {
             }}
             style={[s.bottomTab, selected && s.bottomTabActive]}
           >
-            <Text style={[s.bottomTabIcon, selected && { transform: [{ scale: 1.1 }] }]}>{item.icon}</Text>
-            <Text style={[s.bottomTabLabel, selected && s.bottomTabLabelActive]}>{item.label}</Text>
+            <Text style={[s.bottomTabIcon, selected && { color: '#ffffff', transform: [{ scale: 1.1 }] }]}>{item.icon}</Text>
+            <Text style={[s.bottomTabLabel, selected && s.bottomTabLabelActive]}>{item.display}</Text>
           </Pressable>
         );
       })}

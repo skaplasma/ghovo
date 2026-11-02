@@ -19,6 +19,7 @@ import {CheckpointSettings} from './src/CheckpointSettings';
 import React, { memo, createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, AppState, Image, Linking, Pressable, ScrollView, Keyboard, Text, TextInput, View } from 'react-native';
 import {router,usePathname} from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import {Ionicons} from '@expo/vector-icons';
 import {useGpsPreparation} from './src/useGpsPreparation';
 import { StatusBar } from 'expo-status-bar';
@@ -35,6 +36,7 @@ import { fonts } from './src/fonts';
 import { date, km } from './src/format';
 import { RouteCard } from './src/RouteCard';
 import { WelcomeScreen } from './src/WelcomeScreen';
+import { AppSplash } from './src/AppSplash';
 import { type Point, type Run, type TravelMode, clock, duration, ghostAt, isComparable, length, recordingQuality } from './src/core';
 import { active, history, read, serial, write, writeMany } from './src/storage';
 import { activityTotals, filterRoutes, resultFor, type RouteDetails, type RouteOrder } from './src/results';
@@ -183,6 +185,11 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     if(!a) setSelected(value => value && !h.some(r => r.routeId===value) ? null : value);
     setServiceRunning(nativeRunning);
   }, []);
+  useEffect(() => {
+    if (!ready) return;
+    // La cortina nativa se mantiene hasta que hay datos en pantalla, no solo hasta el primer render.
+    void SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
   useEffect(() => {
     if(loadError||!foreground)return;
     const refreshSafe = () => refresh().catch(e => setLoadError(e instanceof Error?e.message:String(e)));
@@ -767,7 +774,12 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     </View>}
     {!run&&navigation}
   </View>;
-  return <ScreenContent.Provider value={content}>{children}</ScreenContent.Provider>;
+  return <ScreenContent.Provider value={content}>
+    <View style={{flex:1}}>
+      {children}
+      <AppSplash ready={ready}/>
+    </View>
+  </ScreenContent.Provider>;
 }
 
 

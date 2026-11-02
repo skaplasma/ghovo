@@ -1,4 +1,5 @@
 import React,{useCallback,useEffect,useRef,useState} from 'react';
+import {decimal} from './format';
 import {Alert,Image,Linking,Pressable,ScrollView,Text,View} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {appStyles as s,palette} from './design';
@@ -41,7 +42,7 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,stats={routes
  async function run(operation:()=>Promise<void>){if(busy)return;setBusy(true);try{await operation();}catch(error){if(mounted.current){setWallet(undefined);setMessage(billingError(error));}}finally{if(mounted.current)setBusy(false);}}
 
  const currentWallet=wallet?.userId===account.user?.id?wallet:undefined;
- const price=currentWallet?`${(currentWallet.config.priceMinor/100).toFixed(2).replace('.',',')} €`:'4,99 €';
+ const price=currentWallet?`${decimal(currentWallet.config.priceMinor/100,2)} €`:'4,99 €';
 
  const canWatchAd=!!currentWallet&&!currentWallet.premium&&isLoaded&&!active&&currentWallet.adsRemaining>0&&currentWallet.available<50&&!busy;
 
@@ -95,7 +96,7 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,stats={routes
 
    {!premiumPage&&<View style={{flexDirection:'row',gap:10}}>
     <View style={s.statBox}><Text style={s.statValue}>{stats.routes}</Text><Text style={s.statLabel}>Rutas</Text></View>
-    <View style={s.statBox}><Text style={s.statValue}>{stats.km.toFixed(1)}</Text><Text style={s.statLabel}>km recorridos</Text></View>
+    <View style={s.statBox}><Text style={s.statValue}>{decimal(stats.km,1)}</Text><Text style={s.statLabel}>km recorridos</Text></View>
     <View style={s.statBox}><Text style={s.statValue}>{stats.favorites}</Text><Text style={s.statLabel}>Favoritas</Text></View>
    </View>}
 

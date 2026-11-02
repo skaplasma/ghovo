@@ -42,16 +42,16 @@ test('existing APK database without revisions migrates without losing a route', 
 test('JSON and structural damage produce a recoverable error without deleting the stored bytes', async () => {
   await storage.write('history', [run]);
   for (const invalid of ['{broken', '{"not":"an array"}', '[null]']) {
-    db.prepare('UPDATE state SET value=?,revision=revision+1 WHERE key=?').run(invalid, 'history');
+    db.prepare('UPDATE runs SET json=?,sig=? WHERE id=?').run(invalid, `corrupt-${invalid.length}`, 'one');
     await expect(storage.history()).rejects.toThrow('No se han borrado');
-    expect(db.prepare('SELECT value FROM state WHERE key=?').get('history')!.value).toBe(invalid);
+    expect(db.prepare('SELECT json FROM runs WHERE id=?').get('one')!.json).toBe(invalid);
   }
 });
 test('a valid recovery snapshot restores a damaged library while retaining the snapshot', async () => {
   await storage.writeMany({ history: [run], routeDetails: { route: { favorite: true, note: 'Antes' } }, lastResult: 'one', active: null });
   await storage.writeMany({ history: [], routeDetails: {}, lastResult: null }, true);
   const saved = await storage.read('recovery', null);
-  db.prepare('UPDATE state SET value=?,revision=revision+1 WHERE key=?').run('{broken', 'history');
+  db.prepare('INSERT INTO runs(id,sig,json) VALUES(?,?,?)').run('broken', 'corrupt', '{broken');
   await expect(storage.history()).rejects.toThrow('No se han borrado');
   await storage.recoverPreviousLibrary();
   expect(await storage.history()).toEqual([run]);

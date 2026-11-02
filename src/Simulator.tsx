@@ -1,4 +1,5 @@
 import {checkpointNotice,arrivalNotice} from './notices';
+import {decimal} from './format';
 import {speakNotice,stopVoice,testVoice} from './speech';
 import {advanceComparison,arrivalReady,courseModel,initialComparison} from './comparison';
 import {checkpointsFor} from './checkpoints';
@@ -52,9 +53,9 @@ export function Simulator({onClose,origin}:{onClose:()=>void;origin?:Point}){
     <View style={[s.mapArea,{flex:.8}]}><RouteMap points={run.points} recording checkpoints={controls} ghost={run.comparison&&!run.comparison.unavailable&&simulationPoint(step,origin).timestamp-(run.lastFixAt??run.startedAt)<=15000?ghostAt(model.reference,step*1000):undefined}/></View>
     <ScrollView style={{flex:1}} contentContainerStyle={s.content}>
       <Text style={s.muted}>Circuito ficticio de unos 3 km. Comprueba curvas, puntos rechazados y cortes sin salir de casa. No representa una carretera calculada.</Text>
-      <Text style={s.playTime}>{clock(step*1000)} / 03:00 · {(length(run.points)/1000).toFixed(2)} km</Text>
+      <Text style={s.playTime}>{clock(step*1000)} / 03:00 · {decimal(length(run.points)/1000,2)} km</Text>
       <Text style={s.caption}>{run.points.length} puntos guardados · {run.rejectedFixes??0} rechazados · {run.gpsGaps??0} cortes detectados al recuperar señal</Text>
-      <View style={s.card}><Text style={s.cardTitle}>Comparación simulada</Text><Text style={s.muted}>{run.comparison?.difference==null||run.comparison.unavailable||simulationPoint(step,origin).timestamp-(run.lastFixAt??run.startedAt)>15000?'Comparación no disponible':`Diferencia: ${(run.comparison.difference/1000).toFixed(1)} s`}</Text><Text style={s.caption}>{run.comparison?.splits.length??0} controles cruzados · {run.autoCompleted?'Llegada confirmada':'Sin llegada confirmada'}</Text></View>
+      <View style={s.card}><Text style={s.cardTitle}>Comparación simulada</Text><Text style={s.muted}>{run.comparison?.difference==null||run.comparison.unavailable||simulationPoint(step,origin).timestamp-(run.lastFixAt??run.startedAt)>15000?'Comparación no disponible':`Diferencia: ${decimal(run.comparison.difference/1000,1)} s`}</Text><Text style={s.caption}>{run.comparison?.splits.length??0} controles cruzados · {run.autoCompleted?'Llegada confirmada':'Sin llegada confirmada'}</Text></View>
       <View style={s.row}>{[[0.9,'Referencia más rápida'],[1,'Mismo ritmo'],[1.1,'Referencia más lenta']].map(([value,label])=><View key={String(value)} style={{flex:1}}><Control label={String(label)} selected={referenceRate===value} onPress={()=>{setReferenceRate(Number(value));reset();}}/></View>)}</View>
       {step===SIMULATION_STEPS&&<Control label="Confirmar llegada (5 s)" onPress={()=>{setSession(previous=>{const point={...simulationPoint(SIMULATION_STEPS,origin),timestamp:previous.run.lastFixAt!+5000};const comparison=advanceComparison(model,previous.run.comparison??initialComparison(previous.run.startedAt),point,previous.run.startedAt);const completed:Run={...appendFix(previous.run,point),comparison,referenceId:model.reference.id,autoCompleted:arrivalReady(comparison,point.timestamp)};if(completed.autoCompleted){completed.endedAt=point.timestamp;completed.notice=arrivalNotice(completed,model.reference);}return {...previous,run:completed};});}}/>}
       {run.notice&&<View accessibilityLiveRegion="polite" style={s.card}><Text style={s.cardTitle}>{run.notice.title}</Text><Text style={s.muted}>{run.notice.message}</Text></View>}

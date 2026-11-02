@@ -3,7 +3,7 @@ import type {ComparisonState} from './comparison.ts';
 import type {CheckpointInterval} from './checkpoints.ts';
 export type Point = { latitude: number; longitude: number; timestamp: number; accuracy: number };
 export type TravelMode = 'walking' | 'driving' | 'bicycling' | 'running';
-export type Run = { id: string; routeId: string; name: string; mode?: TravelMode; points: Point[]; startedAt: number; circuitStartedAt?: number; endedAt?: number; referenceOffsetMs?:number;incomplete?:boolean;error?: string; referenceId?:string; checkpointKm?:CheckpointInterval|null; autoFinish?:boolean;autoCompleted?:boolean;voiceEnabled?:boolean;notice?:RouteNotice;comparison?:ComparisonState; lastAccuracy?:number; lastFixAt?: number; gpsGaps?: number; maxGpsGapMs?: number; rejectedFixes?: number };
+export type Run = { id: string; routeId: string; name: string; mode?: TravelMode; points: Point[]; startedAt: number; circuitStartedAt?: number; endedAt?: number; referenceOffsetMs?:number;incomplete?:boolean;error?: string; referenceId?:string; checkpointKm?:CheckpointInterval|null; autoFinish?:boolean;autoCompleted?:boolean;voiceEnabled?:boolean;notice?:RouteNotice;comparison?:ComparisonState; lastAccuracy?:number; lastFixAt?: number; gpsGaps?: number; maxGpsGapMs?: number; rejectedFixes?: number; pausedAt?: number };
 export const distance = (a: Point, b: Point) => {
   const r = Math.PI / 180;
   const x = Math.sin((b.latitude-a.latitude)*r/2)**2 + Math.cos(a.latitude*r)*Math.cos(b.latitude*r)*Math.sin((b.longitude-a.longitude)*r/2)**2;
@@ -11,7 +11,7 @@ export const distance = (a: Point, b: Point) => {
 };
 export const isTraceBreak=(a:Point,b:Point)=>b.timestamp-a.timestamp>15000&&distance(a,b)>20;
 export const length = (p: Point[]) => p.slice(1).reduce((sum, v, i) => sum + (isTraceBreak(p[i],v)?0:distance(p[i], v)), 0);
-export const duration = (r: Run) => (r.endedAt ?? Date.now()) - (r.circuitStartedAt ?? r.startedAt);
+export const duration = (r: Run) => (r.endedAt ?? Date.now()) - (r.circuitStartedAt ?? r.startedAt) - (r.pausedAt ? Date.now() - r.pausedAt : 0);
 export function ghostAt(run: Run, elapsed: number): Point | undefined {
   const t = run.startedAt + Math.max(0, elapsed), p = run.points;
   if(!p.length)return undefined;

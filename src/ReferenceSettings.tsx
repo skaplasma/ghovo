@@ -1,4 +1,5 @@
 import React,{useState} from 'react';
+import {decimal} from './format';
 import {Pressable,Text,View} from 'react-native';
 import type {Run} from './core';
 import {clock,duration} from './core';
@@ -25,6 +26,6 @@ export function SplitSummary({run}:{run:Run}){
     const elapsed=split.elapsed!==null&&previousElapsed!==null?split.elapsed-previousElapsed:null;
     const reference=split.referenceElapsed-previousReference;
     const difference=elapsed===null?null:elapsed-reference;
-    return <View key={split.meters} style={s.attempt}><View style={{flex:1,gap:5}}><Text style={s.lightText}>{index===splits.length-1&&run.endedAt?'Meta':`Km ${(split.meters/1000).toFixed(1)}`}</Text><Text style={s.caption}>{difference===null?'Sin comparación fiable':difference===0?'Mismo tiempo':`${(Math.abs(difference)/1000).toFixed(1)} s ${difference<0?'menos':'más'} en este tramo`}</Text></View><Text style={s.playTime}>{elapsed===null?'—':clock(elapsed)}</Text></View>;
+    return <View key={split.meters} style={s.attempt}><View style={{flex:1,gap:5}}><Text style={s.lightText}>{index===splits.length-1&&run.endedAt?'Meta':`Km ${decimal(split.meters/1000,1)}`}</Text><Text style={s.caption}>{difference===null?'Sin comparación fiable':difference===0?'Mismo tiempo':`${decimal(Math.abs(difference)/1000,1)} s ${difference<0?'menos':'más'} en este tramo`}</Text></View><Text style={s.playTime}>{elapsed===null?'—':clock(elapsed)}</Text></View>;
   })}</View>;
 }

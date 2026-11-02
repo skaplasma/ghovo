@@ -1,4 +1,5 @@
 import React,{useMemo,useState} from 'react';
+import {decimal} from './format';
 import {Pressable,Text,View} from 'react-native';
 import {clock,type Run} from './core';
 import {routeFacts} from './results';
@@ -20,7 +21,7 @@ export function RouteInformation({reference,attempts}:{reference:Run;attempts:Ru
       <Text style={s.cardTitle}>Tu historial en esta ruta</Text>
       <View style={s.row}><Item label="Tiempo habitual" value={facts.typical===null?'Sin datos suficientes':clock(facts.typical)}/><Item label="Mejor tiempo guardado" value={facts.best===null?'Sin datos suficientes':clock(facts.best)}/></View>
       <Text style={s.caption}>Tiempo habitual: mediana de {facts.validCount} {facts.validCount===1?'viaje válido':'viajes válidos'}. Incluye paradas. Los viajes con cortes GPS o datos insuficientes quedan fuera del cálculo de tiempos.</Text>
-      <View style={s.row}><Item label="Viajes completados" value={String(facts.count)}/><Item label="Distancia acumulada" value={`${(facts.meters/1000).toFixed(2)} km`}/></View>
+      <View style={s.row}><Item label="Viajes completados" value={String(facts.count)}/><Item label="Distancia acumulada" value={`${decimal(facts.meters/1000,2)} km`}/></View>
       <Text style={s.caption}>La distancia suma los trazados registrados; puede ser incompleta si hubo cortes.</Text>
       <Item label="Primer viaje guardado" value={date(facts.first)}/><Item label="Última salida guardada" value={date(facts.latest)}/>
       <Item label="Modo de esta ruta" value={modeLabel(reference.mode)}/>

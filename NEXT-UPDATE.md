@@ -1,3 +1,30 @@
+## Coma decimal, errores legibles, pausa real y biblioteca normalizada — 03/11/2026 (0.1.23)
+
+Seis mejoras sobre la versión probada en el POCO.
+
+- **Coma decimal**: `src/format.ts` añade `decimal(valor, dígitos)`, que usa `.toFixed()` y sustituye el punto por coma. Aplicado en Inicio, actividad, resultados, grabación (velocidad y diferencia), biblioteca, tarjetas, perfil, análisis premium, simulador y ajustes de controles. Las coordenadas siguen con punto, que es su convención.
+- **Herramientas de prueba fuera de release**: «Herramientas de prueba», «Abrir simulador» y el acceso rápido del inicio quedan detrás de `__DEV__`. En un APK de usuarios ya no aparecen.
+- **Errores legibles**: `src/errors.ts` traduce fallos técnicos (SQLite, espacio, permisos, red) a mensajes en español. Los mensajes que ya escribe la app se muestran tal cual y el texto original solo aparece como «Detalle técnico» en la pantalla de datos ilegibles.
+- **Pausa real de la grabación**: botón «Pausar»/«Reanudar» junto a «Guardar y salir». Mientras dura la pausa no se guardan posiciones y el cronómetro se detiene (`run.pausedAt`). Al reanudar, la línea de tiempo se desplaza lo que duró la pausa —`startedAt`, `circuitStartedAt`, `lastFixAt`, todas las posiciones, el estado de comparación y el aviso— para que la pausa no cuente como tiempo ni deje un hueco de GPS que marque el intento como interrumpido.
+- **Biblioteca normalizada**: el historial deja de ser una sola fila JSON. Cada ruta vive en una fila de la tabla `runs` con una firma barata; al guardar solo se reescriben las rutas que cambiaron y se borran las retiradas, todo en la misma transacción que el resto del estado. La lectura reutiliza los objetos ya interpretados mientras la firma no cambie y devuelve el mismo array cuando nada ha cambiado. Migración automática desde la fila antigua, idempotente, con reintento si falla y conservando la fila original hasta que la copia está hecha. La copia de recuperación sigue guardando el historial completo en el momento del checkpoint.
+- **Cancelar con confirmación**: al cerrar una ruta en curso ahora se pregunta «¿Cancelar la ruta?» con «Seguir grabando» y «Sí, cancelar», en lugar del ambiguo «Cancelar / Guardar y salir» que se podía tocar por accidente al desbloquear el móvil. El recorrido sigue guardándose en pendientes.
+
+Validación: 96 pruebas de lógica y 171 de interfaz, `tsc --noEmit` limpio y `eslint` 0 errores. Las pruebas de almacenamiento comprueban ahora la corrupción sobre la tabla `runs` y la recuperación desde la copia.
+
+## Modo automático más tolerante — 02/11/2026 (0.1.22)
+
+El cierre automático exigía aparcar a menos de 30–150 m del punto B y quedarse quieto dentro de un radio de 5–15 m, así que aparcar en una calle lateral o pasarse de la meta dejaba la ruta abierta. Ahora:
+
+- **Zona de meta** (`destinationRadius`): 15 % de la longitud de la ruta, con un mínimo de 60 m y un máximo de 150 m (antes 20 %, mínimo 30 m).
+- **Haber llegado al final cuenta**: si la proyección alcanza los últimos 30 m del trazado, se acepta el cierre aunque se haya aparcado más allá de B, con un margen lateral de 250 m para absorber el aparcamiento o la calle de al lado.
+- **Parada**: se considera detenido hasta 1,5 m/s (5 km/h), que cubre el ruido del GPS parado y el paso lento al aparcar, y el ancla de estabilidad sube a 8–25 m según la precisión.
+- **Espera**: 3 s en lugar de 5 s.
+- **Entrada a la ruta**: el emparejamiento con el trazado pasa de 30 a 45 m de margen (80 m en la salida), para que el cronómetro arranque al incorporarse aunque la calle sea ancha o el GPS tenga ruido.
+
+Sigue sin cerrarse la ruta si te detienes **antes** de la meta (200 m antes no cuenta) ni por pasar por la zona sin parar; ambas cosas tienen prueba. Añadida: aparcar 200 m después de la meta sí cierra. 96 pruebas de lógica y 171 de interfaz.
+
+Límite conocido: si aparcas en un garaje sin cobertura, dejan de llegar posiciones y el cierre automático no tiene con qué decidir. En ese caso queda el botón «Finalizar ruta».
+
 ## Ajustes tras la primera prueba en el POCO F5 — 02/11/2026 (0.1.21)
 
 Cambios pedidos después de usar la 0.1.19 en el móvil, todos para ganar espacio y quitar cosas que tapaban el mapa.

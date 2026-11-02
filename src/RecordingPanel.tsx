@@ -1,4 +1,5 @@
 import { GpsDiagnostics } from './GpsDiagnostics';
+import {decimal} from './format';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { clock, distance as geoDistance, type Run } from './core';
@@ -40,8 +41,9 @@ export function RecordingPanel({
 }: Props) {
   const [options, setOptions] = useState(false);
   const age = Math.max(0, Math.floor((now - (run.lastFixAt ?? run.points.at(-1)?.timestamp ?? run.startedAt)) / 1000));
+  const paused = !!run.pausedAt;
   const stale = age > 15;
-  const needsAttention = !serviceRunning || stale || !!run.error;
+  const needsAttention = !paused && (!serviceRunning || stale || !!run.error);
   const hadLoss = useRef(false);
   const [recovered, setRecovered] = useState(false);
 
@@ -59,13 +61,15 @@ export function RecordingPanel({
     };
   }, [needsAttention]);
 
-  const title = !serviceRunning
-    ? 'Grabación interrumpida'
-    : stale
-      ? 'Buscando una posición precisa'
-      : run.error
-        ? 'Revisar señal GPS'
-        : 'Grabación activa';
+  const title = paused
+    ? 'Grabación en pausa'
+    : !serviceRunning
+      ? 'Grabación interrumpida'
+      : stale
+        ? 'Buscando una posición precisa'
+        : run.error
+          ? 'Revisar señal GPS'
+          : 'Grabación activa';
 
   // Instant speed calculation from the last 2 GPS fixes
   const points = run.points;
@@ -80,8 +84,8 @@ export function RecordingPanel({
     }
   }
 
-  // Elapsed duration
-  const elapsedMs = Math.max(0, now - (run.circuitStartedAt ?? run.startedAt));
+  // Elapsed duration (el tiempo en pausa no cuenta)
+  const elapsedMs = Math.max(0, now - (run.circuitStartedAt ?? run.startedAt) - (run.pausedAt ? now - run.pausedAt : 0));
 
   // Average speed
   const distNumKm = parseFloat(distance.replace(',', '.'));
@@ -92,14 +96,14 @@ export function RecordingPanel({
   const hasDiff = diff != null;
   const isAhead = hasDiff && diff < -200;
   const isBehind = hasDiff && diff > 200;
-  const diffSeconds = hasDiff ? (Math.abs(diff) / 1000).toFixed(1) : null;
+  const diffSeconds = hasDiff ? decimal(Math.abs(diff) / 1000, 1) : null;
 
   return (
     <>
       {/* Velocímetro circular */}
       <View style={{ alignItems: 'center', paddingVertical: 4 }}>
         <SpeedGauge
-          value={run.mode === 'running' ? (currentSpeedKmh > 0 ? formatPace(currentSpeedKmh) : '—') : currentSpeedKmh.toFixed(0)}
+          value={run.mode === 'running' ? (currentSpeedKmh > 0 ? formatPace(currentSpeedKmh) : '—') : decimal(currentSpeedKmh,0)}
           unit={run.mode === 'running' ? 'min/km' : 'km/h'}
           caption={run.mode === 'running' ? 'Ritmo actual' : 'Velocidad actual'}
           ratio={currentSpeedKmh / MAX_SPEED_KMH[run.mode ?? 'driving']}
@@ -175,7 +179,7 @@ export function RecordingPanel({
           <Text style={s.cockpitMetricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
             {run.mode === 'running'
               ? (avgSpeedKmh > 0 ? formatPace(avgSpeedKmh) : '—')
-              : avgSpeedKmh.toFixed(1)}
+              : decimal(avgSpeedKmh,1)}
           </Text>
         </View>
       </View>

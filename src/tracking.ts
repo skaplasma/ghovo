@@ -17,6 +17,7 @@ export const TASK='ghovo-route-location';
 TaskManager.defineTask<{locations:Location.LocationObject[]}>(TASK,async({data,error})=>{
   await serial(async()=>{
     let run=await active(); if(!run)return;
+    if(run.pausedAt) return;
     if(error){recordGpsEvent('provider');await write('active',{...run,error:error.message});return;}
     const previous=run.referenceId?(await history()).find(r=>r.id===run!.referenceId&&r.routeId===run!.routeId&&r.mode===run!.mode):undefined;
     let newNotice=false;

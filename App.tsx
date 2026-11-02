@@ -33,7 +33,8 @@ import {TravelModePicker} from './src/TravelModePicker';
 import { exportGpx,exportRouteReport } from './src/data-transfer';
 import { appStyles as s, palette } from './src/design';
 import { fonts } from './src/fonts';
-import { date, km } from './src/format';
+import { date, decimal, km } from './src/format';
+import { describeError } from './src/errors';
 import { RouteCard } from './src/RouteCard';
 import { WelcomeScreen } from './src/WelcomeScreen';
 import { AppSplash } from './src/AppSplash';
@@ -247,7 +248,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     return () => listener.remove();
   }, [total, refresh]);
   const points = run?.points ?? reference?.points ?? noPoints;
-  const currentDistance = `${(length(points)/1000).toFixed(2)} km`;
+  const currentDistance = `${decimal(length(points)/1000,2)} km`;
   const liveComparisonAvailable=!!run?.comparison&&!run.comparison.unavailable&&now-run.comparison.lastFixAt<=15000&&serviceRunning&&!run.error;
   const ghost=run?(comparisonReference&&liveComparisonAvailable&&run.circuitStartedAt?ghostAt(comparisonReference,now-run.circuitStartedAt):undefined):replayReference&&showGhost?ghostAt(replayReference,playback):undefined;
   const disabled = busy || !ready;
@@ -265,7 +266,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
   const act=useCallback(async(fn: () => Promise<void> | void)=>{
     if (locked.current) return;
     locked.current = true; setBusy(true);
-    try { await fn(); } catch (e) { const code=e instanceof Error?e.message:String(e);if(['NO_CREDITS','SIGN_IN_REQUIRED','BILLING_RECOVERY_REQUIRED','BILLING_ACCOUNT_MISMATCH','ROUTE_ALREADY_ACTIVE'].includes(code)){router.push('/credits');}else{Alert.alert('GHOVO',code==='BACKEND_NOT_CONFIGURED'?billingError(e):code);} }
+    try { await fn(); } catch (e) { const code=e instanceof Error?e.message:String(e);if(['NO_CREDITS','SIGN_IN_REQUIRED','BILLING_RECOVERY_REQUIRED','BILLING_ACCOUNT_MISMATCH','ROUTE_ALREADY_ACTIVE'].includes(code)){router.push('/credits');}else{Alert.alert('GHOVO',code==='BACKEND_NOT_CONFIGURED'?billingError(e):describeError(e));} }
     finally { await refresh().catch(() => {}); locked.current = false; setBusy(false); }
   },[refresh]);
   function choose(id: string | null) {
@@ -339,10 +340,39 @@ export function AppProvider({children}:{children:React.ReactNode}) {
   async function tryVoice(){if(!(await testVoice()))Alert.alert('Avisos de voz','Android no ha confirmado el inicio de la voz. Prueba el ejemplo en Ajustes del móvil → Texto a voz. Si allí funciona, el fallo está en la app.');}
   async function recover(){await resumeTracking();setPendingRecovery(false);void recoverBilling().catch(()=>{});}
   function discard() {
-    Alert.alert('Conservar recorrido pendiente','Se guardará una copia con todos los puntos para recuperarla desde Inicio. No se borrará el viaje.',[{text:'Cancelar'},{text:'Guardar y salir',onPress:()=>void act(async()=>{
-      await serial(async()=>{const current=await active();if(!current)return;const pending=await read<Run[]>('pendingRecordings',[]);await writeMany({pendingRecordings:[...pending.filter(item=>item.id!==current.id),current],active:null});});
-      void stopTracking().catch(()=>{});void stopVoice();setPendingRecovery(false);goHome();
-    })}]);
+    Alert.alert('¿Cancelar la ruta?','Se detendrá la grabación. El recorrido queda guardado en «Recorridos pendientes» con todos sus puntos y podrás continuarlo desde Inicio.',[
+      {text:'Seguir grabando',style:'cancel'},
+      {text:'Sí, cancelar',style:'destructive',onPress:()=>void act(async()=>{
+        await serial(async()=>{const current=await active();if(!current)return;const pending=await read<Run[]>('pendingRecordings',[]);await writeMany({pendingRecordings:[...pending.filter(item=>item.id!==current.id),current],active:null});});
+        void stopTracking().catch(()=>{});void stopVoice();setPendingRecovery(false);goHome();
+      })},
+    ]);
+  }
+  async function pauseRun(){
+    await serial(async()=>{const current=await active();if(!current||current.pausedAt)return;await writeMany({active:{...current,pausedAt:Date.now()}});});
+  }
+  async function resumeRun(){
+    await serial(async()=>{
+      const current=await active();if(!current?.pausedAt)return;
+      // Desplaza la línea de tiempo de la grabación: la pausa no cuenta como tiempo
+      // ni deja un hueco de GPS entre las posiciones anteriores y las siguientes.
+      const shift=Date.now()-current.pausedAt;
+      const moveAt=(value?:number)=>value===undefined?undefined:value+shift;
+      await writeMany({active:{...current,
+        startedAt:current.startedAt+shift,
+        circuitStartedAt:moveAt(current.circuitStartedAt),
+        lastFixAt:moveAt(current.lastFixAt),
+        pausedAt:undefined,
+        points:current.points.map(point=>({...point,timestamp:point.timestamp+shift})),
+        comparison:current.comparison?{...current.comparison,
+          lastFixAt:current.comparison.lastFixAt+shift,
+          lastMatchedAt:current.comparison.lastMatchedAt+shift,
+          arrivalSince:moveAt(current.comparison.arrivalSince),
+          arrivalAnchor:current.comparison.arrivalAnchor?{...current.comparison.arrivalAnchor,timestamp:current.comparison.arrivalAnchor.timestamp+shift}:undefined,
+        }:current.comparison,
+        notice:current.notice?{...current.notice,createdAt:current.notice.createdAt+shift}:current.notice,
+      }});
+    });
   }
   async function restorePending(id:string){
     await serial(async()=>{if(await active())throw Error('Ya hay un recorrido activo. Guárdalo antes de recuperar otro.');const pending=await read<Run[]>('pendingRecordings',[]),draft=pending.find(item=>item.id===id);if(!draft)throw Error('El recorrido pendiente ya no está disponible.');await writeMany({active:draft,pendingRecordings:pending.filter(item=>item.id!==id)});setSelected(draft.routeId);});
@@ -492,10 +522,10 @@ export function AppProvider({children}:{children:React.ReactNode}) {
               <Ionicons name="person" size={22} color={palette.purpleLight} />
               <Text style={s.quickCardLabel}>Mi cuenta</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Abrir el simulador" onPress={()=>setSimulator(true)} style={s.quickCard}>
+            {__DEV__&&<Pressable accessibilityRole="button" accessibilityLabel="Abrir el simulador" onPress={()=>setSimulator(true)} style={s.quickCard}>
               <Ionicons name="speedometer" size={22} color={palette.purpleLight} />
               <Text style={s.quickCardLabel}>Simulador</Text>
-            </Pressable>
+            </Pressable>}
           </View>
 
           {/* Mi actividad */}
@@ -512,7 +542,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
                 <Text style={s.statLabel}>Rutas</Text>
               </View>
               <View style={s.statBox}>
-                <Text style={s.statValue}>{(activity.meters/1000).toFixed(1)}</Text>
+                <Text style={s.statValue}>{decimal(activity.meters/1000,1)}</Text>
                 <Text style={s.statLabel}>km recorridos</Text>
               </View>
               <View style={s.statBox}>
@@ -527,8 +557,8 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           {[{title:'Favoritas',routes:favoriteRoutes},{title:'Tus rutas habituales',routes:habits}].map(group=>group.routes.length>0&&<View key={group.title} style={{gap:12}}><Text style={s.sectionTitle}>{group.title}</Text>
           {group.routes.map(habit=><View key={habit.reference.routeId} style={[s.card,{flexDirection:'row',alignItems:'center',padding:14,gap:12}]}><View style={{flex:1,gap:5}}><Text style={[s.cardTitle,{fontSize:16}]} numberOfLines={2}>{habit.reference.name}</Text><Text style={s.caption}>{km(habit.reference)} · {habit.attempts.length} {habit.attempts.length===1?'viaje':'viajes'}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Iniciar ${habit.reference.name}`} accessibilityState={{disabled}} disabled={disabled} onPress={()=>startHabit(habit.reference.routeId)} style={[s.button,{minHeight:44,paddingVertical:10,paddingHorizontal:14}]}><Text style={s.buttonText}>Iniciar</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Ver ${habit.reference.name}`} disabled={disabled} onPress={()=>choose(habit.reference.routeId)} style={{minHeight:44,minWidth:32,justifyContent:'center',alignItems:'center'}}><Text style={s.tabSelected}>›</Text></Pressable></View>)}</View>)}
           {!summaries.length&&<MascotMessage title="Tu primera huella" message="Graba de A a B. Tus rutas aparecerán aquí para volver a utilizarlas."/>}
-          <Button label={moreOptions?'Ocultar herramientas de prueba':'Herramientas de prueba'} secondary onPress={()=>setMoreOptions(value=>!value)}/>
-          {moreOptions&&<Button label="Abrir simulador" secondary disabled={disabled} onPress={()=>setSimulator(true)}/>}
+          {__DEV__&&<Button label={moreOptions?'Ocultar herramientas de prueba':'Herramientas de prueba'} secondary onPress={()=>setMoreOptions(value=>!value)}/>}
+          {__DEV__&&moreOptions&&<Button label="Abrir simulador" secondary disabled={disabled} onPress={()=>setSimulator(true)}/>}
         </>
       )}
     </ScrollView>{!run&&navigation}
@@ -577,7 +607,8 @@ export function AppProvider({children}:{children:React.ReactNode}) {
       <ScrollView key={`${section}:${selected??'new'}:${detailTab}`} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
         {!ready && !loadError && <Text style={s.muted}>Cargando tus rutas…</Text>}
         {loadError ? <>
-          <Text style={s.title}>Revisemos tus datos</Text><Text style={s.warning}>{loadError}</Text>
+          <Text style={s.title}>Revisemos tus datos</Text><Text style={s.warning}>{describeError(loadError)}</Text>
+          <Text style={s.caption}>Detalle técnico: {loadError}</Text>
           <Text style={s.muted}>No hemos borrado las rutas. Puedes reintentar la lectura o usar una copia de recuperación.</Text>
           <Button label="Volver a leer datos" disabled={busy} onPress={()=>void act(refresh)}/>
           <DataTools disabled={busy} onChanged={refresh}/>
@@ -637,11 +668,11 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           {!!summaries.length && !visibleRoutes.length && <Text style={s.muted}>{favoritesOnly ? 'No hay favoritas que coincidan. Marca una ruta con la estrella o desactiva este filtro.' : 'No hay rutas con ese nombre. Prueba otra búsqueda.'}</Text>}
           {!summaries.length && <View style={s.card}><MascotMessage title="Tu primera huella empieza aquí" message="Graba un recorrido. Aquí guardarás su trazado y los tiempos de cada salida."/></View>}
           {visibleRoutes.map(summary => <RouteCard key={summary.reference.routeId} summary={summary} favorite={!!routeDetails[summary.reference.routeId]?.favorite} disabled={disabled} onPress={() => choose(summary.reference.routeId)} />)}
-          <Button label={activityOpen?'Ocultar actividad acumulada':`Tu actividad · ${activity.routes} rutas · ${(activity.meters/1000).toFixed(2)} km`} secondary onPress={()=>setActivityOpen(value=>!value)}/>
+          <Button label={activityOpen?'Ocultar actividad acumulada':`Tu actividad · ${activity.routes} rutas · ${decimal(activity.meters/1000,2)} km`} secondary onPress={()=>setActivityOpen(value=>!value)}/>
           {activityOpen&&<>
           <View style={s.card}>
             <Text style={s.cardTitle}>Tu actividad acumulada</Text>
-            <View style={s.metrics}><Metric label="Kilómetros registrados" value={(activity.meters / 1000).toFixed(2)} /><Metric label="Tiempo total" value={`${Math.floor(activity.milliseconds / 3600000)} h ${Math.floor(activity.milliseconds / 60000) % 60} min`} /></View>
+            <View style={s.metrics}><Metric label="Kilómetros registrados" value={decimal(activity.meters / 1000,2)} /><Metric label="Tiempo total" value={`${Math.floor(activity.milliseconds / 3600000)} h ${Math.floor(activity.milliseconds / 60000) % 60} min`} /></View>
             <Text style={s.caption}>{activity.routes} rutas · {activity.attempts} intentos completados · {activity.days} días con actividad</Text>
             <Text style={s.caption}>Incluye todas las repeticiones guardadas y las paradas durante cada intento.</Text>
           </View>
@@ -655,8 +686,8 @@ export function AppProvider({children}:{children:React.ReactNode}) {
             {result.run.notice?.kind==='arrival'&&<Text accessibilityLiveRegion="polite" style={s.tabSelected}>{result.run.notice.message}</Text>}
             <Text style={s.muted}>{result.run.name} · {date(result.run)}</Text>
             {(result.run.gpsGaps??recordingQuality(result.run.points).gaps)>0 && <Text style={s.warning}>Este registro contiene {result.run.gpsGaps??recordingQuality(result.run.points).gaps} interrupciones GPS de más de 30 segundos. La distancia y el trazado pueden ser incompletos.</Text>}
-            <View style={s.metrics}><Metric label="Distancia registrada" value={`${(result.distance / 1000).toFixed(2)} km`} /><Metric label="Duración" value={clock(result.time)} /></View>
-            {result.run.incomplete?<Text style={s.muted}>El recorrido está guardado. La llegada o el recorrido A→B completo no se han confirmado; no se compara el tiempo final ni sustituye tu referencia.</Text>:result.status==='incomplete'?<Text style={s.muted}>La ruta está guardada, pero los cortes GPS no permiten una comparación fiable.</Text>:result.difference!==null?<Text style={s.muted}>{result.difference===0?'Llegaste en el mismo tiempo que tu referencia.':`Llegaste ${(Math.abs(result.difference)/1000).toFixed(1)} s ${result.difference<0?'antes':'más tarde'} que la referencia elegida (${clock(duration((result.comparisonReference??result.previousBest)!))}, ${date((result.comparisonReference??result.previousBest)!)}).`}</Text>:<Text style={s.muted}>Primera ruta en este modo. Será la referencia para tus próximos viajes.</Text>}
+            <View style={s.metrics}><Metric label="Distancia registrada" value={`${decimal(result.distance / 1000,2)} km`} /><Metric label="Duración" value={clock(result.time)} /></View>
+            {result.run.incomplete?<Text style={s.muted}>El recorrido está guardado. La llegada o el recorrido A→B completo no se han confirmado; no se compara el tiempo final ni sustituye tu referencia.</Text>:result.status==='incomplete'?<Text style={s.muted}>La ruta está guardada, pero los cortes GPS no permiten una comparación fiable.</Text>:result.difference!==null?<Text style={s.muted}>{result.difference===0?'Llegaste en el mismo tiempo que tu referencia.':`Llegaste ${decimal(Math.abs(result.difference)/1000,1)} s ${result.difference<0?'antes':'más tarde'} que la referencia elegida (${clock(duration((result.comparisonReference??result.previousBest)!))}, ${date((result.comparisonReference??result.previousBest)!)}).`}</Text>:<Text style={s.muted}>Primera ruta en este modo. Será la referencia para tus próximos viajes.</Text>}
 
             <TripDetails run={result.run}/>
             <SplitSummary run={result.run}/>
@@ -729,7 +760,29 @@ export function AppProvider({children}:{children:React.ReactNode}) {
       </ScrollView>
     </View>
     {!loadError&&<View style={s.actionDock}>
-      {run&&<View style={{flexDirection:'row',alignItems:'center',justifyContent:'flex-end',paddingBottom:4}}>
+      {run&&<View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:10,paddingBottom:4}}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={run.pausedAt?'Reanudar grabación':'Pausar grabación'}
+          accessibilityHint="La pausa detiene el registro de posiciones sin cerrar la ruta"
+          onPress={()=>void act(run.pausedAt?resumeRun:pauseRun)}
+          style={{
+            minHeight: 44,
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            borderRadius: 22,
+            backgroundColor: run.pausedAt?'#352163':'#211B3C',
+            borderWidth: 1.5,
+            borderColor: run.pausedAt?'#8B5CF6':'#332959',
+            flexDirection: 'row',
+            gap: 8,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Ionicons name={run.pausedAt?'play':'pause'} size={15} color={run.pausedAt?'#FFFFFF':'#B9AEF5'} />
+          <Text style={{ color: run.pausedAt?'#FFFFFF':'#E7E2FF', fontSize: 13, fontFamily: fonts.semibold }}>{run.pausedAt?'Reanudar':'Pausar'}</Text>
+        </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Guardar el recorrido para continuarlo más tarde"
@@ -750,7 +803,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           }}
         >
           <Text style={{ fontSize: 16 }}>💾</Text>
-          <Text style={{ color: '#E7E2FF', fontSize: 13, fontWeight: '700' }}>Guardar y salir</Text>
+          <Text style={{ color: '#E7E2FF', fontSize: 13, fontFamily: fonts.semibold }}>Guardar y salir</Text>
         </Pressable>
       </View>}
       {!run&&!result&&section==='route'&&(!selected||!routeMode)&&<TravelModePicker value={travelMode} onChange={setTravelMode} disabled={disabled}/>}

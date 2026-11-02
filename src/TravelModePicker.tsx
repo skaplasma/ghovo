@@ -1,7 +1,6 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import type { TravelMode } from './core';
-import { appStyles as s } from './design';
 
 const MODES: readonly { mode: TravelMode; label: string; icon: string; title: string }[] = [
   { mode: 'driving', label: 'En coche', icon: '🚗', title: 'Coche' },

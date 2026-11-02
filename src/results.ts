@@ -34,7 +34,7 @@ export function resultFor(run: Run, history: Run[]) {
   return { run, distance: length(run.points), time: duration(run), previousBest: best, comparisonReference, difference,
     status: !isComparable(run) ? 'incomplete' : bestDifference === null ? 'first' : bestDifference < 0 ? 'record' : bestDifference === 0 ? 'tie' : 'completed' };
 }
-export type RouteOrder = 'recent' | 'name' | 'distance';
+export type RouteOrder = 'recent' | 'name' | 'distance' | 'best';
 export type RouteDetails = Record<string, { favorite: boolean; note: string; checkpointKm?:CheckpointInterval|null; referenceChoice?:string; autoFinish?:boolean;voiceEnabled?:boolean }>;
 export function activityTotals(runs: Run[]) {
   const completed = runs.filter(r => r.endedAt !== undefined);
@@ -46,12 +46,15 @@ export function activityTotals(runs: Run[]) {
     days: new Set(completed.map(r => { const d = new Date(r.startedAt); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; })).size,
   };
 }
-export function filterRoutes<T extends { reference: Run; latest: Run }>(routes: T[], query: string, order: RouteOrder): T[] {
+export function filterRoutes<T extends { reference: Run; latest: Run; best?: Run }>(routes: T[], query: string, order: RouteOrder): T[] {
   const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es');
   const needle = normalize(query.trim());
+  // 'best' ordena por el mejor tiempo comparable; las rutas sin referencia válida van al final.
+  const bestTime = (route: T) => (route.best && isComparable(route.best) ? duration(route.best) : Number.MAX_SAFE_INTEGER);
   return routes.filter(r => normalize(r.reference.name).includes(needle)).sort((a, b) =>
     order === 'name' ? a.reference.name.localeCompare(b.reference.name, 'es') :
     order === 'distance' ? length(b.reference.points) - length(a.reference.points) :
+    order === 'best' ? bestTime(a) - bestTime(b) :
     b.latest.startedAt - a.latest.startedAt);
 }
 

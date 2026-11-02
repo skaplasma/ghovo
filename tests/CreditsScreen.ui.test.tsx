@@ -1,7 +1,7 @@
-jest.mock('../src/account-client',()=>{const state={status:'unavailable',user:null,recovery:false};return {accountConfigured:false,accountSnapshot:()=>state,subscribeAccount:()=>()=>{},initializeAccounts:jest.fn(async()=>{}),refreshAccount:jest.fn(async()=>{}),accountError:()=> 'No disponible'};});
 import React from 'react';
 import {render,screen,userEvent} from '@testing-library/react-native';
 import {CreditsScreen} from '../src/CreditsScreen';
+jest.mock('../src/account-client',()=>{const state={status:'unavailable',user:null,recovery:false};return {accountConfigured:false,accountSnapshot:()=>state,subscribeAccount:()=>()=>{},initializeAccounts:jest.fn(async()=>{}),refreshAccount:jest.fn(async()=>{}),accountError:()=> 'No disponible'};});
 jest.mock('../src/monetization-api',()=>({monetizationConfigured:false,monetizationEnforced:false,billingSignedIn:()=>false,billingError:()=> 'Error'}));
 jest.mock('../src/monetized-tracking',()=>({pendingBilling:jest.fn(),recoverBilling:jest.fn()}));
 test('local preparation never shows invented balance or enables unconfigured ads',async()=>{

@@ -1,6 +1,6 @@
 import React from 'react';import {render,screen,userEvent} from '@testing-library/react-native';
 import {AccountPanel} from '../src/AccountPanel';
-import {loginAccount,loginWithGoogle,loginDevAccount,registerAccount,requestRecovery,resendConfirmation,changeRecoveredPassword} from '../src/account-client';
+import {loginAccount,loginWithGoogle,registerAccount,requestRecovery,resendConfirmation,changeRecoveredPassword} from '../src/account-client';
 let mockState={status:'signedOut',user:null as null|{id:string;email:string},recovery:false};
 jest.mock('../src/account-client',()=>({accountConfigured:true,accountSnapshot:()=>mockState,subscribeAccount:()=>()=>{},initializeAccounts:jest.fn(async()=>{}),loginWithGoogle:jest.fn(async()=>{}),loginDevAccount:jest.fn(async()=>{}),loginAccount:jest.fn(async()=>{}),registerAccount:jest.fn(async()=>{}),requestRecovery:jest.fn(async()=>{}),resendConfirmation:jest.fn(async()=>{}),changeRecoveredPassword:jest.fn(async()=>{}),logoutAccount:jest.fn(async()=>{}),refreshAccount:jest.fn(async()=>{}),accountError:()=> 'No se pudo completar la operación.'}));
 beforeEach(()=>{mockState={status:'signedOut',user:null,recovery:false};});

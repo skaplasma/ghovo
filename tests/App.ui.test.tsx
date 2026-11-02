@@ -1,5 +1,3 @@
-jest.mock('../src/account-client',()=>{const state={status:'unavailable',user:null,recovery:false};return {accountConfigured:false,accountSnapshot:()=>state,subscribeAccount:()=>()=>{},initializeAccounts:jest.fn(async()=>{}),refreshAccount:jest.fn(async()=>{}),accountError:()=> 'No disponible'};});
-jest.mock('../src/speech',()=>({speakNotice:jest.fn(async()=>true),stopVoice:jest.fn(async()=>{}),testVoice:jest.fn(async()=>true)}));
 import React from 'react';
 import { Alert, AppState, type AppStateStatus } from 'react-native';
 import { act, render, screen, userEvent, waitFor } from '@testing-library/react-native';
@@ -8,6 +6,8 @@ import App from '../App';
 import type { Run } from '../src/core';
 import {startTracking,stopTracking} from '../src/tracking';
 import {exportRouteReport} from '../src/data-transfer';
+jest.mock('../src/account-client',()=>{const state={status:'unavailable',user:null,recovery:false};return {accountConfigured:false,accountSnapshot:()=>state,subscribeAccount:()=>()=>{},initializeAccounts:jest.fn(async()=>{}),refreshAccount:jest.fn(async()=>{}),accountError:()=> 'No disponible'};});
+jest.mock('../src/speech',()=>({speakNotice:jest.fn(async()=>true),stopVoice:jest.fn(async()=>{}),testVoice:jest.fn(async()=>true)}));
 
 
 let mockGpsReady=true;
@@ -430,7 +430,7 @@ test('saved route details give options the full space and show the map only on r
 test('GPS status can always be opened from Home without a GPS fix',async()=>{
   mockGpsReady=false;
   await render(<App/>);await act(async()=>{await jest.advanceTimersByTimeAsync(1);});
-  await userEvent.setup().press(screen.getByRole('button',{name:/Tu ubicación:/}));
+  await userEvent.setup().press(screen.getByRole('button',{name:/Consultar señal GPS/}));
   expect(screen.getByText('Estado del GPS')).toBeOnTheScreen();
   expect(screen.getByRole('button',{name:'Reintentar ubicación'})).toBeEnabled();
   expect(screen.getByRole('button',{name:'Ver diagnóstico GPS'})).toBeEnabled();
@@ -442,5 +442,5 @@ test('Credits navigation is available without changing saved routes or starting 
   const original=structuredClone(mockState.history),user=userEvent.setup();await user.press(screen.getByRole('tab',{name:'Cuenta'}));
   expect(screen.getByText('Saldo sin verificar')).toBeOnTheScreen();expect(screen.getByRole('tab',{name:'Cuenta'})).toBeSelected();
   await user.press(screen.getByRole('button',{name:'Pasar a Premium'}));expect(screen.getByText('Precio previsto: 4,99 €')).toBeOnTheScreen();
-  await user.press(screen.getByRole('button',{name:'← Inicio'}));expect(screen.getByRole('button',{name:'Nueva ruta'})).toBeOnTheScreen();expect(mockState.history).toEqual(original);
+  await user.press(screen.getByRole('button',{name:'Volver a Inicio'}));expect(screen.getByRole('button',{name:'Nueva ruta'})).toBeOnTheScreen();expect(mockState.history).toEqual(original);
 });

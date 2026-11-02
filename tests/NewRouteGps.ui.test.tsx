@@ -1,13 +1,13 @@
-jest.mock('../src/speech',()=>({speakNotice:jest.fn(async()=>true),stopVoice:jest.fn(async()=>{}),testVoice:jest.fn(async()=>true)}));
 import React from 'react';
 import {Alert,AppState,type AppStateStatus} from 'react-native';
 import { act, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 
 import App from '../App';
 import RootLayout from '../src/app/_layout';
-jest.mock('react-native-safe-area-context',()=>({SafeAreaView:require('react-native').View}));
 import * as Location from 'expo-location';
 import {startTracking} from '../src/tracking';
+jest.mock('../src/speech',()=>({speakNotice:jest.fn(async()=>true),stopVoice:jest.fn(async()=>{}),testVoice:jest.fn(async()=>true)}));
+jest.mock('react-native-safe-area-context',()=>({SafeAreaView:require('react-native').View}));
 
 
 

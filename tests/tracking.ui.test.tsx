@@ -1,10 +1,10 @@
 import {speakNotice} from '../src/speech';
-jest.mock('../src/speech',()=>({speakNotice:jest.fn(async()=>true),stopVoice:jest.fn(async()=>{}),testVoice:jest.fn(async()=>true)}));
 import {writeMany} from '../src/storage';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { ensureTracking, getFreshFix, startTracking, resumeTracking, recoverTracking } from '../src/tracking';
 import type { Run } from '../src/core';
+jest.mock('../src/speech',()=>({speakNotice:jest.fn(async()=>true),stopVoice:jest.fn(async()=>{}),testVoice:jest.fn(async()=>true)}));
 let mockActive:Run|null;
 let mockHistory:Run[]=[];
 let mockResult:string|null=null;

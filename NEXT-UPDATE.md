@@ -1,3 +1,45 @@
+## Rediseño visual según el mockup — 02/11/2026 (sin APK)
+
+Primera pasada del diseño neón morado sobre las pantallas existentes, con la composición del mockup y no solo la paleta, que ya coincidía.
+
+- **Tipografía propia**: Poppins (Regular, Medium, SemiBold, Bold, ExtraBold) en `assets/fonts`, cargada en `src/app/_layout.tsx` con `useFonts` de `expo-font`. Cada peso se registra como familia independiente (`src/fonts.ts`): en Android, combinar `fontFamily` con un `fontWeight` que la familia no contiene devuelve la tipografía del sistema, así que los estilos usan solo la familia. En pruebas no se cargan los binarios (el registro de assets de Jest no los resuelve).
+- **Iconografía**: `@expo/vector-icons` (Ionicons) sustituye a los emojis en la barra inferior y en los accesos del inicio. Los tests usan un sustituto por `Text` mediante `moduleNameMapper` en `jest.config.js`; sin él, el registro de assets de Jest falla con «Module 1 is missing from the asset registry».
+- **Inicio**: cabecera con el fantasma y un único botón de estado del GPS, saludo grande, tarjeta de ubicación compacta de una fila con estado en verde/ámbar, mapa, botón de deslizar para empezar, tres accesos rápidos (Mis rutas, Mi cuenta, Simulador) y la tarjeta de actividad con las tres cifras.
+- **Navegación**: barra inferior de tres pestañas con iconos de línea y píldora activa. Se mantiene la decisión de no mostrar «Desafíos» ni «Eventos» mientras no existan como pantallas reales, aunque el mockup las dibuje: llevaban a una ruta sin pantalla.
+- `CurrentLocation` (nombre del lugar por geocodificación inversa) se ha movido a la pantalla de estado del GPS, donde tiene espacio; en el inicio competía con el estado y se cortaba a 393 px.
+
+Se añade `react-native-svg` para el indicador circular de la pantalla de ruta, pendiente en la siguiente pasada. Ese paquete y `@expo/vector-icons` obligan a compilar una APK nueva: no bastan los cambios de JavaScript.
+
+Velocímetro (`src/SpeedGauge.tsx`): arco de 270° con degradado morado→rosa, halo tenue, cifra grande y unidad, colocado en la pantalla de grabación en lugar del número plano. El arco es solo escala visual: se llena según la velocidad instantánea respecto a un máximo orientativo por modo (130 km/h coche, 55 bici, 20 correr, 9 andar) y no limita ni filtra la grabación. En modo correr muestra el ritmo en min/km con la misma escala interna. Revisado a 393×851 con una ruta ficticia en una pantalla temporal, ya eliminada del árbol.
+
+Perfil (`src/CreditsScreen.tsx`): la pantalla deja de ser solo el monedero. Cabecera con avatar (el fantasma), nombre de la cuenta y tres cifras reales —rutas, kilómetros recorridos y favoritas—, más un menú de tres filas: Premium, Ajustes de la app (abre los ajustes del sistema) y Ayuda (explica la grabación en segundo plano y dónde están las copias). Debajo se conservan el panel de cuenta, los créditos, el anuncio recompensado y el libro de movimientos, con sus textos y validaciones intactos. El distintivo «Miembro Premium» solo aparece cuando el servidor devuelve `premium: true`; si no, se indica «Cuenta gratuita» o «Sin sesión iniciada». La prueba de navegación pulsa ahora el botón «Volver a Inicio» (antes «← Inicio»), que pasó a ser un icono.
+
+Tarjetas de ruta (`src/RouteCard.tsx`): la tarjeta de la biblioteca pasa a un componente propio con la composición del mockup —miniatura esquemática del trazado, modo, corazón de favorita, nombre, fecha, distancia y número de salidas, y el mejor tiempo con trofeo—, sin el pie duplicado que repetía el tiempo. Los emojis de corazón y corona se sustituyen por iconos. `km` y `date` se mueven a `src/format.ts` para compartirlos.
+
+El chip «Récords» de la biblioteca ordenaba por **distancia**, no por récords: ahora usa una ordenación real por mejor tiempo (`order: 'best'` en `src/results.ts`), con las rutas sin referencia comparable al final.
+
+Portada de bienvenida (`src/WelcomeScreen.tsx`): sustituye a la antigua pantalla «Acceso a GHOVO». Cielo con degradado, halo suave, estrellas y dos crestas de montaña dibujadas con SVG; fantasma, nombre GHOVO y lema «Rutas, récords y mucho más»; fila con los cuatro modos reales (andar, correr, bici, coche); botón «Comenzar» que abre el formulario de acceso en la propia app, botón «Iniciar sesión con Google» que usa el flujo nativo y un acceso provisional «Entrar sin registrarse» que entra sin cuenta.
+
+Ese acceso sin cuenta es una bandera en memoria (`guestAccess`), no se guarda en disco y desaparece al reiniciar: está marcado como provisional en la propia interfaz y debe retirarse antes de publicar. El muro de acceso solo se salta con esa bandera.
+
+Se elimina de `AccountPanel` la chapa «👑 Miembro Premium» que se mostraba a **cualquier** cuenta con sesión: el estado Premium solo lo conoce el servidor y ya se muestra en Perfil. El botón «⚡ Acceso rápido (Dev Local)» queda detrás de `__DEV__` para que no exista en compilaciones de release.
+
+Pruebas nuevas en `tests/Welcome.ui.test.tsx`: la portada abre el acceso y el modo invitado, y un fallo de Google mantiene al usuario en la portada con un mensaje. Total: 171 pruebas de interfaz y 95 de lógica.
+
+Validación: 169 pruebas de interfaz y 95 de lógica correctas, `tsc --noEmit` limpio y `eslint` 0 errores. Revisado a 393×851 mediante el inspector web (`tools/preview.mjs`), que mide desbordamiento horizontal y captura pantalla.
+
+## Correcciones locales sobre 0.1.18 — saneamiento, 01/11/2026 (sin APK)
+
+Revisión del árbol publicado como 0.1.18: `tsc --noEmit` fallaba (App.tsx, `act()` recibía `discard`, que devuelve `void`) y `expo lint` acumulaba 7 errores. Ambos quedan en cero: el helper `act()` acepta ahora `() => Promise<void> | void`; las cinco memorizaciones que bloqueaban `react-hooks/preserve-manual-memoization` se sustituyen por cálculo directo (React 19 las vuelve a memorizar cuando se active el compilador) y `RouteNameField` recibe el nombre inicial como función perezosa, sin leer una referencia durante el render.
+
+Interfaz: el dock de grabación tenía dos acciones engañosas. El botón «Pausar grabación» llamaba a `discard()` y terminaba la sesión; el botón 📷 «Añadir hito» solo mostraba un aviso sin guardar nada. Ahora el dock expone una única acción explícita, «Guardar y salir», y la finalización sigue en el botón principal. Las pestañas «Desafíos» y «Eventos» y sus accesos en Inicio se retiran de la barra: no existían como rutas de Expo Router (`/challenges`, `/events`), el contenido era una maqueta que solo llevaba a Mis rutas y su única función realizable era mostrar una ruta sin pantalla. Siguen en la hoja de ruta para cuando tengan implementación y datos.
+
+Configuración: se elimina `app.json`, que duplicaba los identificadores de AdMob ya declarados como propiedades del plugin en `app.config.ts`.
+
+Tarjeta de ubicación de Inicio: contenía un pulsable dentro de otro (el botón «Consultar señal GPS» envolvía a `CurrentLocation`, también pulsable), lo que producía un `<button>` anidado, dos acciones superpuestas y texto cortado a 393 px. Ahora la tarjeta es el único destino táctil y `CurrentLocation` admite renderizarse sin interacción (`interactive={false}`) y sin la segunda línea de detalle. La prueba de interfaz que abría el estado del GPS pulsa la tarjeta en lugar del texto interno.
+
+Validación: 95 pruebas de lógica y 169 de interfaz correctas, `tsc --noEmit` sin errores, `eslint` 0 errores y 16 avisos (todos `require()` deliberados en los mocks de pruebas), exportación Android del bundle JavaScript correcta. La generación de bytecode Hermes no se pudo comprobar en este entorno (el sandbox impide lanzar `hermesc`), así que queda pendiente la comprobación habitual antes de compilar. Sin cambios en adquisición GPS, esquema de datos ni permisos nativos.
+
 ## 0.1.15 (16) — Sistema de anuncios bonificados (Rewarded Ads) AdMob y créditos, 01/11/2026
 
 Implementación del flujo de monetización voluntario basado en anuncios bonificados (Rewarded Video Ads): 1 anuncio visto completo = +1 crédito en la cuenta para gastar en rutas dentro de la app.

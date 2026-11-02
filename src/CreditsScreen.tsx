@@ -1,6 +1,8 @@
 import React,{useCallback,useEffect,useRef,useState} from 'react';
-import {Pressable,ScrollView,Text,View} from 'react-native';
-import {appStyles as s} from './design';
+import {Alert,Image,Linking,Pressable,ScrollView,Text,View} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {appStyles as s,palette} from './design';
+import {fonts} from './fonts';
 import {AccountPanel,useAccount} from './AccountPanel';
 import {refreshAccount,logoutAccount} from './account-client';
 import {billingRequest,billingError,monetizationEnforced,claimAdReward,type WalletSnapshot} from './monetization-api';
@@ -9,8 +11,15 @@ import {useRewardedAd} from './ads';
 
 function Action({label,onPress,disabled=false}:{label:string;onPress:()=>void;disabled?:boolean}){return <Pressable accessibilityRole="button" accessibilityState={{disabled}} disabled={disabled} onPress={onPress} style={[s.button,s.secondary,{opacity:disabled?0.45:1}]}><Text style={s.lightText}>{label}</Text></Pressable>;}
 type Entry={id:string;kind:'initial'|'reward'|'route';delta:number;created_at:string};
+export type ProfileStats={routes:number;km:number;favorites:number};
 
-export function CreditsScreen({premiumPage,active,onHome,onPremium}:{premiumPage:boolean;active:boolean;onHome:()=>void;onPremium:()=>void}){
+const MENU=[
+  {key:'premium',icon:'star-outline',label:'Premium',hint:'Rutas ilimitadas, sin créditos ni anuncios'},
+  {key:'settings',icon:'options-outline',label:'Ajustes de la app',hint:'Permisos, ubicación y batería'},
+  {key:'help',icon:'help-circle-outline',label:'Ayuda',hint:'Pantalla bloqueada, GPS y copias'},
+] as const;
+
+export function CreditsScreen({premiumPage,active,onHome,onPremium,stats={routes:0,km:0,favorites:0}}:{premiumPage:boolean;active:boolean;onHome:()=>void;onPremium:()=>void;stats?:ProfileStats}){
  const account=useAccount(),mounted=useRef(true),requestId=useRef(0);
  const owner=account.user?.id;
  const [wallet,setWallet]=useState<WalletSnapshot>(),[entries,setEntries]=useState<Entry[]>([]),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[pending,setPending]=useState(false);
@@ -52,9 +61,58 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium}:{premiumPage
   });
  };
 
+ const displayName=account.user?.email?account.user.email.split('@')[0]:'Invitado';
+ const menuHint={premium:currentWallet?.premium?'Activo en tu cuenta':'Rutas ilimitadas de por vida',settings:'Permisos, ubicación y batería',help:'Pantalla bloqueada, GPS y copias'};
+
+ function openMenu(key:(typeof MENU)[number]['key']){
+  if(key==='premium'){onPremium();return;}
+  if(key==='settings'){void Linking.openSettings().catch(()=>{});return;}
+  Alert.alert('Ayuda de GHOVO','Para grabar con la pantalla bloqueada, GHOVO necesita ubicación precisa y en segundo plano. En Xiaomi/POCO revisa también el ahorro de batería y «iniciar automáticamente». Las copias se guardan en «Mis rutas → Copias y opciones».',[{text:'Entendido'}]);
+ }
+
  return <View style={{flex:1}}>
-  <View style={s.header}><Action label="← Inicio" onPress={onHome}/><Text style={s.cardTitle}>{premiumPage?'GHOVO Premium':'Tu cuenta'}</Text></View>
+  <View style={s.header}>
+   <Pressable accessibilityRole="button" accessibilityLabel="Volver a Inicio" onPress={onHome} style={{width:42,height:42,borderRadius:21,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
+    <Ionicons name="arrow-back" size={20} color="#FFFFFF"/>
+   </Pressable>
+   <Text style={s.cardTitle}>{premiumPage?'GHOVO Premium':'Perfil'}</Text>
+  </View>
   <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
+   {!premiumPage&&<View style={{flexDirection:'row',alignItems:'center',gap:14}}>
+    <View style={{width:72,height:72,borderRadius:36,backgroundColor:'#2A1F4D',borderWidth:2,borderColor:'#6A0DAD',alignItems:'center',justifyContent:'center'}}>
+     <Image source={require('../assets/ghovo-mascot-2d-v1.png')} style={{width:62,height:62}} resizeMode="contain" accessible={false}/>
+    </View>
+    <View style={{flex:1,gap:3}}>
+     <Text style={[s.heroTitle,{fontSize:24,lineHeight:30}]} numberOfLines={1}>{displayName}</Text>
+     {currentWallet?.premium
+      ? <View style={{flexDirection:'row',alignItems:'center',gap:5,alignSelf:'flex-start',paddingHorizontal:10,paddingVertical:4,borderRadius:10,backgroundColor:'#3A2A12',borderWidth:1,borderColor:'#7A5A1E'}}>
+         <Ionicons name="star" size={12} color={palette.yellowGold}/>
+         <Text style={{fontFamily:fonts.semibold,fontSize:11,color:palette.yellowGold}}>Miembro Premium</Text>
+        </View>
+      : <Text style={s.caption}>{account.user?'Cuenta gratuita':'Sin sesión iniciada'}</Text>}
+    </View>
+   </View>}
+
+   {!premiumPage&&<View style={{flexDirection:'row',gap:10}}>
+    <View style={s.statBox}><Text style={s.statValue}>{stats.routes}</Text><Text style={s.statLabel}>Rutas</Text></View>
+    <View style={s.statBox}><Text style={s.statValue}>{stats.km.toFixed(1)}</Text><Text style={s.statLabel}>km recorridos</Text></View>
+    <View style={s.statBox}><Text style={s.statValue}>{stats.favorites}</Text><Text style={s.statLabel}>Favoritas</Text></View>
+   </View>}
+
+   {!premiumPage&&<View style={{backgroundColor:'#15112D',borderRadius:20,borderWidth:1,borderColor:'#241C40',paddingHorizontal:16}}>
+    {MENU.map((item,index)=>
+     <Pressable key={item.key} accessibilityRole="button" accessibilityLabel={item.label} onPress={()=>openMenu(item.key)} style={{flexDirection:'row',alignItems:'center',gap:12,paddingVertical:14,borderBottomWidth:index===MENU.length-1?0:1,borderBottomColor:'#241C40',minHeight:56}}>
+      <View style={{width:38,height:38,borderRadius:19,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
+       <Ionicons name={item.icon} size={19} color={palette.purpleLight}/>
+      </View>
+      <View style={{flex:1,gap:1}}>
+       <Text style={{fontFamily:fonts.semibold,color:'#FFFFFF',fontSize:14}}>{item.label}</Text>
+       <Text style={s.caption} numberOfLines={1}>{menuHint[item.key]}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color="#6E6690"/>
+     </Pressable>)}
+   </View>}
+
    {(!premiumPage||!account.user)&&<AccountPanel active={active}/>}
    {!monetizationEnforced&&<Text style={s.caption}>Monetización sin activar: esta versión de pruebas mantiene los recorridos disponibles.</Text>}
    {!premiumPage&&<View style={s.card}>

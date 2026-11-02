@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Checkpoint } from './checkpoints';
 import { type Point } from './core';
@@ -61,13 +61,13 @@ export function RouteMap({
     };
   }, [allPoints]);
 
-  const project = (p: Point, width = 360, height = 220) => {
+  const project = useCallback((p: Point, width = 360, height = 220) => {
     const x = ((p.longitude - minLng) / Math.max(maxLng - minLng, 0.0001)) * width;
     const y = ((maxLat - p.latitude) / Math.max(maxLat - minLat, 0.0001)) * height;
     return { x: Math.max(10, Math.min(width - 10, x)), y: Math.max(10, Math.min(height - 10, y)) };
-  };
+  }, [minLat, maxLat, minLng, maxLng]);
 
-  const pointsToPath = (pts: Point[], w = 360, h = 220) => {
+  const pointsToPath = useCallback((pts: Point[], w = 360, h = 220) => {
     if (!pts.length) return '';
     return pts
       .map((p, i) => {
@@ -75,12 +75,12 @@ export function RouteMap({
         return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
       })
       .join(' ');
-  };
+  }, [project]);
 
-  const recordingPath = useMemo(() => pointsToPath(points), [points, minLat, maxLat, minLng, maxLng]);
+  const recordingPath = useMemo(() => pointsToPath(points), [points, pointsToPath]);
   const referencePath = useMemo(
     () => (reference ? pointsToPath(reference) : ''),
-    [reference, minLat, maxLat, minLng, maxLng]
+    [reference, pointsToPath]
   );
 
   return (

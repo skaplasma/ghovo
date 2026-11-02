@@ -1,24 +1,25 @@
 import {CreditsScreen} from './src/CreditsScreen';
 import {AccountPanel, useAccount} from './src/AccountPanel';
 import {accountConfigured} from './src/account-client';
-import {modeLabel} from './src/TripDetails';
+import {modeLabel,TripDetails} from './src/TripDetails';
 import {startMonetizedTracking,settleMonetizedTracking,recoverBilling} from './src/monetized-tracking';
 import {billingError} from './src/monetization-api';
-import {TripDetails} from './src/TripDetails';
+
 import {PremiumInsights} from './src/PremiumInsights';
 import {RouteInformation} from './src/RouteInformation';
 import {CurrentLocation} from './src/CurrentLocation';
 import {GpsDiagnostics} from './src/GpsDiagnostics';
 import {completeRun} from './src/completion';
-import {routeEntry,referenceForRun} from './src/route-entry';
+import {referenceForRun} from './src/route-entry';
 import {speakNotice,stopVoice,testVoice} from './src/speech';
 import {ReferenceSettings,SplitSummary} from './src/ReferenceSettings';
-import {selectReference,courseModel} from './src/comparison';
+import {selectReference} from './src/comparison';
 import {checkpointsFor,type CheckpointInterval} from './src/checkpoints';
 import {CheckpointSettings} from './src/CheckpointSettings';
 import React, { memo, createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, AppState, Image, Linking, Pressable, ScrollView, Keyboard, Text, TextInput, View } from 'react-native';
 import {router,usePathname} from 'expo-router';
+import {Ionicons} from '@expo/vector-icons';
 import {useGpsPreparation} from './src/useGpsPreparation';
 import { StatusBar } from 'expo-status-bar';
 import { RouteMap } from './src/RouteMap';
@@ -26,11 +27,15 @@ import { DataTools } from './src/DataTools';
 import {Simulator} from './src/Simulator';
 import {RecordingAwake} from './src/RecordingAwake';
 import {RecordingPanel} from './src/RecordingPanel';
-import {RouteThumbnail, MascotMessage} from './src/RouteVisuals';
+import {MascotMessage} from './src/RouteVisuals';
 import {TravelModePicker} from './src/TravelModePicker';
 import { exportGpx,exportRouteReport } from './src/data-transfer';
 import { appStyles as s, palette } from './src/design';
-import { accepts,type Point, type Run, type TravelMode, clock, duration, ghostAt, isComparable, length, recordingQuality } from './src/core';
+import { fonts } from './src/fonts';
+import { date, km } from './src/format';
+import { RouteCard } from './src/RouteCard';
+import { WelcomeScreen } from './src/WelcomeScreen';
+import { type Point, type Run, type TravelMode, clock, duration, ghostAt, isComparable, length, recordingQuality } from './src/core';
 import { active, history, read, serial, write, writeMany } from './src/storage';
 import { activityTotals, filterRoutes, resultFor, type RouteDetails, type RouteOrder } from './src/results';
 import { ensureTracking, recoverTracking, resumeTracking, stopTracking, trackingRunning } from './src/tracking';
@@ -38,8 +43,6 @@ import { changeReplayRate, seekReplay, type Replay, replayTime, stopReplay, togg
 
 const resetReplay: Replay = { offset: 0, startedAt: null };
 const noPoints: Point[] = [];
-const km = (r: Run) => `${(length(r.points) / 1000).toFixed(2)} km`;
-const date = (r: Run) => new Date(r.startedAt).toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 function StartSliderButton({ disabled, onPress }: { disabled: boolean; onPress: () => void }) {
   return (
     <Pressable
@@ -110,7 +113,7 @@ const AttemptList=memo(function AttemptList({attempts,bestId,onOpen}:{attempts:R
     <View style={{alignItems:'flex-end',gap:4}}><Text style={s.playTime}>{clock(duration(r))}</Text><Pressable accessibilityRole="button" accessibilityLabel={`Ver detalles del viaje ${date(r)}`} onPress={()=>onOpen(r.id)} style={{minHeight:44,justifyContent:'center',paddingHorizontal:8}}><Text style={s.tabSelected}>Ver detalles ›</Text></Pressable></View>
   </View>)}</>;
 });
-function RouteNameField({onChange,initialName}:{onChange:(value:string)=>void;initialName:string}){
+function RouteNameField({onChange,initialName}:{onChange:(value:string)=>void;initialName:()=>string}){
   const [value,setValue]=useState(initialName);
   return <TextInput accessibilityLabel="Nombre de la ruta" style={s.input} value={value} onChangeText={text=>{setValue(text);onChange(text);}} maxLength={60} placeholder="Nombre (Opcional)" placeholderTextColor="#80949b" autoCorrect={false} returnKeyType="done" onSubmitEditing={()=>Keyboard.dismiss()}/>;
 }
@@ -120,6 +123,9 @@ export default function App(){return <AppProvider><GhovoScreen/></AppProvider>;}
 export function AppProvider({children}:{children:React.ReactNode}) {
   const account = useAccount();
   const [expanded, setExpanded] = useState(false);
+  // Portada de bienvenida y acceso provisional sin cuenta (se retira al publicar).
+  const [welcomeForm, setWelcomeForm] = useState(false);
+  const [guestAccess, setGuestAccess] = useState(false);
 
   const [detailTab,setDetailTab]=useState<'summary'|'settings'|'trips'>('summary');
   const [showPlayback,setShowPlayback]=useState(false);
@@ -208,12 +214,13 @@ export function AppProvider({children}:{children:React.ReactNode}) {
   const reference = detail?.reference;
   const routeMode=detail?.attempts.find(attempt=>attempt.mode)?.mode;
   const best = detail?.best;
-  const comparisonReference=useMemo(()=>{const reference=detail?selectReference(detail.attempts,run?.referenceId??personal?.referenceChoice??'latest',run?.mode??routeMode??travelMode):undefined;return run?referenceForRun(run,reference):reference;},[detail,run,personal?.referenceChoice,routeMode,travelMode]);
-  const referenceCandidates=useMemo(()=>detail?.attempts.filter(attempt=>selectReference([attempt],attempt.id,routeMode??travelMode))??[],[detail,routeMode,travelMode]);
+  const pickedReference=detail?selectReference(detail.attempts,run?.referenceId??personal?.referenceChoice??'latest',run?.mode??routeMode??travelMode):undefined;
+  const comparisonReference=run?referenceForRun(run,pickedReference):pickedReference;
+  const referenceCandidates=detail?.attempts.filter(attempt=>selectReference([attempt],attempt.id,routeMode??travelMode))??[];
   const favoriteRoutes=useMemo(()=>summaries.filter(item=>routeDetails[item.reference.routeId]?.favorite).sort((a,b)=>b.latest.startedAt-a.latest.startedAt),[summaries,routeDetails]);
   const habits=useMemo(()=>summaries.filter(item=>!routeDetails[item.reference.routeId]?.favorite).sort((a,b)=>b.attempts.length-a.attempts.length||b.latest.startedAt-a.latest.startedAt).slice(0,4),[summaries,routeDetails]);
-  const checkpoints=useMemo(()=>checkpointsFor(reference?.points??noPoints,routeDetails[reference?.routeId??'']?.checkpointKm),[reference,routeDetails]);
-  const referenceDistance = useMemo(()=>reference?km(reference):'', [reference]);
+  const checkpoints=checkpointsFor(reference?.points??noPoints,routeDetails[reference?.routeId??'']?.checkpointKm);
+  const referenceDistance = reference ? km(reference) : '';
   const replayReference=comparisonReference??best;
   const total = replayReference ? duration(replayReference) : 0;
   const playback = replayTime(replay, now, total);
@@ -233,7 +240,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     return () => listener.remove();
   }, [total, refresh]);
   const points = run?.points ?? reference?.points ?? noPoints;
-  const currentDistance = useMemo(()=>`${(length(points)/1000).toFixed(2)} km`,[points]);
+  const currentDistance = `${(length(points)/1000).toFixed(2)} km`;
   const liveComparisonAvailable=!!run?.comparison&&!run.comparison.unavailable&&now-run.comparison.lastFixAt<=15000&&serviceRunning&&!run.error;
   const ghost=run?(comparisonReference&&liveComparisonAvailable&&run.circuitStartedAt?ghostAt(comparisonReference,now-run.circuitStartedAt):undefined):replayReference&&showGhost?ghostAt(replayReference,playback):undefined;
   const disabled = busy || !ready;
@@ -248,7 +255,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     return()=>clearInterval(timer);
   },[hasActiveRun,foreground,pendingRecovery,busy,refresh]);
   const gps=useGpsPreparation(ready&&!run&&!result&&foreground&&!simulator&&!busy,false);
-  const act=useCallback(async(fn: () => Promise<void>)=>{
+  const act=useCallback(async(fn: () => Promise<void> | void)=>{
     if (locked.current) return;
     locked.current = true; setBusy(true);
     try { await fn(); } catch (e) { const code=e instanceof Error?e.message:String(e);if(['NO_CREDITS','SIGN_IN_REQUIRED','BILLING_RECOVERY_REQUIRED','BILLING_ACCOUNT_MISMATCH','ROUTE_ALREADY_ACTIVE'].includes(code)){router.push('/credits');}else{Alert.alert('GHOVO',code==='BACKEND_NOT_CONFIGURED'?billingError(e):code);} }
@@ -360,11 +367,9 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     router.replace('/');
   }
   const tabsList = [
-    { label: 'Inicio', display: 'Inicio', path: '/', icon: '⚡' },
-    { label: 'Mis rutas', display: 'Rutas', path: '/library', icon: '🗺️' },
-    { label: 'Desafíos', display: 'Desafíos', path: '/challenges', icon: '🏆' },
-    { label: 'Eventos', display: 'Eventos', path: '/events', icon: '🚩' },
-    { label: 'Cuenta', display: 'Perfil', path: '/credits', icon: '👤' },
+    { label: 'Inicio', display: 'Inicio', path: '/', on: 'home', off: 'home-outline' },
+    { label: 'Mis rutas', display: 'Rutas', path: '/library', on: 'map', off: 'map-outline' },
+    { label: 'Cuenta', display: 'Perfil', path: '/credits', on: 'person', off: 'person-outline' },
   ] as const;
 
   const navigation = (
@@ -384,7 +389,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
             }}
             style={[s.bottomTab, selected && s.bottomTabActive]}
           >
-            <Text style={[s.bottomTabIcon, selected && { color: '#ffffff', transform: [{ scale: 1.1 }] }]}>{item.icon}</Text>
+            <Ionicons name={selected ? item.on : item.off} size={21} color={selected ? palette.lavender : '#857E9D'} />
             <Text style={[s.bottomTabLabel, selected && s.bottomTabLabelActive]}>{item.display}</Text>
           </Pressable>
         );
@@ -392,7 +397,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     </View>
   );
   let content:React.ReactNode;
-  const showAuthWall = process.env.NODE_ENV !== 'test' && accountConfigured && !account.user;
+  const showAuthWall = process.env.NODE_ENV !== 'test' && accountConfigured && !account.user && !guestAccess;
   if(showAuthWall) {
     if(account.status === 'loading') {
       content = <View style={[s.root, { justifyContent: 'center', alignItems: 'center', gap: 16 }]}>
@@ -401,109 +406,26 @@ export function AppProvider({children}:{children:React.ReactNode}) {
         <Text style={s.homeTitle}>Iniciando GHOVO...</Text>
         <Text style={s.muted}>Cargando tu sesión segura</Text>
       </View>;
+    } else if(!welcomeForm) {
+      content = <WelcomeScreen onSignIn={()=>setWelcomeForm(true)} onGuest={()=>setGuestAccess(true)}/>;
     } else {
       content = <View style={s.root}>
         <StatusBar style="light" />
-        <ScrollView contentContainerStyle={[s.content, { paddingBottom: 40, paddingTop: 30 }]} keyboardShouldPersistTaps="handled">
-          <View style={{ alignItems: 'center', gap: 12, paddingBottom: 10 }}>
-            <View style={s.brandMark}><Image source={require('./assets/ghovo-mascot-2d-v1.png')} style={s.brandMascot} resizeMode="contain" accessible={false} /></View>
-            <Text style={s.brand}>GHOVO</Text>
-            <Text style={[s.homeTitle, { textAlign: 'center', fontSize: 24, lineHeight: 30 }]}>Acceso a GHOVO</Text>
-            <Text style={[s.muted, { textAlign: 'center', paddingHorizontal: 12 }]}>
-              Regístrate o inicia sesión para utilizar la aplicación, guardar tus rutas y comparar tiempos con el fantasma.
-            </Text>
-          </View>
+        <View style={s.header}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Volver a la portada" onPress={()=>setWelcomeForm(false)} style={{width:42,height:42,borderRadius:21,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
+            <Ionicons name="arrow-back" size={20} color="#FFFFFF"/>
+          </Pressable>
+          <Text style={s.cardTitle}>Entrar en GHOVO</Text>
+        </View>
+        <ScrollView contentContainerStyle={[s.content, { paddingTop: 12 }]} keyboardShouldPersistTaps="handled">
+          <Text style={s.muted}>Tu cuenta guarda tus rutas, tus créditos y tu fantasma. Sin sesión no se puede grabar.</Text>
           <AccountPanel active={false} />
         </ScrollView>
       </View>;
     }
   }
   else if(simulator)content= <View style={s.root}><StatusBar style="light"/><Simulator onClose={()=>setSimulator(false)} origin={reference?.points[0]}/></View>;
-  else if(pathname==='/challenges'||pathname==='/events')content=<View style={s.root}><StatusBar style="light"/>
-    <View style={s.header}>
-      <Button label="← Inicio" secondary onPress={goHome}/>
-      <Text style={s.cardTitle}>{pathname==='/challenges'?'Desafíos':'Eventos'}</Text>
-    </View>
-    <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-      {/* Tarjeta Mi Fantasma (Maqueta Desafios) */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Mi Fantasma: Compite contra tu mejor tiempo"
-        onPress={() => router.replace('/library')}
-        style={({pressed})=>[s.card,{padding:20,backgroundColor:'#2A1F4D',borderColor:'#8B5CF6',borderWidth:1.5,opacity:pressed?0.8:1}]}
-      >
-        <View style={{flexDirection:'row',alignItems:'center',gap:14}}>
-          <View style={{width:54,height:54,borderRadius:27,backgroundColor:'#3C2A6E',alignItems:'center',justifyContent:'center'}}>
-            <Text style={{fontSize:26}}>👻</Text>
-          </View>
-          <View style={{flex:1,gap:3}}>
-            <Text style={{color:'#FFFFFF',fontSize:18,fontWeight:'800'}}>Mi Fantasma</Text>
-            <Text style={{color:'#E2C8FF',fontSize:13,fontWeight:'600'}}>Compite contra tu mejor tiempo personal</Text>
-          </View>
-          <Text style={{color:'#FFFFFF',fontSize:22}}>›</Text>
-        </View>
-      </Pressable>
-
-      {/* Tarjeta Desafios Online */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Desafíos online: Reta a otros usuarios"
-        onPress={() => router.replace('/library')}
-        style={({pressed})=>[s.card,{padding:20,backgroundColor:'#211B3C',borderColor:'#332959',opacity:pressed?0.8:1}]}
-      >
-        <View style={{flexDirection:'row',alignItems:'center',gap:14}}>
-          <View style={{width:54,height:54,borderRadius:27,backgroundColor:'#2D2352',alignItems:'center',justifyContent:'center'}}>
-            <Text style={{fontSize:24}}>👥</Text>
-          </View>
-          <View style={{flex:1,gap:3}}>
-            <Text style={{color:'#FFFFFF',fontSize:17,fontWeight:'800'}}>Desafíos online</Text>
-            <Text style={{color:'#AAA5C4',fontSize:13,fontWeight:'500'}}>Reta a otros usuarios en tus tramos habituales</Text>
-          </View>
-          <Text style={{color:'#AAA5C4',fontSize:22}}>›</Text>
-        </View>
-      </Pressable>
-
-      {/* Tarjeta Eventos y Retos Especiales */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Eventos: Rutas especiales y retos temporales"
-        onPress={() => router.replace('/library')}
-        style={({pressed})=>[s.card,{padding:20,backgroundColor:'#211B3C',borderColor:'#332959',opacity:pressed?0.8:1}]}
-      >
-        <View style={{flexDirection:'row',alignItems:'center',gap:14}}>
-          <View style={{width:54,height:54,borderRadius:27,backgroundColor:'#2D2352',alignItems:'center',justifyContent:'center'}}>
-            <Text style={{fontSize:24}}>🚩</Text>
-          </View>
-          <View style={{flex:1,gap:3}}>
-            <Text style={{color:'#FFFFFF',fontSize:17,fontWeight:'800'}}>Eventos</Text>
-            <Text style={{color:'#AAA5C4',fontSize:13,fontWeight:'500'}}>Rutas especiales y retos temporales de la comunidad</Text>
-          </View>
-          <Text style={{color:'#AAA5C4',fontSize:22}}>›</Text>
-        </View>
-      </Pressable>
-
-      {/* Tarjeta Tu Progreso */}
-      <View style={[s.card,{backgroundColor:'#15112D',borderColor:'#282046',gap:12}]}>
-        <View style={{flexDirection:'row',alignItems:'center',gap:10}}>
-          <Text style={{fontSize:22}}>🏆</Text>
-          <Text style={{color:'#FFFFFF',fontSize:17,fontWeight:'800'}}>Tu progreso</Text>
-        </View>
-        <View style={{gap:6}}>
-          <Text style={{color:'#AAA5C4',fontSize:14}}>
-            • <Text style={{color:'#FFFFFF',fontWeight:'700'}}>{summaries.length}</Text> rutas registradas en tu historial
-          </Text>
-          <Text style={{color:'#AAA5C4',fontSize:14}}>
-            • <Text style={{color:'#FFFFFF',fontWeight:'700'}}>{favoriteRoutes.length}</Text> trazados guardados como favoritos
-          </Text>
-          <Text style={{color:'#AAA5C4',fontSize:14}}>
-            • <Text style={{color:'#FFFFFF',fontWeight:'700'}}>{(activity.meters/1000).toFixed(1)} km</Text> recorridos en tus salidas
-          </Text>
-        </View>
-      </View>
-    </ScrollView>
-    {!run&&navigation}
-  </View>;
-  else if(pathname==='/credits'||pathname==='/premium')content=<View style={s.root}><StatusBar style="light"/><CreditsScreen premiumPage={pathname==='/premium'} active={!!run} onHome={goHome} onPremium={()=>router.push('/premium')}/>{!run&&navigation}</View>;
+  else if(pathname==='/credits'||pathname==='/premium')content=<View style={s.root}><StatusBar style="light"/><CreditsScreen premiumPage={pathname==='/premium'} active={!!run} onHome={goHome} onPremium={()=>router.push('/premium')} stats={{routes:summaries.length,km:activity.meters/1000,favorites:favoriteRoutes.length}}/>{!run&&navigation}</View>;
   else if((section==='home'&&!run||homeDuringRun&&run&&pathname!=='/gps')&&!loadError)content= <View style={s.root}><StatusBar style="light"/>{run&&foreground&&keepScreenOn&&<RecordingAwake/>}
     <View style={s.header}>
       <Pressable accessibilityRole="button" accessibilityLabel="GHOVO · Ir a Inicio" onPress={goHome} style={s.identity}>
@@ -511,52 +433,46 @@ export function AppProvider({children}:{children:React.ReactNode}) {
         <Text style={s.brand}>GHOVO</Text>
       </Pressable>
       <View style={{flexDirection:'row',alignItems:'center',gap:10,flexShrink:1}}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Avisos" onPress={()=>router.push('/gps')} style={{width:40,height:40,borderRadius:20,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959',alignItems:'center',justifyContent:'center'}}>
-          <Text style={{fontSize:17}}>🔔</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Perfil y cuenta" onPress={()=>router.push('/credits')} style={{width:40,height:40,borderRadius:20,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959',alignItems:'center',justifyContent:'center'}}>
-          <Text style={{fontSize:17}}>👤</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Estado del GPS" onPress={()=>router.push('/gps')} style={{width:42,height:42,borderRadius:21,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
+          <Ionicons name={gps.ready?'navigate-circle':'navigate-circle-outline'} size={25} color={gps.ready?palette.green:palette.purpleLight} />
         </Pressable>
       </View>
     </View>
 
     <ScrollView contentContainerStyle={[s.content,{paddingTop:8}]} showsVerticalScrollIndicator={false}>
-      {/* Saludo y subtitulo */}
-      <View style={{gap:4,marginBottom:4}}>
-        <Text style={{color: '#FFFFFF', fontSize: 28, fontWeight: '900', letterSpacing: -0.5}}>¡A rodar! 🤙</Text>
-        <Text style={s.eyebrow}>TU PRÓXIMA HUELLA</Text>
-        <Text style={[s.homeTitle,{fontSize:22,lineHeight:28,color:'#AAA5C4'}]}>¿Dónde vamos hoy?</Text>
+      {/* Saludo */}
+      <View style={{gap:2,marginBottom:2}}>
+        <Text style={s.heroTitle}>¡A rodar! 🤙</Text>
+        <Text style={s.heroSub}>¿Dónde vamos hoy?</Text>
       </View>
 
-      {/* GPS Status Card */}
+      {/* Estado del GPS */}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Consultar señal GPS"
+        accessibilityLabel={`Consultar señal GPS. ${gps.ready ? 'Señal estable.' : gps.message}`}
         onPress={()=>router.push('/gps')}
         style={{
-          paddingVertical:12,
-          paddingHorizontal:16,
-          backgroundColor:'#211B3C',
-          borderRadius:20,
+          paddingVertical:11,
+          paddingHorizontal:14,
+          backgroundColor:'#1A1435',
+          borderRadius:18,
           borderWidth:1,
-          borderColor:'#332959',
+          borderColor:'#2D2350',
           flexDirection:'row',
           alignItems:'center',
-          justifyContent:'space-between',
+          gap:11,
         }}
       >
-        <View style={{flexDirection:'row',alignItems:'center',gap:12,flex:1}}>
-          <View style={{width:36,height:36,borderRadius:18,backgroundColor:'#162A29',alignItems:'center',justifyContent:'center',borderWidth:1.5,borderColor:gps.ready?'#10B981':'#EAB308'}}>
-            <View style={{width:10,height:10,borderRadius:5,backgroundColor:gps.ready?'#10B981':'#EAB308'}} />
-          </View>
-          <View style={{flex:1}}>
-            <Text style={{color:'#FFFFFF',fontSize:14,fontWeight:'700'}}>Ubicación actual</Text>
-            <Text style={{color:gps.ready?'#A78BFA':'#FBBF24',fontSize:12,fontWeight:'600'}}>
-              {gps.ready ? `GPS estable (±${Math.round(gps.accuracy ?? 4)} m)` : gps.message}
-            </Text>
-          </View>
+        <View style={{width:32,height:32,borderRadius:16,backgroundColor:'#123024',alignItems:'center',justifyContent:'center',borderWidth:1.5,borderColor:gps.ready?'#10B981':'#EAB308'}}>
+          <View style={{width:9,height:9,borderRadius:5,backgroundColor:gps.ready?'#10B981':'#EAB308'}} />
         </View>
-        <CurrentLocation point={run?.points.at(-1)??gps.observedPoint} now={now} message={gps.message} onRetry={()=>router.push('/gps')}/>
+        <View style={{flex:1,gap:1}}>
+          <Text style={{fontFamily:fonts.semibold,color:'#FFFFFF',fontSize:13}}>Ubicación actual</Text>
+          <Text numberOfLines={1} style={{fontFamily:fonts.medium,color:gps.ready?'#34D399':'#FBBF24',fontSize:11.5}}>
+            {gps.ready ? `GPS estable · ±${Math.round(gps.accuracy ?? 4)} m` : gps.message}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color="#6E6690" />
       </Pressable>
 
       {/* Mini mapa con marco violeta */}
@@ -576,57 +492,42 @@ export function AppProvider({children}:{children:React.ReactNode}) {
         <>
           <StartSliderButton disabled={disabled} onPress={()=>choose(null)}/>
 
-          {/* Quick Access Pills: Mis Rutas, Desafios, Eventos */}
-          <View style={{flexDirection:'row',gap:10,marginVertical:4}}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Ir a Mis Rutas"
-              onPress={()=>router.replace('/library')}
-              style={{flex:1,paddingVertical:12,paddingHorizontal:10,borderRadius:18,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959',alignItems:'center',gap:4}}
-            >
-              <Text style={{fontSize:20}}>🗺️</Text>
-              <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>Mis Rutas</Text>
+          {/* Accesos rápidos */}
+          <View style={s.quickRow}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Ir a Mis Rutas" onPress={()=>router.replace('/library')} style={s.quickCard}>
+              <Ionicons name="map" size={22} color={palette.purpleLight} />
+              <Text style={s.quickCardLabel}>Mis rutas</Text>
             </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Ir a Desafíos"
-              onPress={()=>router.push('/challenges')}
-              style={{flex:1,paddingVertical:12,paddingHorizontal:10,borderRadius:18,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959',alignItems:'center',gap:4}}
-            >
-              <Text style={{fontSize:20}}>🏆</Text>
-              <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>Desafíos</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Ir a mi cuenta" onPress={()=>router.replace('/credits')} style={s.quickCard}>
+              <Ionicons name="person" size={22} color={palette.purpleLight} />
+              <Text style={s.quickCardLabel}>Mi cuenta</Text>
             </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Ir a Eventos"
-              onPress={()=>router.push('/events')}
-              style={{flex:1,paddingVertical:12,paddingHorizontal:10,borderRadius:18,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959',alignItems:'center',gap:4}}
-            >
-              <Text style={{fontSize:20}}>🚩</Text>
-              <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>Eventos</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Abrir el simulador" onPress={()=>setSimulator(true)} style={s.quickCard}>
+              <Ionicons name="speedometer" size={22} color={palette.purpleLight} />
+              <Text style={s.quickCardLabel}>Simulador</Text>
             </Pressable>
           </View>
 
-          {/* Tarjeta Mi Actividad Real */}
-          <View style={[s.card,{gap:10,backgroundColor:'#15112D',borderColor:'#282046'}]}>
+          {/* Mi actividad */}
+          <View style={{gap:10}}>
             <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
-              <Text style={{color:palette.purpleLight,fontSize:12,fontWeight:'800',letterSpacing:1.2}}>📊 MI ACTIVIDAD</Text>
+              <Text style={[s.eyebrow,{color:'#8E87AB'}]}>MI ACTIVIDAD</Text>
               <Pressable accessibilityRole="button" accessibilityLabel="Ver historial" onPress={()=>router.replace('/library')}>
-                <Text style={{color:palette.purpleBright,fontSize:12,fontWeight:'700'}}>Ver todo ›</Text>
+                <Text style={{fontFamily:fonts.semibold,color:palette.purpleBright,fontSize:12}}>Ver todo ›</Text>
               </Pressable>
             </View>
-            <View style={{flexDirection:'row',gap:8}}>
-              <View style={{flex:1,backgroundColor:'#211B3C',borderRadius:16,padding:12,borderWidth:1,borderColor:'#332959',alignItems:'center'}}>
-                <Text style={{color:'#FFFFFF',fontSize:20,fontWeight:'800'}}>{summaries.length}</Text>
-                <Text style={{color:'#AAA5C4',fontSize:11,fontWeight:'600'}}>Rutas</Text>
+            <View style={{flexDirection:'row',gap:10}}>
+              <View style={s.statBox}>
+                <Text style={s.statValue}>{summaries.length}</Text>
+                <Text style={s.statLabel}>Rutas</Text>
               </View>
-              <View style={{flex:1.2,backgroundColor:'#211B3C',borderRadius:16,padding:12,borderWidth:1,borderColor:'#332959',alignItems:'center'}}>
-                <Text style={{color:'#FFFFFF',fontSize:20,fontWeight:'800'}}>{(activity.meters/1000).toFixed(1)} km</Text>
-                <Text style={{color:'#AAA5C4',fontSize:11,fontWeight:'600'}}>Recorridos</Text>
+              <View style={s.statBox}>
+                <Text style={s.statValue}>{(activity.meters/1000).toFixed(1)}</Text>
+                <Text style={s.statLabel}>km recorridos</Text>
               </View>
-              <View style={{flex:1,backgroundColor:'#211B3C',borderRadius:16,padding:12,borderWidth:1,borderColor:'#332959',alignItems:'center'}}>
-                <Text style={{color:'#FFFFFF',fontSize:20,fontWeight:'800'}}>{favoriteRoutes.length}</Text>
-                <Text style={{color:'#AAA5C4',fontSize:11,fontWeight:'600'}}>Destacadas</Text>
+              <View style={s.statBox}>
+                <Text style={s.statValue}>{favoriteRoutes.length}</Text>
+                <Text style={s.statLabel}>Destacadas</Text>
               </View>
             </View>
           </View>
@@ -647,6 +548,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     <View style={s.header}><Button label="← Inicio" secondary onPress={goHome}/><Text style={s.cardTitle}>Ubicación</Text></View>
     <ScrollView contentContainerStyle={s.content}>
       <Text style={s.title}>Estado del GPS</Text><Text style={s.muted}>{gps.message}</Text>
+      <CurrentLocation point={gps.point} now={now} message={gps.message} onRetry={gps.retry}/>
       {gps.accuracy!==undefined&&<Text style={s.lightText}>Precisión estimada: ±{Math.round(gps.accuracy)} m</Text>}
       <Text style={s.caption}>Puedes consultar esta pantalla sin señal. Para empezar una ruta necesitamos una posición precisa y estable.</Text>
       <Button label="Reintentar ubicación" onPress={gps.retry}/>
@@ -715,7 +617,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Filtrar por récords"
-            onPress={() => { setFavoritesOnly(false); setOrder('distance'); }}
+            onPress={() => { setFavoritesOnly(false); setOrder('best'); }}
             style={[
               {paddingVertical:8,paddingHorizontal:16,borderRadius:16,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959'},
               !favoritesOnly && order==='distance' && {backgroundColor:'#8B5CF6',borderColor:'#8B5CF6'}
@@ -742,35 +644,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           </>}
           {!!summaries.length && !visibleRoutes.length && <Text style={s.muted}>{favoritesOnly ? 'No hay favoritas que coincidan. Marca una ruta con la estrella o desactiva este filtro.' : 'No hay rutas con ese nombre. Prueba otra búsqueda.'}</Text>}
           {!summaries.length && <View style={s.card}><MascotMessage title="Tu primera huella empieza aquí" message="Graba un recorrido. Aquí guardarás su trazado y los tiempos de cada salida."/></View>}
-          {visibleRoutes.map(({ reference: r, attempts, best: b, latest }) => <Pressable key={r.routeId} accessibilityRole="button" accessibilityLabel={`${r.name}, ${km(r)}, ${isComparable(b)?'mejor tiempo':'tiempo de referencia'} ${clock(duration(b))}`} onPress={() => choose(r.routeId)} style={({pressed})=>[s.card,{opacity:pressed?0.75:1,borderRadius:22,borderColor:'#332959',padding:16}]}>
-            <View style={s.routeCardHeading}>
-              <RouteThumbnail points={r.points}/>
-              <View style={{flex:1,gap:5}}>
-                <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
-                  <Text style={s.routeMode}>{modeLabel(r.mode).toUpperCase()}</Text>
-                  <Text style={{fontSize:16}}>{routeDetails[r.routeId]?.favorite ? '❤️' : '🤍'}</Text>
-                </View>
-                <Text style={[s.cardTitle,{fontSize:17}]} numberOfLines={1}>{r.name}</Text>
-                <Text style={s.caption}>{date(latest)} · {km(r)}</Text>
-                <View style={{flexDirection:'row',alignItems:'center',gap:6,marginTop:2}}>
-                  <Text style={{fontSize:14}}>👑</Text>
-                  <Text style={{color:'#FBBF24',fontSize:15,fontWeight:'800',fontVariant:['tabular-nums']}}>{clock(duration(b))}</Text>
-                </View>
-              </View>
-              <Text style={s.routeChevron}>›</Text>
-            </View>
-            <View style={s.routeCardFooter}>
-              <View style={{flex:1,gap:2}}>
-                <Text style={s.caption}>{isComparable(b)?'Mejor tiempo':'Tiempo referencia'}</Text>
-                <Text style={s.routeBest}>{clock(duration(b))}</Text>
-              </View>
-              <View style={{flex:1,gap:2,alignItems:'flex-end'}}>
-                <Text style={s.caption}>Total viajes</Text>
-                <Text style={s.lightText}>{attempts.length} {attempts.length===1?'salida':'salidas'}</Text>
-              </View>
-            </View>
-            {!!routeDetails[r.routeId]?.note && <Text style={s.caption} numberOfLines={2}>{routeDetails[r.routeId].note}</Text>}
-          </Pressable>)}
+          {visibleRoutes.map(summary => <RouteCard key={summary.reference.routeId} summary={summary} favorite={!!routeDetails[summary.reference.routeId]?.favorite} disabled={disabled} onPress={() => choose(summary.reference.routeId)} />)}
           <Button label={activityOpen?'Ocultar actividad acumulada':`Tu actividad · ${activity.routes} rutas · ${(activity.meters/1000).toFixed(2)} km`} secondary onPress={()=>setActivityOpen(value=>!value)}/>
           {activityOpen&&<>
           <View style={s.card}>
@@ -800,7 +674,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           {!selected?<>
             <Text style={s.homeTitle}>Nueva ruta</Text>
             <Text style={s.muted}>Pon un nombre y espera a que el GPS esté preparado.</Text>
-            <View style={{gap:8}}><Text style={s.fieldLabel}>Nombre de la ruta</Text><RouteNameField initialName={name.current} onChange={value=>{name.current=value;}}/></View>
+            <View style={{gap:8}}><Text style={s.fieldLabel}>Nombre de la ruta</Text><RouteNameField initialName={()=>name.current} onChange={value=>{name.current=value;}}/></View>
             <View style={[s.signalCard,{minHeight:76},!gps.ready&&s.signalAttention]}><View style={{flex:1,gap:6}}><Text accessibilityLiveRegion="polite" style={s.signalTitle}>{gps.message}</Text>{gps.accuracy!==undefined&&<Text style={s.caption}>Precisión estimada: ±{Math.round(gps.accuracy)} m</Text>}</View></View>
             {!gps.ready&&<Button label="Reintentar GPS" secondary onPress={gps.retry}/>}
             <Pressable accessibilityRole="button" onPress={()=>{Keyboard.dismiss();router.push('/gps');}} style={s.optionsLink}><Text style={s.tabSelected}>Ver estado del GPS ›</Text></Pressable>
@@ -863,62 +737,28 @@ export function AppProvider({children}:{children:React.ReactNode}) {
       </ScrollView>
     </View>
     {!loadError&&<View style={s.actionDock}>
-      {run&&<View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-around',paddingBottom:4}}>
+      {run&&<View style={{flexDirection:'row',alignItems:'center',justifyContent:'flex-end',paddingBottom:4}}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Añadir hito de ruta"
-          onPress={() => Alert.alert('Hito registrado', 'Punto de interés guardado en este tramo.', [{ text: 'Aceptar' }])}
+          accessibilityLabel="Guardar el recorrido para continuarlo más tarde"
+          accessibilityHint="Detiene la grabación y guarda los puntos; podrás recuperarlo desde Inicio"
+          onPress={discard}
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
+            minHeight: 44,
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            borderRadius: 22,
             backgroundColor: '#211B3C',
             borderWidth: 1.5,
             borderColor: '#332959',
+            flexDirection: 'row',
+            gap: 8,
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Text style={{ fontSize: 20 }}>📷</Text>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={serviceRunning ? 'Pausar grabación' : 'Reanudar grabación'}
-          onPress={() => void act(serviceRunning ? discard : recover)}
-          style={{
-            width: 58,
-            height: 58,
-            borderRadius: 29,
-            backgroundColor: '#8B5CF6',
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: '#8B5CF6',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.45,
-            shadowRadius: 8,
-            elevation: 6,
-          }}
-        >
-          <Text style={{ fontSize: 24, color: '#FFFFFF' }}>{serviceRunning ? '⏸' : '▶'}</Text>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Finalizar recorrido rápido"
-          onPress={() => void act(finish)}
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
-            backgroundColor: '#261220',
-            borderWidth: 1.5,
-            borderColor: '#5C223C',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ fontSize: 18, color: '#F472B6' }}>⏹</Text>
+          <Text style={{ fontSize: 16 }}>💾</Text>
+          <Text style={{ color: '#E7E2FF', fontSize: 13, fontWeight: '700' }}>Guardar y salir</Text>
         </Pressable>
       </View>}
       {!run&&!result&&section==='route'&&(!selected||!routeMode)&&<TravelModePicker value={travelMode} onChange={setTravelMode} disabled={disabled}/>}

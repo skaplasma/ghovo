@@ -29,9 +29,6 @@ export function AccountPanel({active}:{active:boolean}){
      <Image source={require('../assets/ghovo-mascot-2d-v1.png')} style={{width:52,height:52}} resizeMode="contain" />
     </View>
     <Text style={{color:'#ffffff',fontSize:17,fontWeight:'700',letterSpacing:-0.3}}>{account.user.email}</Text>
-    <View style={{backgroundColor:'#2A1F4D',borderRadius:14,paddingHorizontal:12,paddingVertical:4,borderWidth:1,borderColor:'#6A0DAD',flexDirection:'row',alignItems:'center',gap:4}}>
-     <Text style={{fontSize:11}}>👑</Text><Text style={{fontSize:11,color:'#E2C8FF',fontWeight:'800',letterSpacing:0.5}}>Miembro Premium</Text>
-    </View>
    </View>
    <Text style={s.eyebrow}>TU CUENTA</Text>
    <Text style={s.caption}>{account.status==='offline'?'Sin conexión: no se ha podido comprobar la sesión con el servidor.':'La sesión se conserva de forma segura en este dispositivo.'}</Text>
@@ -39,7 +36,7 @@ export function AccountPanel({active}:{active:boolean}){
   </>:<>
    <Text style={s.cardTitle}>{mode==='signup'?'Crea tu cuenta':mode==='reset'?'Recupera tu acceso':'Inicia sesión'}</Text>
    {mode!=='reset'&&<>
-    <Pressable accessibilityRole="button" accessibilityLabel="Acceso rápido local" accessibilityState={{disabled}} disabled={disabled} onPress={()=>void perform(loginDevAccount)} style={[s.button,{backgroundColor:'#00e5a3',marginBottom:10,opacity:disabled?0.45:1}]}><Text style={[s.buttonText,{color:'#0d1b1e',fontWeight:'bold'}]}>⚡ Acceso rápido (Dev Local)</Text></Pressable>
+    {__DEV__&&<Pressable accessibilityRole="button" accessibilityLabel="Acceso rápido local" accessibilityState={{disabled}} disabled={disabled} onPress={()=>void perform(loginDevAccount)} style={[s.button,{backgroundColor:'#00e5a3',marginBottom:10,opacity:disabled?0.45:1}]}><Text style={[s.buttonText,{color:'#0d1b1e',fontWeight:'bold'}]}>⚡ Acceso rápido (Dev Local)</Text></Pressable>}
     <Pressable accessibilityRole="button" accessibilityLabel="Continuar con Google" accessibilityState={{disabled}} disabled={disabled} onPress={()=>void perform(loginWithGoogle)} style={[s.button,{backgroundColor:'#ffffff',opacity:disabled?0.45:1}]}><Text style={[s.buttonText,{color:'#1f1f1f'}]}>Continuar con Google</Text></Pressable>
     <Text style={s.caption}>Usa tu cuenta de Google, sin crear otra contraseña.</Text>
     <Text style={s.eyebrow}>O CONTINÚA CON TU CORREO</Text>

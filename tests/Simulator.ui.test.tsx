@@ -1,8 +1,8 @@
-jest.mock('../src/speech',()=>({speakNotice:jest.fn(async()=>true),stopVoice:jest.fn(async()=>{}),testVoice:jest.fn(async()=>true)}));
 import React from 'react';
 import {act,render,screen,userEvent} from '@testing-library/react-native';
 import {Simulator} from '../src/Simulator';
 import {writeMany} from '../src/storage';
+jest.mock('../src/speech',()=>({speakNotice:jest.fn(async()=>true),stopVoice:jest.fn(async()=>{}),testVoice:jest.fn(async()=>true)}));
 jest.mock('../src/RouteMap',()=>({RouteMap:()=>null}));
 jest.mock('../src/storage',()=>({writeMany:jest.fn()}));
 beforeEach(()=>{jest.useFakeTimers();});

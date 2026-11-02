@@ -4,6 +4,10 @@ import { Pressable, Text, View } from 'react-native';
 import { clock, distance as geoDistance, type Run } from './core';
 import { formatPace, modeLabel } from './TripDetails';
 import { appStyles as s } from './design';
+import { SpeedGauge } from './SpeedGauge';
+
+// Fondo de escala del velocímetro: solo define cuánto arco se pinta, no limita la grabación.
+const MAX_SPEED_KMH: Record<string, number> = { driving: 130, bicycling: 55, running: 20, walking: 9 };
 
 type Props = {
   run: Run;
@@ -100,23 +104,14 @@ export function RecordingPanel({
         </Text>
       </View>
 
-      {/* Central Cockpit Speedometer / Pace */}
-      <View style={s.hudSpeedContainer}>
-        {run.mode === 'running' ? (
-          <>
-            <Text style={s.hudSpeedValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-              {currentSpeedKmh > 0 ? formatPace(currentSpeedKmh) : '— /km'}
-            </Text>
-            <Text style={s.hudSpeedUnit}>Ritmo actual (min/km)</Text>
-          </>
-        ) : (
-          <>
-            <Text style={s.hudSpeedValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-              {currentSpeedKmh > 0 ? currentSpeedKmh.toFixed(0) : '0'}
-            </Text>
-            <Text style={s.hudSpeedUnit}>km/h · Velocidad actual</Text>
-          </>
-        )}
+      {/* Velocímetro circular */}
+      <View style={{ alignItems: 'center', paddingVertical: 4 }}>
+        <SpeedGauge
+          value={run.mode === 'running' ? (currentSpeedKmh > 0 ? formatPace(currentSpeedKmh) : '—') : currentSpeedKmh.toFixed(0)}
+          unit={run.mode === 'running' ? 'min/km' : 'km/h'}
+          caption={run.mode === 'running' ? 'Ritmo actual' : 'Velocidad actual'}
+          ratio={currentSpeedKmh / MAX_SPEED_KMH[run.mode ?? 'driving']}
+        />
       </View>
 
       {/* Delta Box with Ghost Comparison */}

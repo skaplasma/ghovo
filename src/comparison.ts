@@ -4,7 +4,7 @@ export type Split={meters:number;elapsed:number|null;referenceElapsed:number;dif
 export type ComparisonState={progress:number;segment:number;lastFixAt:number;lastMatchedAt:number;unavailable:boolean;difference:number|null;splits:Split[];arrivalSince?:number;arrivalAnchor?:Point};
 export type CourseModel={reference:Run;meters:number[];total:number;controls:{meters:number;referenceElapsed:number}[];valid:boolean};
 // A destination is an area (e.g. nearby parking), not a single GPS coordinate.
-export const destinationRadius=(total:number)=>Math.min(150,Math.max(30,total*.2));
+export const destinationRadius=(total:number)=>Math.round(Math.min(150,Math.max(60,total*.15)));
 const referenceGap=(a:Point,b:Point)=>isTraceBreak(a,b)||(b.timestamp-a.timestamp>30000&&distance(a,b)>5);
 export const validReferenceChoice=(value:unknown):value is string=>typeof value==='string'&&/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,159}$/.test(value)&&!['constructor','prototype','__proto__'].includes(value);
 export function selectReference(attempts:Run[],choice='latest',mode?:Run['mode']){
@@ -43,8 +43,12 @@ export function advanceComparison(model:CourseModel,state:ComparisonState,point:
     if(!best||offset<best.offset-0.5)best={progress,segment:i,offset};
   }
   const radius=destinationRadius(model.total);
-  const finishZone=best&&best.progress>=model.total-radius&&distance(point,points.at(-1)!)<=radius;
-  if(!best||best.offset>(finishZone?radius:30))return lost;
+  const distanceToEnd=distance(point,points.at(-1)!);
+  // Basta con haber llegado al final del trazado o con estar dentro de la zona de meta:
+  // aparcar en una calle lateral o pasarse unos metros es habitual y no debe impedir el cierre.
+  const reachedEnd=!!best&&best.progress>=model.total-30;
+  const finishZone=reachedEnd||(!!best&&best.progress>=model.total-radius&&distanceToEnd<=radius);
+  if(!best||best.offset>(finishZone?Math.max(radius,250):30))return lost;
   const progress=Math.max(state.progress,best.progress),elapsed=point.timestamp-startedAt;
   const continuous=!state.unavailable&&point.timestamp-state.lastFixAt<=15000;
   const splits=[...state.splits];
@@ -53,13 +57,14 @@ export function advanceComparison(model:CourseModel,state:ComparisonState,point:
     const crossing=continuous&&cp.meters>=state.progress?state.lastFixAt-startedAt+(point.timestamp-state.lastFixAt)*Math.max(0,Math.min(1,f)):null;
     splits.push({meters:cp.meters,elapsed:crossing,referenceElapsed:cp.referenceElapsed,difference:crossing===null?null:crossing-cp.referenceElapsed});
   }
-  const atFinish=continuous&&progress>=Math.max(model.total-radius,model.total*.85)&&distance(point,points.at(-1)!)<=radius&&point.accuracy<=25;
-  const stopped=atFinish&&(speed===undefined||!Number.isFinite(speed)||speed<0||speed<=0.8);
-  const stability=typeof speed==='number'&&Number.isFinite(speed)&&speed>=0?Math.max(5,Math.min(15,point.accuracy)):Math.max(2,Math.min(5,point.accuracy));
+  const atFinish=continuous&&(reachedEnd||(progress>=Math.max(model.total-radius,model.total*.85)&&distanceToEnd<=radius))&&point.accuracy<=25;
+  // 1,5 m/s (5 km/h) cubre el ruido del GPS parado y el paso lento al aparcar.
+  const stopped=atFinish&&(speed===undefined||!Number.isFinite(speed)||speed<0||speed<=1.5);
+  const stability=typeof speed==='number'&&Number.isFinite(speed)&&speed>=0?Math.max(8,Math.min(25,point.accuracy)):Math.max(6,Math.min(12,point.accuracy));
   const anchored=stopped&&state.arrivalAnchor&&distance(state.arrivalAnchor,point)<=stability;
   return {progress,segment:best.segment,lastFixAt:point.timestamp,lastMatchedAt:point.timestamp,unavailable:false,difference:elapsed-referenceTime(model,progress,best.segment),splits,arrivalSince:stopped?(anchored?state.arrivalSince??point.timestamp:point.timestamp):undefined,arrivalAnchor:stopped?(anchored?state.arrivalAnchor:point):undefined};
 }
-export function arrivalReady(state:ComparisonState,now:number){return !state.unavailable&&state.arrivalSince!==undefined&&now-state.arrivalSince>=5000&&now-state.lastFixAt<=15000;}
+export function arrivalReady(state:ComparisonState,now:number){return !state.unavailable&&state.arrivalSince!==undefined&&now-state.arrivalSince>=3000&&now-state.lastFixAt<=15000;}
 export function validComparison(value:unknown):value is ComparisonState{
   if(typeof value!=='object'||value===null)return false;const v=value as ComparisonState;
   if(v.arrivalAnchor!==undefined&&(typeof v.arrivalAnchor!=='object'||v.arrivalAnchor===null||!accepts([],v.arrivalAnchor)||v.arrivalAnchor.timestamp<0))return false;

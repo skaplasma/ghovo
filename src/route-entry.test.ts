@@ -14,17 +14,32 @@ test('arrival requires being stopped near B; driving through it never satisfies 
  state=advanceComparison(model,state,p(1000,307000),200000,4);assert.equal(arrivalReady(state,307000),false);
 });
 
-test('the destination area accepts nearby parking at 120 m but rejects a position beyond 150 m',()=>{
+test('the destination area accepts nearby parking at 120 m but rejects a position 260 m away',()=>{
  const model=courseModel(reference);let state=initialComparison(200000);
  for(let i=1;i<=100;i++)state=advanceComparison(model,state,p(i*10,200000+i*1000),200000,10);
  const parked={...p(1000,301000),latitude:120/111195,accuracy:12};
  state=advanceComparison(model,state,parked,200000,0);state=advanceComparison(model,state,{...parked,timestamp:306000,latitude:127/111195},200000,0);
  assert.equal(arrivalReady(state,306000),true);assert.equal(destinationRadius(model.total),150);
- state=advanceComparison(model,state,{...parked,timestamp:307000,latitude:151/111195},200000,0);assert.equal(arrivalReady(state,307000),false);
+ state=advanceComparison(model,state,{...parked,timestamp:307000,latitude:260/111195},200000,0);assert.equal(arrivalReady(state,307000),false);
 });
 
 test('a short loop cannot finish merely by waiting at its origin inside the destination area',()=>{
  const loop={...reference,points:[p(0,0),p(40,10000),p(0,20000)],endedAt:20000};const model=courseModel(loop);let state=initialComparison(100000);
  state=advanceComparison(model,state,p(0,101000),100000,0);state=advanceComparison(model,state,p(0,107000),100000,0);
- assert.equal(model.valid,true);assert.equal(destinationRadius(model.total),30);assert.equal(arrivalReady(state,107000),false);
+ assert.equal(model.valid,true);assert.equal(destinationRadius(model.total),60);assert.equal(arrivalReady(state,107000),false);
+});
+test('parking 200 m past the finish completes the route; stopping 200 m before it does not',()=>{
+ const model=courseModel(reference);
+ let state=initialComparison(200000);
+ for(let i=1;i<=100;i++)state=advanceComparison(model,state,p(i*10,200000+i*1000),200000,10);
+ const beyond={...p(1000,301000),longitude:1200/111195,accuracy:8};
+ state=advanceComparison(model,state,beyond,200000,0);
+ state=advanceComparison(model,state,{...beyond,timestamp:306000},200000,0);
+ assert.equal(arrivalReady(state,306000),true);
+ let early=initialComparison(200000);
+ for(let i=1;i<=80;i++)early=advanceComparison(model,early,p(i*10,200000+i*1000),200000,10);
+ const stop={...p(800,301000),accuracy:8};
+ early=advanceComparison(model,early,stop,200000,0);
+ early=advanceComparison(model,early,{...stop,timestamp:306000},200000,0);
+ assert.equal(arrivalReady(early,306000),false);
 });

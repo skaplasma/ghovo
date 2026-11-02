@@ -4,8 +4,8 @@ import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { fonts } from './fonts';
 import { palette } from './design';
 
-const SIZE = 232;
-const STROKE = 15;
+const SIZE = 200;
+const STROKE = 14;
 const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 // 270° útiles: el hueco queda abajo, como el velocímetro del mockup.

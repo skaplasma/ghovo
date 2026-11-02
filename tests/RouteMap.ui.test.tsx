@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { AppState, Linking, type AppStateStatus } from 'react-native';
 import { act, fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import * as Location from 'expo-location';
@@ -78,7 +78,7 @@ test('full-course control fits endpoints and the GPS watcher is disposed on unmo
   const result = await render(<RouteMap points={points} recording={false} />);
   await act(async () => { await jest.advanceTimersByTimeAsync(1); });
   await fireEvent(screen.getByTestId('native-map'), 'load');
-  await userEvent.setup().press(screen.getByRole('button', { name: /Ruta completa/ }));
+  await userEvent.setup().press(screen.getByRole('button', { name: /ruta completa/i }));
   expect(mockCamera.fitBounds).toHaveBeenCalledWith(expect.arrayContaining([expect.any(Number)]), expect.objectContaining({ duration: 400 }));
   const bounds = mockCamera.fitBounds.mock.calls.at(-1)![0];
   expect(bounds[0]).toBeLessThan(-3.03); expect(bounds[3]).toBeGreaterThan(40.02);

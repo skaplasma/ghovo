@@ -434,25 +434,8 @@ export function AppProvider({children}:{children:React.ReactNode}) {
   else if(simulator)content= <View style={s.root}><StatusBar style="light"/><Simulator onClose={()=>setSimulator(false)} origin={reference?.points[0]}/></View>;
   else if(pathname==='/credits'||pathname==='/premium')content=<View style={s.root}><StatusBar style="light"/><CreditsScreen premiumPage={pathname==='/premium'} active={!!run} onHome={goHome} onPremium={()=>router.push('/premium')} stats={{routes:summaries.length,km:activity.meters/1000,favorites:favoriteRoutes.length}}/>{!run&&navigation}</View>;
   else if((section==='home'&&!run||homeDuringRun&&run&&pathname!=='/gps')&&!loadError)content= <View style={s.root}><StatusBar style="light"/>{run&&foreground&&keepScreenOn&&<RecordingAwake/>}
-    <View style={s.header}>
-      <Pressable accessibilityRole="button" accessibilityLabel="GHOVO · Ir a Inicio" onPress={goHome} style={s.identity}>
-        <View style={s.brandMark}><Image source={require('./assets/ghovo-mascot-2d-v1.png')} style={s.brandMascot} resizeMode="contain" accessible={false}/></View>
-        <Text style={s.brand}>GHOVO</Text>
-      </Pressable>
-      <View style={{flexDirection:'row',alignItems:'center',gap:10,flexShrink:1}}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Estado del GPS" onPress={()=>router.push('/gps')} style={{width:42,height:42,borderRadius:21,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
-          <Ionicons name={gps.ready?'navigate-circle':'navigate-circle-outline'} size={25} color={gps.ready?palette.green:palette.purpleLight} />
-        </Pressable>
-      </View>
-    </View>
 
-    <ScrollView contentContainerStyle={[s.content,{paddingTop:8}]} showsVerticalScrollIndicator={false}>
-      {/* Saludo */}
-      <View style={{gap:2,marginBottom:2}}>
-        <Text style={s.heroTitle}>¡A rodar! 🤙</Text>
-        <Text style={s.heroSub}>¿Dónde vamos hoy?</Text>
-      </View>
-
+    <ScrollView contentContainerStyle={[s.content,{paddingTop:4}]} showsVerticalScrollIndicator={false}>
       {/* Estado del GPS */}
       <Pressable
         accessibilityRole="button"
@@ -576,11 +559,13 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     {run&&foreground&&keepScreenOn&&<RecordingAwake/>}
     <StatusBar style="light" />
     <View style={s.header}>
-      <Pressable accessibilityRole="button" accessibilityLabel="GHOVO · Ir a Inicio" onPress={goHome} style={s.identity}><View style={s.brandMark}><Image source={require('./assets/ghovo-mascot-2d-v1.png')} style={s.brandMascot} resizeMode="contain" accessible={false}/></View><View style={{flexShrink:1}}><Text style={s.brand} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>GHOVO</Text><Text style={s.caption} numberOfLines={1}>Graba y revisa tus recorridos.</Text></View></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="GHOVO · Ir a Inicio" onPress={goHome} style={{width:42,height:42,borderRadius:21,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
+        <Ionicons name="chevron-down" size={21} color="#FFFFFF"/>
+      </Pressable>
       {run&&<Text style={[s.badge,s.liveBadge]}>● EN RUTA</Text>}
     </View>
-    {!!run&&<View style={[s.mapArea, result&&section==='route'&&!run&&{flex:0.55}, run&&{flex:0.9}, !run&&detailMap&&{flex:0.65}, expanded && { flex: 0.35 }]}><RouteMap points={points} reference={reference?.points} ghost={ghost} recording={!!run} preparing={!run&&!result&&section==='route'} previewPosition={gps.point} checkpoints={checkpoints.points}/>{run?.referenceId&&<View pointerEvents="none" style={{position:'absolute',top:12,left:12,right:12,padding:12,gap:4,borderRadius:14,backgroundColor:'#101C22F5',borderWidth:1,borderColor:'#3B4655'}}>{run.notice&&(run.notice.kind==='checkpoint'||run.notice.kind==='entry')&&now-run.notice.createdAt<=12000&&now-run.notice.createdAt>=-5000&&<View accessibilityLiveRegion="polite" style={{gap:4,paddingBottom:8}}><Text style={s.eyebrow}>{run.notice.title}</Text><Text style={s.lightText}>{run.notice.kind==='checkpoint'?run.notice.message.split('. ').slice(2).join('. '):run.notice.message}</Text></View>}<Text style={s.caption}>{comparisonReference?`Referencia · ${date(comparisonReference)}`:'Referencia guardada'}</Text><Text style={[s.cardTitle,{color:'#D8D0FA',fontSize:18}]}>{!run.circuitStartedAt?'Esperando entrada al circuito...':!liveComparisonAvailable||run.comparison?.difference==null?'Comparación no disponible':Math.abs(run.comparison.difference)<500?'Mismo tiempo en este punto':`${(Math.abs(run.comparison.difference)/1000).toFixed(0)} s ${run.comparison.difference<0?'menos':'más'} en este punto`}</Text></View>}</View>}
-    <View style={[s.sheet, result&&section==='route'&&!run&&{flex:1.7}, run&&{flex:1.25}, !run&&section==='library'&&{flex:1.8}, expanded && { flex: 1.7 }]}>
+    {!!run&&<View style={[s.mapArea, run&&{flex:0.62}, expanded && { flex: 0.3 }]}><RouteMap points={points} reference={reference?.points} ghost={ghost} recording={!!run} preparing={!run&&!result&&section==='route'} previewPosition={gps.point} checkpoints={checkpoints.points}/>{run?.notice&&now-run.notice.createdAt<=12000&&now-run.notice.createdAt>=-5000&&<View pointerEvents="none" style={{position:'absolute',bottom:8,left:8,right:8,paddingVertical:8,paddingHorizontal:10,borderRadius:12,backgroundColor:'#101C22EE',borderWidth:1,borderColor:'#3B4655'}}><Text numberOfLines={1} style={[s.lightText,{fontSize:12}]}>{run.notice.kind==='entry'?run.notice.message:`${run.notice.title}: ${run.notice.message.split('. ').slice(2).join('. ')||run.notice.message}`}</Text></View>}</View>}
+    <View style={[s.sheet, result&&section==='route'&&!run&&{flex:1.7}, run&&{flex:1.95}, !run&&section==='library'&&{flex:1.8}, expanded && { flex: 1.9 }]}>
       {run&&<Pressable accessibilityRole="button" accessibilityLabel={expanded ? 'Ampliar mapa' : 'Ampliar panel de recorrido'} style={s.panelControl} onPress={() => setExpanded(value => !value)}><Text style={s.caption}>{run ? 'EN DIRECTO' : section==='library'?'TUS RECORRIDOS':'TU PRÓXIMA HUELLA'}</Text><Text style={s.expandLabel}>{expanded ? 'Más mapa ↓' : 'Ampliar panel ↑'}</Text></Pressable>}
       {!run&&section!=='library'&&<View style={s.row}><Button label={selected?'← Mis rutas':'← Inicio'} secondary onPress={()=>{if(selected)setSection('library');else{choose(null);setSection('home');}}}/></View>}
 
@@ -777,7 +762,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
   return <ScreenContent.Provider value={content}>
     <View style={{flex:1}}>
       {children}
-      <AppSplash ready={ready}/>
+      <AppSplash ready={ready || !!loadError}/>
     </View>
   </ScreenContent.Provider>;
 }

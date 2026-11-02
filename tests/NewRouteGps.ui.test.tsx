@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {Alert,AppState,type AppStateStatus} from 'react-native';
 import { act, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 
@@ -105,7 +105,7 @@ test('Home and new route share one location observer without starting recording'
  await act(async()=>{await jest.advanceTimersByTimeAsync(1);});const late=mockFix;
  await user.press(screen.getByRole('tab',{name:/Inicio/}));
  await act(async()=>{late(fix());});
- expect(Location.watchPositionAsync).toHaveBeenCalledTimes(1);expect(screen.getByText('¿Dónde vamos hoy?')).toBeOnTheScreen();
+ expect(Location.watchPositionAsync).toHaveBeenCalledTimes(1);expect(screen.getByText('Ubicación actual')).toBeOnTheScreen();
  expect(startTracking).not.toHaveBeenCalled();
 });
 

@@ -1,4 +1,4 @@
-import type {Checkpoint} from './checkpoints';
+﻿import type {Checkpoint} from './checkpoints';
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, AppState, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Location from 'expo-location';
@@ -156,18 +156,19 @@ export function RouteMap({ points, reference, ghost, recording,preparing=false,p
       <Text accessibilityLiveRegion="polite" style={{ color: '#D6E2E8', textAlign: 'center', fontSize: 14 }}>{recording ? 'Esperando los primeros puntos GPS…' : 'El mapa aparecerá al obtener tu ubicación.'}</Text>
     </View>}
     {failed && <Text style={styles.notice}>No se pudo cargar el mapa. El registro GPS funciona de forma independiente.</Text>}
-    {!recording&&!preparing && <View style={{ position: 'absolute', top: failed ? 70 : 12, left: 12, right: 12, gap: 10 }}>
-      <View style={styles.locationStatus}><Text accessible={false} style={{color:position?'#C0ED8B':'#F4CCA0',fontSize:14}}>{position?'◎':'⌕'}</Text><Text accessibilityLiveRegion="polite" style={{color:'#D6E2E8',fontSize:11,lineHeight:17,flexShrink:1}}>{locationMessage}</Text></View>
-      <View style={{flexDirection:'row',justifyContent:'flex-end',gap:8,flexWrap:'wrap'}}>
-      <Pressable accessibilityRole="button" style={styles.locateButton} onPress={() => {
+    {!recording&&!preparing&&<View style={styles.statusRow}>
+      <Text accessible={false} style={{color:position?'#C0ED8B':'#F4CCA0',fontSize:12}}>{position?'◎':'⌕'}</Text>
+      <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{color:'#B9C7CF',fontSize:11,lineHeight:15,flexShrink:1}}>{locationMessage}</Text>
+    </View>}
+    {!recording&&!preparing && <View style={{ position: 'absolute', bottom: 34, right: 12, gap: 8, alignItems: 'flex-end' }}>
+      {points.length>1&&<Pressable accessibilityRole="button" accessibilityLabel="Ver ruta completa" disabled={!mapReady} accessibilityState={{disabled:!mapReady}} style={styles.locateButton} onPress={fitCourse}><Text style={styles.locateLabel}>↗</Text></Pressable>}
+      <Pressable accessibilityRole="button" accessibilityLabel={needsSettings ? 'Abrir ajustes' : 'Centrar en mi ubicación'} style={styles.locateButton} onPress={() => {
         if (needsSettings) { Linking.openSettings().catch(() => {}); return; }
         if (position) camera.current?.jumpTo({ center: coordinate(position), zoom: 15 });
         setRetry(value => value + 1);
-      }}><Text style={styles.locateLabel}>{needsSettings ? 'Abrir ajustes' : '◎  Mi ubicación'}</Text></Pressable>
-      {points.length>1&&<Pressable accessibilityRole="button" disabled={!mapReady} accessibilityState={{disabled:!mapReady}} style={styles.locateButton} onPress={fitCourse}><Text style={styles.locateLabel}>↗  Ruta completa</Text></Pressable>}
-      </View>
+      }}><Text style={styles.locateLabel}>{needsSettings ? '⚙' : '◎'}</Text></Pressable>
     </View>}
     <Pressable accessibilityRole="link" accessibilityLabel="Créditos de OpenStreetMap" style={styles.credit} onPress={() => { Linking.openURL('https://www.openstreetmap.org/copyright').catch(() => {}); }}><Text style={styles.creditText}>© OpenStreetMap contributors</Text></Pressable>
   </View>;
 }
-const styles = StyleSheet.create({ container: { flex: 1, minHeight: 160 }, pin: { borderRadius: 13, padding: 7, borderWidth: 2, borderColor: '#fff', minWidth: 34, alignItems: 'center', elevation: 5 }, label: { color: '#101b20', fontWeight: '900', fontSize: 12 }, credit: { position: 'absolute', bottom: 0, right: 0, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#ffffffee', borderTopLeftRadius: 8 }, creditText: { color: '#17303c', fontSize: 10 }, notice: { position: 'absolute', top: 12, left: 12, right: 12, padding: 12, borderRadius: 12, backgroundColor: '#30281fee', color: '#ffd28a' }, locationStatus: { alignSelf: 'flex-start', flexDirection:'row', alignItems:'center',gap:8, backgroundColor: '#0B1115ed', color: '#D6E2E8', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 12, fontSize: 11, lineHeight: 17, borderWidth: 1, borderColor: '#394852', maxWidth: '90%' }, locateButton: { alignSelf: 'flex-end', backgroundColor: '#F2F6F7', minHeight: 46, paddingHorizontal: 15, justifyContent: 'center', borderRadius: 14, elevation: 4 }, locateLabel: { color: '#17262E', fontWeight: '700', fontSize: 12 } });
+const styles = StyleSheet.create({ container: { flex: 1, minHeight: 160 }, pin: { borderRadius: 13, padding: 7, borderWidth: 2, borderColor: '#fff', minWidth: 34, alignItems: 'center', elevation: 5 }, label: { color: '#101b20', fontWeight: '900', fontSize: 12 }, credit: { position: 'absolute', bottom: 0, left: 0, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#ffffffee', borderTopRightRadius: 8 }, creditText: { color: '#17303c', fontSize: 10 }, notice: { position: 'absolute', top: 12, left: 12, right: 12, padding: 12, borderRadius: 12, backgroundColor: '#30281fee', color: '#ffd28a' }, locationStatus: { alignSelf: 'flex-start', flexDirection:'row', alignItems:'center',gap:8, backgroundColor: '#0B1115ed', color: '#D6E2E8', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 12, fontSize: 11, lineHeight: 17, borderWidth: 1, borderColor: '#394852', maxWidth: '90%' }, statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#0F1820', borderTopWidth: 1, borderTopColor: '#1E2A33' }, locateButton: { backgroundColor: '#F2F6F7', width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, elevation: 4 }, locateLabel: { color: '#17262E', fontWeight: '900', fontSize: 17 } });

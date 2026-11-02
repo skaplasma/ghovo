@@ -39,7 +39,7 @@ export const appStyles = StyleSheet.create({
   tabActive: { backgroundColor: '#2A1F4D', borderWidth: 1, borderColor: '#6A0DAD' },
   navTab: { borderRadius: 0, backgroundColor: 'transparent', borderWidth: 0, borderBottomWidth: 2, borderBottomColor: palette.purpleBright },
   tabSelected: { fontFamily: fonts.semibold, color: palette.purpleBright, fontSize: 13 },
-  content: { padding: 20, paddingTop: 16, gap: 16, paddingBottom: 118 },
+  content: { padding: 16, paddingTop: 12, gap: 12, paddingBottom: 120 },
   title: { fontFamily: fonts.bold, color: palette.text, fontSize: 29, lineHeight: 36, letterSpacing: -0.8 },
   eyebrow: { fontFamily: fonts.semibold, color: palette.purpleLight, fontSize: 11, letterSpacing: 1.8 },
   sectionTitle: { fontFamily: fonts.bold, color: palette.text, fontSize: 19, marginTop: 10, letterSpacing: -0.3 },

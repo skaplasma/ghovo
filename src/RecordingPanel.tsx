@@ -96,14 +96,6 @@ export function RecordingPanel({
 
   return (
     <>
-      {/* Route & Mode Banner */}
-      <View style={[s.recordHeading, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
-        <Text style={s.eyebrow}>{modeLabel(run.mode).toUpperCase()}</Text>
-        <Text style={[s.recordTitle, { fontSize: 18, flexShrink: 1 }]} numberOfLines={1}>
-          {run.name}
-        </Text>
-      </View>
-
       {/* Velocímetro circular */}
       <View style={{ alignItems: 'center', paddingVertical: 4 }}>
         <SpeedGauge
@@ -179,11 +171,11 @@ export function RecordingPanel({
         </View>
 
         <View style={s.cockpitMetricBox}>
-          <Text style={s.cockpitMetricLabel}>{run.mode === 'running' ? 'Ritmo medio' : 'Vel. media'}</Text>
+          <Text style={s.cockpitMetricLabel}>{run.mode === 'running' ? 'Ritmo medio' : 'Vel. media · km/h'}</Text>
           <Text style={s.cockpitMetricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
             {run.mode === 'running'
               ? (avgSpeedKmh > 0 ? formatPace(avgSpeedKmh) : '—')
-              : `${avgSpeedKmh.toFixed(1)} km/h`}
+              : avgSpeedKmh.toFixed(1)}
           </Text>
         </View>
       </View>

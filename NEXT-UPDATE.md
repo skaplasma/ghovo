@@ -1,3 +1,16 @@
+## Ajustes tras la primera prueba en el POCO F5 — 02/11/2026 (0.1.21)
+
+Cambios pedidos después de usar la 0.1.19 en el móvil, todos para ganar espacio y quitar cosas que tapaban el mapa.
+
+- **Inicio**: fuera la cabecera con el fantasma y el logotipo, y fuera el saludo de dos líneas. La pantalla empieza directamente por la tarjeta de ubicación, que ya es pulsable y lleva al estado del GPS. El botón de GPS de la cabecera desaparecía con ella y duplicaba esa tarjeta.
+- **Grabación**: la cabecera pierde también el fantasma y el logotipo; queda el chevron para volver y la etiqueta «EN RUTA». El mapa pasa de 0,9 a 0,62 de reparto y el panel de 1,25 a 1,95, y `RecordingPanel` ya no repite el nombre y el modo en su cabecera. El velocímetro baja de 232 a 200 px. Con eso el reloj, la diferencia y las métricas quedan a la vista sin desplazar.
+- **Mapa**: los controles «Mi ubicación» y «Ruta completa», que eran dos botones grandes sobre el mapa, pasan a dos botones redondos de 44 px en la esquina inferior derecha. La tarjeta de estado, que ocupaba el ancho del mapa, se convierte en una franja de una línea **debajo** del mapa, que ya no tapa nada. La atribución de OpenStreetMap se mueve a la esquina inferior izquierda para no chocar. En la grabación, el aviso de control o de entrada se reduce a una línea en la parte inferior del mapa en lugar de una tarjeta con dos textos y la referencia.
+- **Márgenes**: el contenedor general baja de 20 a 16 px de relleno y de 16 a 12 px de separación; también se reduce el aire superior de Inicio.
+- **Métrica de velocidad media**: el valor ya no lleva la unidad dentro (se cortaba en pantallas estrechas); la unidad pasa a la etiqueta, que ahora dice «Vel. media · km/h».
+- **Capa de arranque**: si los datos fallaban al cargar, la cortina de marca podía quedarse encima de la app. Ahora también se retira cuando hay error de lectura y tiene un límite de 6 s como red de seguridad.
+
+Pruebas actualizadas a los nuevos anclajes: las de Inicio comprueban la tarjeta «Ubicación actual» en vez del saludo eliminado, y las del mapa usan las nuevas etiquetas. 171 pruebas de interfaz y 95 de lógica, `tsc` limpio y `eslint` 0 errores.
+
 ## Rediseño visual según el mockup — 02/11/2026 (sin APK)
 
 Primera pasada del diseño neón morado sobre las pantallas existentes, con la composición del mockup y no solo la paleta, que ya coincidía.

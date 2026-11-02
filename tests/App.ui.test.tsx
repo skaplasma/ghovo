@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Alert, AppState, type AppStateStatus } from 'react-native';
 import { act, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { history, writeMany } from '../src/storage';
@@ -395,12 +395,12 @@ test('new route name remains editable while GPS is unavailable and never starts 
   expect(screen.getByLabelText('Nombre de la ruta').props.value).toBe('Casa al trabajo');
   expect(startTracking).not.toHaveBeenCalled();
   await user.press(screen.getByRole('tab',{name:/Inicio/}));
-  expect(screen.getByText('¿Dónde vamos hoy?')).toBeOnTheScreen();
+  expect(screen.getByText('Ubicación actual')).toBeOnTheScreen();
 });
 
 test('tapping the GHOVO header returns from new route to Home',async()=>{
   await openApp();await userEvent.setup().press(screen.getByRole('button',{name:'GHOVO · Ir a Inicio'}));
-  expect(screen.getByText('¿Dónde vamos hoy?')).toBeOnTheScreen();
+  expect(screen.getByText('Ubicación actual')).toBeOnTheScreen();
   expect(screen.getByRole('button',{name:'Nueva ruta'})).toBeOnTheScreen();
   expect(startTracking).not.toHaveBeenCalled();
 });
@@ -409,7 +409,7 @@ test('the header opens Home during recording without stopping it and offers a re
   mockState.active={...run,id:'pending',endedAt:undefined};
   await render(<App/>);await act(async()=>{await jest.advanceTimersByTimeAsync(1);});
   const user=userEvent.setup();await user.press(screen.getByRole('button',{name:'GHOVO · Ir a Inicio'}));
-  expect(screen.getByText('¿Dónde vamos hoy?')).toBeOnTheScreen();
+  expect(screen.getByText('Ubicación actual')).toBeOnTheScreen();
   expect(screen.queryByRole('button',{name:'Nueva ruta'})).not.toBeOnTheScreen();
   expect((mockState.active as Run).id).toBe('pending');expect(stopTracking).not.toHaveBeenCalled();
   await user.press(screen.getByRole('button',{name:'Volver a mi ruta'}));

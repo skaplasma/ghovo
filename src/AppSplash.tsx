@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Animated, Easing, Image, View} from 'react-native';
 import {palette} from './design';
 
@@ -6,13 +6,18 @@ import {palette} from './design';
 // retira al primer fotograma; esta capa cubre el hueco, evita el salto entre la
 // cortina y la app y garantiza que la imagen de GHOVO se vea siempre.
 export function AppSplash({ready}: {ready: boolean}) {
-  const fade = useRef(new Animated.Value(1)).current;
+  const [fade] = useState(() => new Animated.Value(1));
   const [minimumShown, setMinimumShown] = useState(false);
   const [removed, setRemoved] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setMinimumShown(true), 650);
-    return () => clearTimeout(timer);
+    // Red de seguridad: la capa nunca debe quedarse tapando la app si los datos fallan.
+    const failsafe = setTimeout(() => setRemoved(true), 6000);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(failsafe);
+    };
   }, []);
 
   useEffect(() => {

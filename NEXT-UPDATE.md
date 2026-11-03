@@ -1,3 +1,12 @@
+## Más mapa y botón con halo — 03/11/2026 (0.1.24)
+
+- **Fuera la franja de estado del mapa**: la línea que ocupaba el ancho bajo el mapa («Ubicación aproximada», «Buscando…») desaparece; el mapa gana esos píxeles. El aviso sigue en la tarjeta de ubicación de Inicio y en la pantalla de estado del GPS, y el propio mapa mantiene su texto de espera cuando todavía no hay posición.
+- **Atribución mínima**: «© OpenStreetMap» pasa a 8 px, sin fondo ni recuadro, en la esquina inferior izquierda. No se elimina porque la licencia de las teselas exige atribución visible; si algún día se cambia de proveedor, se puede quitar del todo.
+- **Botón «Comenzar ruta» con halo**: dos capas translúcidas alrededor del botón, además de la sombra, para que el resplandor se vea también en Android, donde `shadowColor` no pinta como en iOS.
+- **Fuera el mensaje duplicado bajo «Mi actividad»**: repetía el mismo aviso de ubicación que la tarjeta superior.
+
+Pruebas del mapa actualizadas: la de GPS desactivado comprueba el botón de centrar y el texto de espera; la de timeout, que no queda ningún indicador girando. 96 pruebas de lógica y 171 de interfaz, `tsc` limpio y `eslint` 0 errores.
+
 ## Coma decimal, errores legibles, pausa real y biblioteca normalizada — 03/11/2026 (0.1.23)
 
 Seis mejoras sobre la versión probada en el POCO.

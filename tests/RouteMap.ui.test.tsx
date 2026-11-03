@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { AppState, Linking, type AppStateStatus } from 'react-native';
 import { act, fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import * as Location from 'expo-location';
@@ -57,13 +57,17 @@ test('permanently denied permission offers settings without starting GPS', async
 test('disabled GPS displays actionable feedback and no perpetual spinner', async () => {
   jest.mocked(Location.hasServicesEnabledAsync).mockResolvedValueOnce(false);
   await mount();
-  expect(screen.getByText('Activa la ubicación del móvil y pulsa Mi ubicación.')).toBeOnTheScreen();
+  // La franja de estado sobre el mapa ya no existe: el aviso queda en el botón de ajustes
+  // y en el texto del propio mapa.
+  expect(screen.getByRole('button', { name: 'Centrar en mi ubicación' })).toBeOnTheScreen();
+  expect(screen.getByText('El mapa aparecerá al obtener tu ubicación.')).toBeOnTheScreen();
   expect(screen.queryByLabelText('Buscando señal GPS')).not.toBeOnTheScreen();
 });
 test('GPS timeout removes the watcher and late fixes cannot show a stale map', async () => {
   await mount(); const lateCallback = mockLocationCallback!;
   await act(async () => { await jest.advanceTimersByTimeAsync(20001); });
-  expect(screen.getByText(/No se pudo obtener tu posición/)).toBeOnTheScreen();
+  expect(screen.getByText('El mapa aparecerá al obtener tu ubicación.')).toBeOnTheScreen();
+  expect(screen.queryByLabelText('Buscando señal GPS')).not.toBeOnTheScreen();
   await act(async () => { lateCallback(fix()); });
   expect(screen.queryByTestId('native-map')).not.toBeOnTheScreen();
   expect(mockRemove).toHaveBeenCalled();

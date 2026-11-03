@@ -48,55 +48,59 @@ const resetReplay: Replay = { offset: 0, startedAt: null };
 const noPoints: Point[] = [];
 function StartSliderButton({ disabled, onPress }: { disabled: boolean; onPress: () => void }) {
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Nueva ruta"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        {
-          minHeight: 64,
-          borderRadius: 32,
-          backgroundColor: '#8B5CF6',
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 8,
-          paddingVertical: 6,
-          gap: 14,
-          opacity: disabled ? 0.45 : pressed ? 0.85 : 1,
-          overflow: 'hidden',
-          marginBottom: 10,
-          shadowColor: '#8B5CF6',
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.45,
-          shadowRadius: 14,
-          elevation: 8,
-        }
-      ]}
-    >
-      <View
-        style={{
-          width: 50,
-          height: 50,
-          borderRadius: 25,
-          backgroundColor: '#FFFFFF',
-          alignItems: 'center',
-          justifyContent: 'center',
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-        }}
+    <View style={{ marginBottom: 14, marginHorizontal: 2 }}>
+      {/* Halo: dos capas translúcidas alrededor del botón, visibles también en Android. */}
+      <View pointerEvents="none" style={{ position: 'absolute', top: -10, left: -10, right: -10, bottom: -10, borderRadius: 42, backgroundColor: 'rgba(139,92,246,0.16)' }} />
+      <View pointerEvents="none" style={{ position: 'absolute', top: -5, left: -5, right: -5, bottom: -5, borderRadius: 37, backgroundColor: 'rgba(139,92,246,0.28)' }} />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Nueva ruta"
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={onPress}
+        style={({ pressed }) => [
+          {
+            minHeight: 64,
+            borderRadius: 32,
+            backgroundColor: '#8B5CF6',
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 8,
+            paddingVertical: 6,
+            gap: 14,
+            opacity: disabled ? 0.45 : pressed ? 0.85 : 1,
+            overflow: 'hidden',
+            shadowColor: '#8B5CF6',
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.45,
+            shadowRadius: 14,
+            elevation: 8,
+          }
+        ]}
       >
-        <Text style={{ fontSize: 22, color: '#6A0DAD', marginLeft: 3 }}>▶</Text>
-      </View>
-      <View style={{ flex: 1, alignItems: 'center', paddingRight: 28 }}>
-        <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 }}>
-          Comenzar ruta
-        </Text>
-      </View>
-    </Pressable>
+        <View
+          style={{
+            width: 50,
+            height: 50,
+            borderRadius: 25,
+            backgroundColor: '#FFFFFF',
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 4,
+          }}
+        >
+          <Text style={{ fontSize: 22, color: '#6A0DAD', marginLeft: 3 }}>▶</Text>
+        </View>
+        <View style={{ flex: 1, alignItems: 'center', paddingRight: 28 }}>
+          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 }}>
+            Comenzar ruta
+          </Text>
+        </View>
+      </Pressable>
+    </View>
   );
 }
 
@@ -552,7 +556,6 @@ export function AppProvider({children}:{children:React.ReactNode}) {
             </View>
           </View>
 
-          <Text style={s.caption}>{busy?'Preparando GPS preciso…':gps.ready?'Ubicación preparada para empezar.':gps.message}</Text>
           {!!pendingRecordings.length&&<View style={s.card}><Text style={s.cardTitle}>Recorridos pendientes</Text><Text style={s.caption}>Sus puntos están guardados. Puedes recuperarlos para finalizar o continuar.</Text>{pendingRecordings.map(item=><Button key={item.id} label={`Recuperar ${item.name}`} secondary disabled={disabled} onPress={()=>void act(()=>restorePending(item.id))}/>)}</View>}
           {[{title:'Favoritas',routes:favoriteRoutes},{title:'Tus rutas habituales',routes:habits}].map(group=>group.routes.length>0&&<View key={group.title} style={{gap:12}}><Text style={s.sectionTitle}>{group.title}</Text>
           {group.routes.map(habit=><View key={habit.reference.routeId} style={[s.card,{flexDirection:'row',alignItems:'center',padding:14,gap:12}]}><View style={{flex:1,gap:5}}><Text style={[s.cardTitle,{fontSize:16}]} numberOfLines={2}>{habit.reference.name}</Text><Text style={s.caption}>{km(habit.reference)} · {habit.attempts.length} {habit.attempts.length===1?'viaje':'viajes'}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Iniciar ${habit.reference.name}`} accessibilityState={{disabled}} disabled={disabled} onPress={()=>startHabit(habit.reference.routeId)} style={[s.button,{minHeight:44,paddingVertical:10,paddingHorizontal:14}]}><Text style={s.buttonText}>Iniciar</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Ver ${habit.reference.name}`} disabled={disabled} onPress={()=>choose(habit.reference.routeId)} style={{minHeight:44,minWidth:32,justifyContent:'center',alignItems:'center'}}><Text style={s.tabSelected}>›</Text></Pressable></View>)}</View>)}

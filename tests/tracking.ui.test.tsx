@@ -62,7 +62,12 @@ test('a recording without comparison may start outside the old A radius',async()
 });
 test('a saved route may start in its middle and aligns the reference offset',async()=>{
  const now=Date.now();const points=Array.from({length:101},(_,i)=>({latitude:0,longitude:i*10/111195,timestamp:now-500000+i*1000,accuracy:5}));mockHistory=[{id:'ref',routeId:'route',name:'Test',startedAt:points[0].timestamp,endedAt:points.at(-1)!.timestamp,points}];const draft={...run(),referenceId:'ref'};
- await startTracking(draft,points[0],{...points[40],timestamp:now});expect(mockActive?.referenceOffsetMs).toBeGreaterThan(39000);expect(mockActive?.startedAt).toBe(now);expect(mockActive?.points).toHaveLength(1);
+ await startTracking(draft,points[0],{...points[40],timestamp:now});
+ // Seguro de arranque: la primera posición sobre el trazado solo deja la entrada pendiente.
+ expect(mockActive?.entryPendingAt).toBe(now);expect(mockActive?.circuitStartedAt).toBeUndefined();
+ const second=points[41];
+ await executeTask({data:{locations:[location({timestamp:now+1000,coords:{...location().coords,latitude:second.latitude,longitude:second.longitude}})]},error:null,executionInfo:{eventId:'entry',taskName:'ghovo-route-location',appState:'background'}} as never);
+ expect(mockActive?.circuitStartedAt).toBe(now+1000);expect(mockActive?.referenceOffsetMs).toBeGreaterThan(39000);expect(mockActive?.startedAt).toBe(now);expect(mockActive?.points).toHaveLength(2);
 });
 
 test('failed native service start removes only the newly created draft',async()=>{
@@ -128,7 +133,7 @@ test('background arrival saves exactly once after the full course and five secon
   jest.mocked(Location.hasStartedLocationUpdatesAsync).mockResolvedValueOnce(true);
   const locations=Array.from({length:105},(_,i)=>{const index=i+1,pt=point(Math.min(index*10,1000),startedAt+index*1000);return location({timestamp:pt.timestamp,coords:{...location().coords,latitude:pt.latitude,longitude:pt.longitude}});});
   await executeTask({data:{locations},error:null,executionInfo:{eventId:'arrival',taskName:'ghovo-route-location',appState:'background'}} as never);
-  expect(mockActive).toBeNull();expect(mockHistory).toHaveLength(2);expect(mockResult).toBe('today');expect(mockHistory[1].autoCompleted).toBe(true);expect(mockHistory[1].comparison?.splits.at(-1)?.elapsed).toBe(mockHistory[1].endedAt!-startedAt);expect(Location.stopLocationUpdatesAsync).toHaveBeenCalled();
+  expect(mockActive).toBeNull();expect(mockHistory).toHaveLength(2);expect(mockResult).toBe('today');expect(mockHistory[1].autoCompleted).toBe(true);expect(mockHistory[1].comparison?.splits.at(-1)?.elapsed).toBe(mockHistory[1].endedAt!-(mockHistory[1].circuitStartedAt??startedAt));expect(Location.stopLocationUpdatesAsync).toHaveBeenCalled();
   await executeTask({data:{locations},error:null,executionInfo:{eventId:'duplicate',taskName:'ghovo-route-location',appState:'background'}} as never);expect(mockHistory).toHaveLength(2);expect(speakNotice).toHaveBeenCalledTimes(1);expect(speakNotice).toHaveBeenCalledWith(expect.objectContaining({kind:'arrival'}),true);
 });
 

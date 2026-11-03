@@ -126,8 +126,8 @@ export function RecordingPanel({
         >
           {!run.circuitStartedAt ? (
             <>
-              <Text style={[s.deltaDeltaText, s.deltaNeutralText]}>◎ Esperando entrada</Text>
-              <Text style={s.deltaSubtitle}>El cronómetro del fantasma se activará al entrar en el trazado</Text>
+              <Text style={[s.deltaDeltaText, s.deltaNeutralText]}>{run.entryPendingAt ? '◎ Confirmando entrada…' : '◎ Esperando entrada'}</Text>
+              <Text style={s.deltaSubtitle}>{run.entryPendingAt ? 'Una posición más sobre el trazado y arranca el fantasma' : 'El cronómetro del fantasma se activará al entrar en el trazado'}</Text>
             </>
           ) : hasDiff ? (
             <>

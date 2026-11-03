@@ -1,3 +1,14 @@
+## Seguro de arranque: dos posiciones para activar el fantasma — 03/11/2026 (sin APK)
+
+Una sola posición sobre el trazado ya no basta para dar por iniciada la ruta. Aunque se pase junto a la línea, el GPS puede tener 20 m de error y una calle paralela puede coincidir; con el fantasma en marcha el tiempo se contaba desde antes de entrar.
+
+- **Confirmación en dos pasos**: la primera posición válida sobre el trazado solo marca `entryPendingAt`. La segunda, separada por **menos de 5 s**, confirma la entrada y entonces se fija `circuitStartedAt`, `referenceOffsetMs` y arranca la comparación. Si la segunda posición ya no está sobre el trazado, la entrada pendiente se descarta.
+- **Arrancar encima de la ruta** también pasa por el mismo seguro: `startTracking` deja la entrada pendiente en lugar de activar el cronómetro, así que el fantasma sale con la segunda posición y no con la primera.
+- **Interfaz**: mientras se espera la confirmación, el panel dice «Confirmando entrada…» y «Una posición más sobre el trazado y arranca el fantasma», en vez de dejar al usuario sin saber si el sistema le ha visto.
+- El tiempo previo a la confirmación no forma parte del intento: el cronómetro empieza en la posición que confirma la entrada, y las comparaciones y los parciales se calculan desde ahí.
+
+Pruebas actualizadas: el arranque en mitad de la ruta comprueba ahora el estado pendiente y luego la confirmación con una segunda posición; la llegada automática calcula el parcial desde `circuitStartedAt`. 96 pruebas de lógica y 171 de interfaz, `tsc` limpio y `eslint` 0 errores. Sin compilación: se acumula para el próximo lote.
+
 ## Entrada a la ruta más estricta y dos remates de interfaz — 03/11/2026 (sin APK)
 
 - **El fantasma ya no arranca antes de entrar en la ruta.** La detección de entrada se había relajado a 80 m en la salida y 45 m en el resto del trazado, y eso hacía que una calle paralela o el punto donde aparcas al empezar contaran como «estoy en la ruta»: el cronómetro y el fantasma echaban a andar sin haber llegado. Vuelve a **30 m en la salida y 25 m en el resto**, que es ancho de calzada más error de GPS sin coger calles de al lado. Al detectarse la entrada se sigue fijando `referenceOffsetMs` con el punto exacto de incorporación, así que el fantasma aparece sincronizado en ese punto y no al principio del trazado.

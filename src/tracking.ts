@@ -30,13 +30,22 @@ TaskManager.defineTask<{locations:Location.LocationObject[]}>(TASK,async({data,e
         if(run.comparison){
           updated.circuitStartedAt=run.startedAt;
         }else{
-          const atStart=run.points[0]&&routeEntry(previous,run.points[0]);
-          const entry=atStart||routeEntry(previous,p);
-          if(entry){
-            updated.circuitStartedAt=atStart?run.points[0].timestamp:p.timestamp;
+          // Seguro de arranque: una sola posición sobre el trazado no basta (una calle
+          // paralela o un GPS ruidoso pueden coincidir). Hacen falta dos seguidas,
+          // separadas por menos de 5 s, para activar el fantasma y el cronómetro.
+          const entry=routeEntry(previous,p);
+          if(!entry){
+            if(updated.entryPendingAt!==undefined)delete updated.entryPendingAt;
+          }else if(updated.entryPendingAt===undefined){
+            updated.entryPendingAt=p.timestamp;
+          }else if(p.timestamp-updated.entryPendingAt>5000){
+            updated.entryPendingAt=p.timestamp;
+          }else{
+            updated.circuitStartedAt=p.timestamp;
             updated.referenceOffsetMs=entry.offset;
             updated.comparison=initialComparison(updated.circuitStartedAt);
             updated.notice=entryNotice(updated,updated.circuitStartedAt);
+            delete updated.entryPendingAt;
             newNotice=true;
           }
         }
@@ -114,12 +123,9 @@ export async function startTracking(run:Run,_origin?:Point,prepared?:Point) {
     const reference=(await history()).find(item=>item.id===run.referenceId&&item.routeId===run.routeId&&item.mode===run.mode);
     if(!reference||!courseModel(reference,run.checkpointKm).valid)throw Error('La referencia ya no está disponible o tiene cortes GPS. Elige otra.');
     const entry=routeEntry(reference,point);
-    if(entry){
-      run.circuitStartedAt=point.timestamp;
-      run.referenceOffsetMs=entry.offset;
-      run.comparison=initialComparison(point.timestamp);
-      run.notice=entryNotice(run,point.timestamp);
-    }
+    // También con el seguro: arrancar encima del trazado solo deja la entrada pendiente;
+    // la segunda posición coherente la confirma en la tarea de fondo.
+    if(entry)run.entryPendingAt=point.timestamp;
   }
   await serial(async()=>{if(await active())throw Error('Ya hay un recorrido en curso.');await write('active',run);});
   try {await Location.startLocationUpdatesAsync(TASK,{...trackingOptions,timeInterval:run.mode==='driving'||run.mode==='bicycling'?1000:2000});}catch(e){await serial(async()=>{if((await active())?.id===run.id)await write('active',null);});throw e;}

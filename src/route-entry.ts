@@ -1,4 +1,4 @@
-import {accepts,distance,ghostAt,type Point,type Run} from './core.ts';
+﻿import {accepts,distance,ghostAt,type Point,type Run} from './core.ts';
 export function routeEntry(reference:Run,point:Point):{offset:number;meters:number}|undefined{
  if(!accepts([],point)||reference.points.length<2)return;
  let meters=0,best:{offset:number;meters:number;distance:number}|undefined;
@@ -11,7 +11,9 @@ export function routeEntry(reference:Run,point:Point):{offset:number;meters:numb
   meters+=segment;
  }
  if(!best||meters-best.meters<50)return;
- return {offset:best.meters<=50?0:best.offset,meters:best.meters};
+ // Arrancar prácticamente en la salida se trata como salida (0) para no desplazar los
+ // controles; a partir de ahí se respeta el punto exacto de incorporación.
+ return {offset:best.meters<=25?0:best.offset,meters:best.meters};
 }
 let cachedOriginal:Run|undefined,cachedOffset:number|undefined,cachedTail:Run|undefined;
 export function referenceForRun(run:Run,reference:Run|undefined):Run|undefined{

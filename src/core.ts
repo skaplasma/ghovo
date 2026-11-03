@@ -25,7 +25,11 @@ export function ghostAt(run: Run, elapsed: number): Point | undefined {
   const delta=((b.longitude-a.longitude+540)%360)-180;
   return {...a, latitude:a.latitude+(b.latitude-a.latitude)*f, longitude:((a.longitude+delta*f+540)%360)-180, timestamp:t};
 }
-export const isComparable=(run:Run)=>!run.incomplete&&!run.referenceOffsetMs&&(run.gpsGaps??0)===0;
+// Un intento es comparable si no tiene defectos de calidad. Haberse incorporado a mitad
+// no lo invalida: se compara el tramo recorrido desde la entrada.
+export const isComparable=(run:Run)=>!run.incomplete&&(run.gpsGaps??0)===0;
+// Para récords sí hace falta haber recorrido el circuito completo desde la salida.
+export const isFullCourse=(run:Run)=>!run.referenceOffsetMs;
 export function accepts(points: Point[], p: Point, mode:TravelMode='walking') {
   if (![p.latitude,p.longitude,p.timestamp,p.accuracy].every(Number.isFinite) || Math.abs(p.latitude)>90 || Math.abs(p.longitude)>180 || p.accuracy < 0 || p.accuracy > 25) return false;
   const prev=points.at(-1);

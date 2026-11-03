@@ -26,7 +26,8 @@ export function routeFacts(reference:Run,attempts:Run[]){
   };
 }
 export function resultFor(run: Run, history: Run[]) {
-  const previous = history.filter(r => r.routeId === run.routeId && r.mode === run.mode && r.id !== run.id && r.startedAt < run.startedAt && isComparable(r));
+  // Solo los intentos completos sirven de referencia para comparar tiempos finales.
+  const previous = history.filter(r => r.routeId === run.routeId && r.mode === run.mode && r.id !== run.id && r.startedAt < run.startedAt && isComparable(r) && !r.referenceOffsetMs);
   const best = previous.reduce<Run | undefined>((b, r) => !b || duration(r) < duration(b) ? r : b, undefined);
   const comparisonReference=run.referenceId?previous.find(r=>r.id===run.referenceId):best;
   const difference = comparisonReference && isComparable(run) ? duration(run) - duration(comparisonReference) : null;

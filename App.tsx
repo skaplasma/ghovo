@@ -38,7 +38,7 @@ import { describeError } from './src/errors';
 import { RouteCard } from './src/RouteCard';
 import { WelcomeScreen } from './src/WelcomeScreen';
 import { AppSplash } from './src/AppSplash';
-import { type Point, type Run, type TravelMode, clock, duration, ghostAt, isComparable, length, recordingQuality } from './src/core';
+import { type Point, type Run, type TravelMode, clock, duration, ghostAt, isComparable, isFullCourse, length, recordingQuality } from './src/core';
 import { active, history, read, serial, write, writeMany } from './src/storage';
 import { activityTotals, filterRoutes, resultFor, type RouteDetails, type RouteOrder } from './src/results';
 import { ensureTracking, recoverTracking, resumeTracking, stopTracking, trackingRunning } from './src/tracking';
@@ -212,7 +212,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
       const mode=attempts.find(attempt=>attempt.mode)?.mode;
       return {
       reference: attempts[0], attempts,
-      best: attempts.filter(r=>isComparable(r)&&r.mode===mode).reduce<Run|undefined>((b, r) => !b||duration(r) < duration(b) ? r : b,undefined)??attempts.find(r=>r.mode===mode)??attempts[0],
+      best: attempts.filter(r=>isComparable(r)&&isFullCourse(r)&&r.mode===mode).reduce<Run|undefined>((b, r) => !b||duration(r) < duration(b) ? r : b,undefined)??attempts.find(r=>r.mode===mode)??attempts[0],
       latest: attempts.at(-1)!,
     };});
   }, [runs]);

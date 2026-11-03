@@ -1,3 +1,13 @@
+## Fallos de la prueba real: guardado, fantasma e imagen de arranque — 03/11/2026 (sin APK)
+
+Tres fallos comunicados después de usar la app en la calle.
+
+- **«Me salió sin verificar» al llegar.** `completeRun` marcaba como no verificable cualquier intento con `referenceOffsetMs`, es decir, todo recorrido que no había empezado exactamente en A. Ahora la referencia se recorta al punto de incorporación antes de comparar, así que un intento que entra en la ruta a mitad se guarda verificado y con su comparación. Además se recorta la **cola de aparcamiento**: si el último tramo se aleja de la meta, se compara solo hasta el último punto que aún estaba a menos de 50 m de B. Un desvío real a mitad de ruta sigue invalidando el intento (`sameCourse` sobre la traza recortada), y los récords siguen exigiendo circuito completo (`isFullCourse`).
+- **El fantasma empezaba en la salida.** `routeEntry` redondeaba a 0 cualquier incorporación en los primeros 50 m, así que si entrabas 40 m más adelante el fantasma aparecía en A. Ahora solo se redondea por debajo de 25 m —el ruido del GPS al arrancar— y por encima se respeta el punto exacto de incorporación, con el tiempo de referencia correspondiente a ese punto. La comparación, el parcial de meta y el fantasma usan todos la referencia recortada.
+- **Imagen de arranque cortada.** Android 12 recorta el icono de la cortina en un círculo; el fantasma iba a sangre y se veían cortados los lados. Nueva imagen `assets/ghovo-splash-v1.png`, el mismo dibujo al 66 % centrado sobre lienzo transparente, y `imageWidth` sube a 220.
+
+97 pruebas de lógica (una nueva: incorporarse a mitad, fantasma en el punto de entrada y guardado verificado terminando 200 m después de B) y 174 de interfaz. Dos pruebas cambian de expectativa a propósito: aparcar 120 m al lado de B ya no marca el intento como no verificable, y un intento incorporado a mitad pasa a ser comparable aunque no cuente para récords.
+
 ## Cabina compacta en lugar del velocímetro circular — 03/11/2026 (sin APK)
 
 El velocímetro de 200 px más el panel de diferencia ocupaban casi 300 px del panel de grabación. Se sustituyen por **una sola fila de cabina** de unos 76 px:

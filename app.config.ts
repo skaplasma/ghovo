@@ -1,4 +1,4 @@
-﻿import { ExpoConfig } from 'expo/config';
+import { ExpoConfig } from 'expo/config';
 // IDs reales por entorno; sin ellos se usan los de prueba de Google para poder probar el flujo.
 const admobAndroid = process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID ?? 'ca-app-pub-3940256099942544~3347511713';
 const admobIos = process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID ?? 'ca-app-pub-3940256099942544~1458002511';
@@ -27,9 +27,11 @@ const config:ExpoConfig={
     ['expo-location',{isAndroidBackgroundLocationEnabled:true,isAndroidForegroundServiceEnabled:true}],
     'expo-sqlite', '@maplibre/maplibre-react-native',
     ['expo-splash-screen',{
-      image:'./assets/ghovo-mascot-2d-v1.png',
-      imageWidth:200, resizeMode:'contain', backgroundColor:'#101C22',
-      dark:{image:'./assets/ghovo-mascot-2d-v1.png',backgroundColor:'#101C22'},
+      // Imagen con margen: Android 12 recorta el icono de arranque en un círculo y el
+      // fantasma a sangre se veía cortado por los lados.
+      image:'./assets/ghovo-splash-v1.png',
+      imageWidth:220, resizeMode:'contain', backgroundColor:'#101C22',
+      dark:{image:'./assets/ghovo-splash-v1.png',backgroundColor:'#101C22'},
     }],
   ],
 };

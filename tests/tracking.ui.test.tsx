@@ -164,7 +164,9 @@ test('parking in the destination area 120 m from B saves automatically without r
  const reference:Run={id:'reference',routeId:'commute',name:'Casa',mode:'driving',startedAt:now-500000,endedAt:now-400000,points:Array.from({length:101},(_,i)=>point(i*10,now-500000+i*1000))};const parked=point(1000,now-5000,120);
  mockHistory=[reference];mockActive={id:'parking',routeId:'commute',name:'Casa',mode:'driving',referenceId:reference.id,autoFinish:true,startedAt,points:[...Array.from({length:101},(_,i)=>point(i*10,startedAt+i*1000)),parked],lastFixAt:parked.timestamp,comparison:{progress:1000,segment:99,lastFixAt:parked.timestamp,lastMatchedAt:parked.timestamp,unavailable:false,difference:0,splits:[],arrivalSince:parked.timestamp,arrivalAnchor:parked}};
  await executeTask({data:{locations:[location({timestamp:now,coords:{...location().coords,latitude:parked.latitude,longitude:parked.longitude,accuracy:8,speed:0}})]},error:null,executionInfo:{eventId:'area-arrival',taskName:'ghovo-route-location',appState:'background'}} as never);
- expect(mockActive).toBeNull();expect(mockHistory).toHaveLength(2);expect(mockHistory[1].autoCompleted).toBe(true);expect(mockHistory[1].incomplete).toBe(true);
+ expect(mockActive).toBeNull();expect(mockHistory).toHaveLength(2);expect(mockHistory[1].autoCompleted).toBe(true);
+ // Aparcar 120 m al lado de B ya no invalida el intento: se recorta la cola de aparcamiento.
+ expect(mockHistory[1].incomplete).toBe(false);
 });
 
 test('checkpoint speech is emitted after saving and duplicate GPS batches do not repeat it',async()=>{

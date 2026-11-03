@@ -8,7 +8,7 @@ import {AccountPanel,useAccount} from './AccountPanel';
 import {refreshAccount,logoutAccount} from './account-client';
 import {billingRequest,billingError,monetizationEnforced,claimAdReward,type WalletSnapshot} from './monetization-api';
 import {pendingBilling,recoverBilling} from './monetized-tracking';
-import {useRewardedAd} from './ads';
+import {adsConfigured,useRewardedAd} from './ads';
 
 function Action({label,onPress,disabled=false}:{label:string;onPress:()=>void;disabled?:boolean}){return <Pressable accessibilityRole="button" accessibilityState={{disabled}} disabled={disabled} onPress={onPress} style={[s.button,s.secondary,{opacity:disabled?0.45:1}]}><Text style={s.lightText}>{label}</Text></Pressable>;}
 type Entry={id:string;kind:'initial'|'reward'|'route';delta:number;created_at:string};
@@ -24,7 +24,7 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,stats={routes
  const account=useAccount(),mounted=useRef(true),requestId=useRef(0);
  const owner=account.user?.id;
  const [wallet,setWallet]=useState<WalletSnapshot>(),[entries,setEntries]=useState<Entry[]>([]),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[pending,setPending]=useState(false);
- const {isLoaded,showAd,reloadAd}=useRewardedAd();
+ const {isLoaded,showAd,reloadAd,consent,showPrivacyOptions}=useRewardedAd();
 
  const refresh=useCallback(async()=>{
   if(!owner)return;const request=++requestId.current;
@@ -44,7 +44,8 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,stats={routes
  const currentWallet=wallet?.userId===account.user?.id?wallet:undefined;
  const price=currentWallet?`${decimal(currentWallet.config.priceMinor/100,2)} €`:'4,99 €';
 
- const canWatchAd=!!currentWallet&&!currentWallet.premium&&isLoaded&&!active&&currentWallet.adsRemaining>0&&currentWallet.available<50&&!busy;
+ // Sin consentimiento de privacidad no se pide ningún anuncio, aunque el SDK esté cargado.
+ const canWatchAd=!!currentWallet&&!currentWallet.premium&&consent.canRequestAds&&isLoaded&&!active&&currentWallet.adsRemaining>0&&currentWallet.available<50&&!busy;
 
  const onWatchAd=()=>{
   if(!canWatchAd)return;
@@ -136,7 +137,12 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,stats={routes
     <Text style={s.cardTitle}>Conseguir créditos</Text><Text style={s.muted}>Mira un anuncio y consigue una ruta gratis.</Text><Text style={s.caption}>1 recompensa confirmada = 1 crédito. Máximo {currentWallet?.config.dailyAdLimit??10} al día y hasta 50 acumulados. No caducan.</Text>
     {currentWallet&&!currentWallet.premium&&<Text style={s.caption}>Recompensas restantes hoy: {currentWallet.adsRemaining}. La disponibilidad de anuncios depende del proveedor.</Text>}
     <Action label="Ver anuncio para conseguir 1 crédito" disabled={!canWatchAd} onPress={onWatchAd}/>
-    <Text style={s.caption}>{active?'No se permiten anuncios con una ruta activa.':!account.user?'Inicia sesión para conseguir créditos.':currentWallet?.premium?'Tu cuenta ya tiene Premium activo con rutas ilimitadas.':currentWallet&&currentWallet.adsRemaining<=0?'Has alcanzado el límite diario de anuncios recompensados.':currentWallet&&currentWallet.available>=50?'Has alcanzado el límite máximo de créditos (50).':!isLoaded?'Cargando anuncio de prueba... Espera unos instantes.':'Al completar el vídeo se sumará 1 crédito automáticamente a tu saldo.'}</Text>
+    {!consent.canRequestAds&&<>
+      <Text style={s.caption}>Los anuncios necesitan tu consentimiento de privacidad. Puedes cambiarlo cuando quieras.</Text>
+      <Action label="Opciones de privacidad" disabled={busy} onPress={()=>void run(async()=>{await showPrivacyOptions();})}/>
+    </>}
+    {consent.canRequestAds&&!adsConfigured&&<Text style={s.caption}>Versión de pruebas: Google sirve anuncios de prueba, sin ingresos.</Text>}
+    <Text style={s.caption}>{active?'No se permiten anuncios con una ruta activa.':!account.user?'Inicia sesión para conseguir créditos.':currentWallet?.premium?'Tu cuenta ya tiene Premium activo con rutas ilimitadas.':currentWallet&&currentWallet.adsRemaining<=0?'Has alcanzado el límite diario de anuncios recompensados.':currentWallet&&currentWallet.available>=50?'Has alcanzado el límite máximo de créditos (50).':!consent.canRequestAds?'Sin consentimiento no se puede mostrar el anuncio.':!isLoaded?'Preparando el anuncio... Espera unos instantes.':'Al completar el vídeo se sumará 1 crédito automáticamente a tu saldo.'}</Text>
     <Action label="Pasar a Premium" disabled={busy} onPress={onPremium}/>
    </View>}
    {premiumPage&&<View style={s.card}><Text style={s.eyebrow}>PAGO ÚNICO · SIN SUSCRIPCIONES</Text><Text style={s.resultTitle}>{currentWallet?.premium?'Premium verificado':`Precio previsto: ${price}`}</Text><Text style={s.muted}>Rutas ilimitadas de por vida, sin créditos ni anuncios y con las funciones actuales de GHOVO.</Text><Text style={s.caption}>El precio definitivo lo mostrará la tienda antes de confirmar. No hay cuotas mensuales ni anuales.</Text><Action label="Comprar Premium" disabled onPress={()=>{}}/><Action label="Restaurar compra" disabled onPress={()=>{}}/><Text style={s.caption}>Compras y restauración pendientes de conectar a Google Play. No se realiza ningún cobro desde esta pantalla. Si ya eres Premium, tus créditos se conservan.</Text>{!!message&&<Text style={s.muted}>{message}</Text>}</View>}

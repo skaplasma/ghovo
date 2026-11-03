@@ -1,3 +1,20 @@
+## Anuncios terminados: consentimiento, IDs configurables y circuito cerrado — 03/11/2026 (sin APK)
+
+Repaso de lo que ya existía y cierre del apartado de anuncios recompensados.
+
+**Ya estaba**: SDK nativo de AdMob con sus ids de prueba, precarga del anuncio recompensado, eventos LOADED/EARNED_REWARD/CLOSED/ERROR con limpieza de suscripciones, abono del crédito en servidor con `ghovo_claim_reward`, límites de 10 al día y 50 acumulados, y bloqueo con ruta activa.
+
+**Añadido ahora**:
+
+- **Consentimiento (UMP)** en `src/ads.ts` con `AdsConsent`: `requestInfoUpdate`, formulario si es obligatorio y `canRequestAds` como condición previa. Sin consentimiento no se pide ningún anuncio, `loadRewardedAd` no hace nada y `showRewardedAd` rechaza. Al volver del formulario se recarga el anuncio si el usuario ha aceptado.
+- **Opciones de privacidad** desde Perfil: botón que abre `showPrivacyOptionsForm`, para poder cambiar o retirar el consentimiento cuando el usuario quiera.
+- **IDs configurables por entorno**: `EXPO_PUBLIC_ADMOB_ANDROID_APP_ID`, `EXPO_PUBLIC_ADMOB_IOS_APP_ID` (se aplican al compilar, en `app.config.ts`) y `EXPO_PUBLIC_ADMOB_REWARDED_UNIT` (en ejecución). Documentados en `.env.example`. Mientras falten se usan los de prueba de Google y la pantalla lo advierte: «Versión de pruebas: Google sirve anuncios de prueba, sin ingresos».
+- **Estado de consentimiento en la interfaz**: si falta, el botón de ver el anuncio queda deshabilitado, se explica por qué y aparece «Opciones de privacidad»; el texto de ayuda prioriza el motivo real (ruta activa, límite diario, tope de créditos, sin consentimiento, cargando).
+
+**Pendiente para ingresos reales** (requiere cuentas, no código): crear la cuenta de AdMob y la unidad recompensada, dar de alta las variables, publicar el producto Premium en Play Console y sustituir el abono desde el cliente por la verificación **SSV** de Google en el servidor. Mientras el crédito lo pida la app tras `EARNED_REWARD`, un cliente modificado podría reclamarlo sin ver el vídeo; el límite diario y el libro de movimientos en servidor acotan el daño, pero no lo sustituyen.
+
+173 pruebas de interfaz (dos nuevas para el consentimiento), 96 de lógica, `tsc` limpio y `eslint` 0 errores. Sin compilación.
+
 ## Seguro de arranque: dos posiciones para activar el fantasma — 03/11/2026 (sin APK)
 
 Una sola posición sobre el trazado ya no basta para dar por iniciada la ruta. Aunque se pase junto a la línea, el GPS puede tener 20 m de error y una calle paralela puede coincidir; con el fantasma en marcha el tiempo se contaba desde antes de entrar.

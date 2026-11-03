@@ -1,4 +1,7 @@
-﻿import { ExpoConfig } from 'expo/config';
+import { ExpoConfig } from 'expo/config';
+// IDs reales por entorno; sin ellos se usan los de prueba de Google para poder probar el flujo.
+const admobAndroid = process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID ?? 'ca-app-pub-3940256099942544~3347511713';
+const admobIos = process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID ?? 'ca-app-pub-3940256099942544~1458002511';
 const config:ExpoConfig={
   name:'GHOVO', slug:'ghovo', owner:'skacristian',
   extra:{eas:{projectId:'72f2347a-dad7-4daf-a387-8bb1ea0408be'}},
@@ -16,8 +19,8 @@ const config:ExpoConfig={
       },
     }],
     ['react-native-google-mobile-ads',{
-      androidAppId:'ca-app-pub-3940256099942544~3347511713',
-      iosAppId:'ca-app-pub-3940256099942544~1458002511',
+      androidAppId:admobAndroid,
+      iosAppId:admobIos,
       delayAppMeasurementInit:true,
     }],
     '@react-native-google-signin/google-signin','expo-router','expo-sharing','expo-status-bar','expo-secure-store','expo-web-browser',

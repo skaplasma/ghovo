@@ -5,12 +5,18 @@ export const TEST_REWARDED_AD_UNIT = 'ca-app-pub-3940256099942544/5224354917';
 
 export type AdReward = { amount: number; type: string };
 export type AdState = 'idle' | 'loading' | 'loaded' | 'showing' | 'error';
+export type ConsentState = {
+  status: 'unknown' | 'required' | 'obtained' | 'not-required' | 'unavailable';
+  canRequestAds: boolean;
+  privacyOptionsRequired: boolean;
+};
 
 let RewardedAd: any = null;
 let RewardedAdEventType: any = null;
 let AdEventType: any = null;
 let mobileAds: any = null;
 let TestIds: any = null;
+let AdsConsent: any = null;
 
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -18,19 +24,25 @@ try {
   RewardedAd = gma.RewardedAd;
   RewardedAdEventType = gma.RewardedAdEventType;
   AdEventType = gma.AdEventType;
+  AdsConsent = gma.AdsConsent;
   mobileAds = gma.default;
   TestIds = gma.TestIds;
 } catch {
-  // Graceful fallback for non-native or test environments
+  // Fallback cuando el módulo nativo no existe (web o pruebas).
 }
 
-export const adUnitId: string = TestIds?.REWARDED ?? TEST_REWARDED_AD_UNIT;
+// Una unidad real se configura por entorno; mientras no exista se anuncian los de prueba
+// de Google, que no generan ingresos pero permiten probar el flujo completo.
+export const adUnitId: string =
+  process.env.EXPO_PUBLIC_ADMOB_REWARDED_UNIT ?? TestIds?.REWARDED ?? TEST_REWARDED_AD_UNIT;
+export const adsConfigured = Boolean(process.env.EXPO_PUBLIC_ADMOB_REWARDED_UNIT);
 
 let currentAd: any = null;
 let currentState: AdState = 'idle';
 let currentError: string | null = null;
 let initialized = false;
 let pendingOnReward: ((reward: AdReward) => Promise<void> | void) | null = null;
+let consent: ConsentState = { status: 'unknown', canRequestAds: false, privacyOptionsRequired: false };
 const listeners = new Set<() => void>();
 
 function notify() {
@@ -39,8 +51,20 @@ function notify() {
   }
 }
 
+function readConsent(info: any): ConsentState {
+  return {
+    status: info?.status === 'OBTAINED' ? 'obtained' : info?.status === 'NOT_REQUIRED' ? 'not-required' : info?.status === 'REQUIRED' ? 'required' : 'unknown',
+    canRequestAds: info?.canRequestAds === true,
+    privacyOptionsRequired: info?.privacyOptionsRequirementStatus === 'REQUIRED',
+  };
+}
+
 export function getAdState(): { state: AdState; isLoaded: boolean; error: string | null } {
   return { state: currentState, isLoaded: currentState === 'loaded', error: currentError };
+}
+
+export function getConsent(): ConsentState {
+  return consent;
 }
 
 export function subscribeAd(listener: () => void) {
@@ -48,18 +72,61 @@ export function subscribeAd(listener: () => void) {
   return () => { listeners.delete(listener); };
 }
 
+// Google exige una plataforma de consentimiento (UMP) en el EEE antes de pedir anuncios.
+// Sin consentimiento no se carga ningún anuncio y la recompensa no puede obtenerse.
+export async function requestConsent(): Promise<ConsentState> {
+  if (Platform.OS === 'web' || !AdsConsent) {
+    consent = { status: 'unavailable', canRequestAds: false, privacyOptionsRequired: false };
+    notify();
+    return consent;
+  }
+  try {
+    await AdsConsent.requestInfoUpdate();
+    const info = await AdsConsent.loadAndShowConsentFormIfRequired();
+    consent = readConsent(info);
+  } catch (error) {
+    consent = { status: 'unavailable', canRequestAds: false, privacyOptionsRequired: false };
+    console.warn('[Ads] Consent flow failed:', error);
+  }
+  notify();
+  if (consent.canRequestAds) loadRewardedAd();
+  return consent;
+}
+
+export async function showPrivacyOptions(): Promise<ConsentState> {
+  if (Platform.OS === 'web' || !AdsConsent) return consent;
+  try {
+    consent = readConsent(await AdsConsent.showPrivacyOptionsForm());
+  } catch (error) {
+    console.warn('[Ads] Privacy options failed:', error);
+  }
+  notify();
+  if (consent.canRequestAds) loadRewardedAd();
+  return consent;
+}
+
 export async function initAds(): Promise<void> {
-  if (initialized || Platform.OS === 'web' || !mobileAds) return;
+  if (Platform.OS === 'web' || !mobileAds) return;
+  if (initialized) {
+    if (consent.status === 'unknown') await requestConsent();
+    return;
+  }
   try {
     await mobileAds().initialize();
     initialized = true;
   } catch (e) {
     console.warn('[Ads] SDK initialization failed:', e);
+    return;
   }
+  await requestConsent();
 }
 
 export function loadRewardedAd(): void {
   if (Platform.OS === 'web' || !RewardedAd) {
+    currentState = 'idle';
+    return;
+  }
+  if (!consent.canRequestAds) {
     currentState = 'idle';
     return;
   }
@@ -129,7 +196,7 @@ export function loadRewardedAd(): void {
 }
 
 export async function showRewardedAd(onReward: (reward: AdReward) => Promise<void> | void): Promise<boolean> {
-  if (!currentAd || currentState !== 'loaded') {
+  if (!consent.canRequestAds || !currentAd || currentState !== 'loaded') {
     return false;
   }
   try {
@@ -149,20 +216,26 @@ export async function showRewardedAd(onReward: (reward: AdReward) => Promise<voi
 
 export function useRewardedAd() {
   const [adInfo, setAdInfo] = useState(getAdState);
+  const [consentInfo, setConsentInfo] = useState(getConsent);
 
   useEffect(() => {
     void initAds().then(() => {
+      setConsentInfo(getConsent());
       loadRewardedAd();
     });
     const unsubscribe = subscribeAd(() => {
       setAdInfo(getAdState());
+      setConsentInfo(getConsent());
     });
     return unsubscribe;
   }, []);
 
   return {
     ...adInfo,
+    consent: consentInfo,
     showAd: showRewardedAd,
     reloadAd: loadRewardedAd,
+    requestConsent: async () => { setConsentInfo(await requestConsent()); },
+    showPrivacyOptions: async () => { setConsentInfo(await showPrivacyOptions()); },
   };
 }

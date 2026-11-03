@@ -1,3 +1,15 @@
+## Cabina compacta en lugar del velocímetro circular — 03/11/2026 (sin APK)
+
+El velocímetro de 200 px más el panel de diferencia ocupaban casi 300 px del panel de grabación. Se sustituyen por **una sola fila de cabina** de unos 76 px:
+
+- A la izquierda, la velocidad grande (40 px) con su unidad y una barra fina de progreso hacia el máximo orientativo del modo. En modo correr muestra el ritmo en min/km.
+- A la derecha, la diferencia con el fantasma en el mismo formato de antes pero a 22 px: `▲ -2,4 s` en verde, `▼ +2,4 s` en rojo, `= 0,0 s` en neutro.
+- Los estados de espera caben en ese hueco: «Esperando… / El fantasma arranca al entrar» y «Confirmando… / Una posición más sobre el trazado».
+
+Se elimina `src/SpeedGauge.tsx` y la dependencia de `react-native-svg` deja de usarse en esta pantalla (el paquete sigue instalado por si se recupera el arco). El espacio ganado va al mapa y a los márgenes, no a más widgets.
+
+174 pruebas de interfaz, 96 de lógica, `tsc` limpio y `eslint` 0 errores. Sin compilación: si el formato no convence al probarlo, se ajusta en un cambio pequeño.
+
 ## Borrado de cuenta y política de privacidad — 03/11/2026 (sin APK)
 
 Requisitos de Google Play que faltaban, sin tocar la captura GPS ni el esquema de rutas.

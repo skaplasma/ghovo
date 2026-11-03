@@ -1,13 +1,13 @@
 import { GpsDiagnostics } from './GpsDiagnostics';
 import {decimal} from './format';
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { clock, distance as geoDistance, type Run } from './core';
-import { formatPace, modeLabel } from './TripDetails';
-import { appStyles as s } from './design';
-import { SpeedGauge } from './SpeedGauge';
+import { formatPace } from './TripDetails';
+import { appStyles as s, palette } from './design';
+import { fonts } from './fonts';
 
-// Fondo de escala del velocímetro: solo define cuánto arco se pinta, no limita la grabación.
+// Fondo de escala del velocímetro: solo define cuánto se llena la barra, no limita la grabación.
 const MAX_SPEED_KMH: Record<string, number> = { driving: 130, bicycling: 55, running: 20, walking: 9 };
 
 type Props = {
@@ -100,63 +100,44 @@ export function RecordingPanel({
 
   return (
     <>
-      {/* Velocímetro circular */}
-      <View style={{ alignItems: 'center', paddingVertical: 4 }}>
-        <SpeedGauge
-          value={run.mode === 'running' ? (currentSpeedKmh > 0 ? formatPace(currentSpeedKmh) : '—') : decimal(currentSpeedKmh,0)}
-          unit={run.mode === 'running' ? 'min/km' : 'km/h'}
-          caption={run.mode === 'running' ? 'Ritmo actual' : 'Velocidad actual'}
-          ratio={currentSpeedKmh / MAX_SPEED_KMH[run.mode ?? 'driving']}
-        />
-      </View>
+      {/* Cabina compacta: velocidad y diferencia con el fantasma en una sola fila */}
+      <View style={styles.cockpit}>
+        <View style={{flex:1.05,gap:2}}>
+          <View style={{flexDirection:'row',alignItems:'flex-end',gap:5}}>
+            <Text style={styles.speedValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+              {run.mode === 'running' ? (currentSpeedKmh > 0 ? formatPace(currentSpeedKmh) : '—') : decimal(currentSpeedKmh,0)}
+            </Text>
+            <Text style={styles.speedUnit}>{run.mode === 'running' ? 'min/km' : 'km/h'}</Text>
+          </View>
+          <Text style={styles.speedCaption}>{run.mode === 'running' ? 'ritmo actual' : 'velocidad actual'}</Text>
+          <View style={styles.speedTrack}>
+            <View style={[styles.speedFill,{width:`${Math.round(Math.max(0,Math.min(1,currentSpeedKmh/MAX_SPEED_KMH[run.mode ?? 'driving']))*100)}%`}]}/>
+          </View>
+        </View>
 
-      {/* Delta Box with Ghost Comparison */}
-      {run.referenceId && (
-        <View
-          style={[
-            s.deltaBox,
-            !run.circuitStartedAt
-              ? s.deltaBoxNeutral
-              : isAhead
-                ? s.deltaBoxAhead
-                : isBehind
-                  ? s.deltaBoxBehind
-                  : s.deltaBoxNeutral,
-          ]}
-        >
+        {run.referenceId&&<View style={styles.divider}/>}
+
+        {run.referenceId&&<View style={{flex:1,gap:2}}>
           {!run.circuitStartedAt ? (
             <>
-              <Text style={[s.deltaDeltaText, s.deltaNeutralText]}>{run.entryPendingAt ? '◎ Confirmando entrada…' : '◎ Esperando entrada'}</Text>
-              <Text style={s.deltaSubtitle}>{run.entryPendingAt ? 'Una posición más sobre el trazado y arranca el fantasma' : 'El cronómetro del fantasma se activará al entrar en el trazado'}</Text>
+              <Text style={[styles.deltaValue,{color:palette.lavender}]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{run.entryPendingAt ? 'Confirmando…' : 'Esperando…'}</Text>
+              <Text style={styles.deltaCaption}>{run.entryPendingAt ? 'Una posición más sobre el trazado' : 'El fantasma arranca al entrar'}</Text>
             </>
           ) : hasDiff ? (
             <>
-              <Text
-                style={[
-                  s.deltaDeltaText,
-                  isAhead ? s.deltaAheadText : isBehind ? s.deltaBehindText : s.deltaNeutralText,
-                ]}
-              >
-                {isAhead ? `▲ -${diffSeconds} s` : isBehind ? `▼ +${diffSeconds} s` : '= Mismo tiempo'}
+              <Text style={[styles.deltaValue,isAhead?{color:'#34D399'}:isBehind?{color:'#FB7185'}:{color:palette.lavender}]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                {isAhead ? `▲ -${diffSeconds} s` : isBehind ? `▼ +${diffSeconds} s` : '= 0,0 s'}
               </Text>
-              <Text style={s.deltaSubtitle}>
-                {isAhead
-                  ? 'Vas ganando tiempo al fantasma'
-                  : isBehind
-                    ? 'Por detrás de tu referencia'
-                    : 'Tiempo exacto en este punto'}
-              </Text>
+              <Text style={styles.deltaCaption}>{isAhead ? 'Vas ganando al fantasma' : isBehind ? 'Por detrás de tu referencia' : 'Mismo tiempo'}</Text>
             </>
           ) : (
             <>
-              <Text style={[s.deltaDeltaText, s.deltaNeutralText]}>Buscando trazado</Text>
-              <Text style={s.deltaSubtitle}>
-                {comparisonReference ? 'Comparando con tu mejor huella' : 'Sincronizando puntos de paso'}
-              </Text>
+              <Text style={[styles.deltaValue,{color:palette.muted}]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>Buscando…</Text>
+              <Text style={styles.deltaCaption}>{comparisonReference ? 'Comparando con tu huella' : 'Sincronizando puntos'}</Text>
             </>
           )}
-        </View>
-      )}
+        </View>}
+      </View>
 
       {/* 3-Column Cockpit Telemetry Grid */}
       <View style={s.cockpitGrid}>
@@ -300,3 +281,15 @@ export function RecordingPanel({
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  cockpit: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#1A1435', borderWidth: 1.5, borderColor: '#332959' },
+  speedValue: { fontFamily: fonts.extrabold, fontSize: 40, lineHeight: 44, color: '#FFFFFF', letterSpacing: -1.5, fontVariant: ['tabular-nums'] },
+  speedUnit: { fontFamily: fonts.semibold, fontSize: 12, color: palette.purpleLight, paddingBottom: 6 },
+  speedCaption: { fontFamily: fonts.medium, fontSize: 9, letterSpacing: 1.1, textTransform: 'uppercase', color: '#8E87AB' },
+  speedTrack: { height: 4, borderRadius: 2, backgroundColor: '#2A2049', overflow: 'hidden', marginTop: 4 },
+  speedFill: { height: '100%', borderRadius: 2, backgroundColor: palette.purpleBright },
+  divider: { width: 1, alignSelf: 'stretch', backgroundColor: '#332959', marginVertical: 2 },
+  deltaValue: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 26, letterSpacing: -0.5, fontVariant: ['tabular-nums'] },
+  deltaCaption: { fontFamily: fonts.medium, fontSize: 10, color: '#8E87AB' },
+});

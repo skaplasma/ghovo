@@ -1,3 +1,11 @@
+## Entrada a la ruta más estricta y dos remates de interfaz — 03/11/2026 (sin APK)
+
+- **El fantasma ya no arranca antes de entrar en la ruta.** La detección de entrada se había relajado a 80 m en la salida y 45 m en el resto del trazado, y eso hacía que una calle paralela o el punto donde aparcas al empezar contaran como «estoy en la ruta»: el cronómetro y el fantasma echaban a andar sin haber llegado. Vuelve a **30 m en la salida y 25 m en el resto**, que es ancho de calzada más error de GPS sin coger calles de al lado. Al detectarse la entrada se sigue fijando `referenceOffsetMs` con el punto exacto de incorporación, así que el fantasma aparece sincronizado en ese punto y no al principio del trazado.
+- **Icono de volver en la pantalla de ruta**: era un chevron hacia abajo y ahora es una flecha a la izquierda, coherente con lo que hace.
+- **Perfil sin título duplicado**: la cabecera ya no repite «Perfil» porque la pestaña inferior indica dónde estás. La pantalla de Premium conserva su título, que sí aporta.
+
+96 pruebas de lógica y 171 de interfaz, `tsc` limpio y `eslint` 0 errores. Sin compilación: se acumula para el próximo lote.
+
 ## Más mapa y botón con halo — 03/11/2026 (0.1.24)
 
 - **Fuera la franja de estado del mapa**: la línea que ocupaba el ancho bajo el mapa («Ubicación aproximada», «Buscando…») desaparece; el mapa gana esos píxeles. El aviso sigue en la tarjeta de ubicación de Inicio y en la pantalla de estado del GPS, y el propio mapa mantiene su texto de espera cuando todavía no hay posición.

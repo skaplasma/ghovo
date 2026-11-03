@@ -76,7 +76,8 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,stats={routes
    <Pressable accessibilityRole="button" accessibilityLabel="Volver a Inicio" onPress={onHome} style={{width:42,height:42,borderRadius:21,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
     <Ionicons name="arrow-back" size={20} color="#FFFFFF"/>
    </Pressable>
-   <Text style={s.cardTitle}>{premiumPage?'GHOVO Premium':'Perfil'}</Text>
+   {/* La pestaña inferior ya dice dónde estamos: el título solo se mantiene en Premium. */}
+   {premiumPage&&<Text style={s.cardTitle}>GHOVO Premium</Text>}
   </View>
   <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
    {!premiumPage&&<View style={{flexDirection:'row',alignItems:'center',gap:14}}>

@@ -593,7 +593,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     <StatusBar style="light" />
     <View style={s.header}>
       <Pressable accessibilityRole="button" accessibilityLabel="GHOVO · Ir a Inicio" onPress={goHome} style={{width:42,height:42,borderRadius:21,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
-        <Ionicons name="chevron-down" size={21} color="#FFFFFF"/>
+        <Ionicons name="chevron-back" size={22} color="#FFFFFF"/>
       </Pressable>
       {run&&<Text style={[s.badge,s.liveBadge]}>● EN RUTA</Text>}
     </View>

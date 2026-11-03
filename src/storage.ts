@@ -112,3 +112,16 @@ export async function history():Promise<Run[]> {
   return runs;
 }
 export const active = () => read<Run|null>('active',null);
+
+// Borra los datos locales del usuario que elimina su cuenta: rutas, ajustes, copias y
+// cualquier resto en la base. No toca nada del servidor.
+export async function wipeLocalData(){
+  const connection=await db();
+  await connection.withExclusiveTransactionAsync(async transaction=>{
+    await transaction.runAsync('DELETE FROM state');
+    await transaction.runAsync('DELETE FROM runs');
+  });
+  cache.clear();
+  runsCache.clear();
+  historySnapshot=undefined;
+}

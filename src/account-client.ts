@@ -193,6 +193,24 @@ export async function loginDevAccount(){
  await encryptedStorage.setItem(devUserKey,JSON.stringify(devUser));
  publish({status:'signedIn',user:devUser,recovery:false});
 }
+// Borrado de cuenta pedido desde la app. La baja real la ejecuta el servidor: la app
+// no puede eliminar su propio usuario de autenticación. Si la llamada falla no se borra
+// nada en local, para no dejar al usuario sin cuenta y sin historial por un error de red.
+export async function deleteAccount(){
+ if(!state.user)throw Error('SIGN_IN_REQUIRED');
+ const devRaw=await encryptedStorage.getItem(devUserKey);
+ if(devRaw){
+  await encryptedStorage.removeItem(devUserKey);
+  await encryptedStorage.removeItem(recoveryKey);
+  publish({status:'signedOut',user:null,recovery:false});
+  return;
+ }
+ const {error}=await accountClient().rpc('ghovo_delete_account');
+ fail(error);
+ await accountClient().auth.signOut({scope:'local'}).catch(()=>{});
+ await encryptedStorage.removeItem(recoveryKey);
+ publish({status:'signedOut',user:null,recovery:false});
+}
 export async function logoutAccount(){
  const devRaw=await encryptedStorage.getItem(devUserKey);
  if(devRaw){

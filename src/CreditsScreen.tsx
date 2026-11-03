@@ -5,7 +5,8 @@ import {Ionicons} from '@expo/vector-icons';
 import {appStyles as s,palette} from './design';
 import {fonts} from './fonts';
 import {AccountPanel,useAccount} from './AccountPanel';
-import {refreshAccount,logoutAccount} from './account-client';
+import {refreshAccount,logoutAccount,deleteAccount} from './account-client';
+import {wipeLocalData} from './storage';
 import {billingRequest,billingError,monetizationEnforced,claimAdReward,type WalletSnapshot} from './monetization-api';
 import {pendingBilling,recoverBilling} from './monetized-tracking';
 import {adsConfigured,useRewardedAd} from './ads';
@@ -65,6 +66,21 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,stats={routes
 
  const displayName=account.user?.email?account.user.email.split('@')[0]:'Invitado';
  const menuHint={premium:currentWallet?.premium?'Activo en tu cuenta':'Rutas ilimitadas de por vida',settings:'Permisos, ubicación y batería',help:'Pantalla bloqueada, GPS y copias'};
+
+ // Doble confirmación: primero se avisa de lo que se pierde y luego se ejecuta.
+ // El servidor borra la cuenta; si falla, no se toca nada del móvil.
+ const confirmDelete=()=>{
+  Alert.alert('¿Eliminar tu cuenta?','Se borrarán tu cuenta GHOVO, tu saldo de créditos y los recorridos guardados en este móvil. Esta acción no se puede deshacer.',[
+   {text:'Cancelar',style:'cancel'},
+   {text:'Eliminar todo',style:'destructive',onPress:()=>void run(async()=>{
+     await deleteAccount();
+     await wipeLocalData();
+     if(mounted.current)setMessage('Cuenta eliminada.');
+     onHome();
+   })},
+  ]);
+ };
+
 
  function openMenu(key:(typeof MENU)[number]['key']){
   if(key==='premium'){onPremium();return;}
@@ -147,6 +163,11 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,stats={routes
    </View>}
    {premiumPage&&<View style={s.card}><Text style={s.eyebrow}>PAGO ÚNICO · SIN SUSCRIPCIONES</Text><Text style={s.resultTitle}>{currentWallet?.premium?'Premium verificado':`Precio previsto: ${price}`}</Text><Text style={s.muted}>Rutas ilimitadas de por vida, sin créditos ni anuncios y con las funciones actuales de GHOVO.</Text><Text style={s.caption}>El precio definitivo lo mostrará la tienda antes de confirmar. No hay cuotas mensuales ni anuales.</Text><Action label="Comprar Premium" disabled onPress={()=>{}}/><Action label="Restaurar compra" disabled onPress={()=>{}}/><Text style={s.caption}>Compras y restauración pendientes de conectar a Google Play. No se realiza ningún cobro desde esta pantalla. Si ya eres Premium, tus créditos se conservan.</Text>{!!message&&<Text style={s.muted}>{message}</Text>}</View>}
    {!premiumPage&&currentWallet&&!!entries.length&&<View style={s.card}><Text style={s.cardTitle}>Últimos movimientos</Text>{entries.map(entry=><View key={entry.id} style={s.row}><View style={{flex:1,gap:4}}><Text style={s.lightText}>{entry.kind==='initial'?'Créditos iniciales':entry.kind==='reward'?'Recompensa verificada':'Inicio de ruta'}</Text><Text style={s.caption}>{new Date(entry.created_at).toLocaleString('es-ES')}</Text></View><Text style={s.lightText}>{entry.delta>0?'+':''}{entry.delta}</Text></View>)}</View>}
+   {!premiumPage&&!!account.user&&<View style={[s.card,{borderColor:'#5C223C'}]}>
+    <Text style={s.cardTitle}>Eliminar mi cuenta</Text>
+    <Text style={s.caption}>Se borrarán tu cuenta GHOVO, tu saldo de créditos y los recorridos guardados en este móvil. No se puede deshacer.</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel="Eliminar mi cuenta" disabled={busy} onPress={confirmDelete} style={[s.button,s.danger,{opacity:busy?0.5:1}]}><Text style={[s.buttonText,s.dangerText]}>Eliminar mi cuenta</Text></Pressable>
+   </View>}
   </ScrollView>
  </View>;
 }

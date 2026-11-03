@@ -1,3 +1,13 @@
+## Borrado de cuenta y política de privacidad — 03/11/2026 (sin APK)
+
+Requisitos de Google Play que faltaban, sin tocar la captura GPS ni el esquema de rutas.
+
+- **Eliminar mi cuenta** en Perfil, al final de la página, con doble confirmación («¿Eliminar tu cuenta?» → «Eliminar todo»). Borra la cuenta en el servidor y, solo si eso ha ido bien, los datos del móvil: `wipeLocalData()` vacía las tablas `state` y `runs` y las cachés en memoria. Si la llamada al servidor falla no se borra nada en local, para no dejar al usuario sin cuenta y sin historial por un error de red.
+- **La baja la ejecuta el servidor**: la app no puede eliminar su propio usuario de autenticación. `supabase/borrado-de-cuenta.sql` crea `public.ghovo_delete_account()`, `security definer`, que solo borra `auth.uid()`; hay que pegarla en el SQL Editor del proyecto. Si las tablas de monetización no tienen `ON DELETE CASCADE` hacia `auth.users`, el archivo deja los borrados preparados para descomentar.
+- **`PRIVACIDAD.md`**: texto completo (responsable, datos, finalidad, base legal, terceros, plazos, derechos, menores, seguridad) listo para colgar en una URL pública y enlazar en la ficha. Incluye cómo exportar y cómo pedir la baja sin acceso a la app, que es lo que revisa Play.
+
+174 pruebas de interfaz (una nueva del borrado), 96 de lógica, `tsc` limpio y `eslint` 0 errores. Sin compilación.
+
 ## Anuncios terminados: consentimiento, IDs configurables y circuito cerrado — 03/11/2026 (sin APK)
 
 Repaso de lo que ya existía y cierre del apartado de anuncios recompensados.

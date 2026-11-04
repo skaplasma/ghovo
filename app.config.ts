@@ -1,14 +1,14 @@
-import { ExpoConfig } from 'expo/config';
+﻿import { ExpoConfig } from 'expo/config';
 // IDs reales por entorno; sin ellos se usan los de prueba de Google para poder probar el flujo.
 const admobAndroid = process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID ?? 'ca-app-pub-3940256099942544~3347511713';
 const admobIos = process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID ?? 'ca-app-pub-3940256099942544~1458002511';
 const config:ExpoConfig={
   name:'GHOVO', slug:'ghovo', owner:'skacristian',
   extra:{eas:{projectId:'72f2347a-dad7-4daf-a387-8bb1ea0408be'}},
-  version:'0.1.25', icon:'./assets/ghovo-2d-icon-v1.png',
+  version:'0.1.26', icon:'./assets/ghovo-2d-icon-v1.png',
   scheme:'ghovo', orientation:'portrait', userInterfaceStyle:'dark',
   android:{
-    package:'app.ghovo.mobile', versionCode:26, allowBackup:false, softwareKeyboardLayoutMode:'resize',
+    package:'app.ghovo.mobile', versionCode:27, allowBackup:false, softwareKeyboardLayoutMode:'resize',
     blockedPermissions:['android.permission.READ_EXTERNAL_STORAGE','android.permission.WRITE_EXTERNAL_STORAGE'],
     adaptiveIcon:{foregroundImage:'./assets/ghovo-2d-adaptive-v1.png',backgroundColor:'#101C22'},
   },

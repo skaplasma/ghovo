@@ -27,6 +27,7 @@ jest.mock('../src/storage',()=>({
   history:jest.fn(async()=>mockHistory),writeMany:jest.fn(async values=>{if('history' in values)mockHistory=values.history;if('active' in values)mockActive=values.active;if('lastResult' in values)mockResult=values.lastResult;}),
   active:jest.fn(async()=>mockActive),serial:jest.fn(async fn=>fn()),
   write:jest.fn(async(key,value)=>{if(key==='active')mockActive=value;}),
+  saveActive:jest.fn(async(run:Run)=>{mockActive=run;}),
 }));
 const executeTask=jest.mocked(TaskManager.defineTask).mock.calls[0][1];
 const run=():Run=>({id:'pending',routeId:'route',name:'Test',startedAt:Date.now(),points:[]});

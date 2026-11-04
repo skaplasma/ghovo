@@ -1,6 +1,7 @@
 import React,{useCallback,useEffect,useRef,useState} from 'react';
 import {decimal} from './format';
-import {Alert,Image,Linking,Pressable,ScrollView,Text,View} from 'react-native';
+import {Alert,Image,Linking,Platform,Pressable,ScrollView,Text,View} from 'react-native';
+import * as IntentLauncher from 'expo-intent-launcher';
 import {Ionicons} from '@expo/vector-icons';
 import {appStyles as s,palette} from './design';
 import {fonts} from './fonts';
@@ -18,10 +19,11 @@ export type ProfileStats={routes:number;km:number;favorites:number};
 const MENU=[
   {key:'premium',icon:'star-outline',label:'Premium',hint:'Rutas ilimitadas, sin créditos ni anuncios'},
   {key:'settings',icon:'options-outline',label:'Ajustes de la app',hint:'Permisos, ubicación y batería'},
+  {key:'privacy',icon:'shield-checkmark-outline',label:'Privacidad',hint:'Qué datos usa GHOVO y cómo borrarlos'},
   {key:'help',icon:'help-circle-outline',label:'Ayuda',hint:'Pantalla bloqueada, GPS y copias'},
 ] as const;
 
-export function CreditsScreen({premiumPage,active,onHome,onPremium,stats={routes:0,km:0,favorites:0}}:{premiumPage:boolean;active:boolean;onHome:()=>void;onPremium:()=>void;stats?:ProfileStats}){
+export function CreditsScreen({premiumPage,active,onHome,onPremium,onPrivacy,stats={routes:0,km:0,favorites:0}}:{premiumPage:boolean;active:boolean;onHome:()=>void;onPremium:()=>void;onPrivacy?:()=>void;stats?:ProfileStats}){
  const account=useAccount(),mounted=useRef(true),requestId=useRef(0);
  const owner=account.user?.id;
  const [wallet,setWallet]=useState<WalletSnapshot>(),[entries,setEntries]=useState<Entry[]>([]),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[pending,setPending]=useState(false);
@@ -65,7 +67,7 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,stats={routes
  };
 
  const displayName=account.user?.email?account.user.email.split('@')[0]:'Invitado';
- const menuHint={premium:currentWallet?.premium?'Activo en tu cuenta':'Rutas ilimitadas de por vida',settings:'Permisos, ubicación y batería',help:'Pantalla bloqueada, GPS y copias'};
+ const menuHint={premium:currentWallet?.premium?'Activo en tu cuenta':'Rutas ilimitadas de por vida',settings:'Permisos, ubicación y batería',privacy:'Qué datos usa GHOVO y cómo borrarlos',help:'Pantalla bloqueada, GPS y copias'};
 
  // Doble confirmación: primero se avisa de lo que se pierde y luego se ejecuta.
  // El servidor borra la cuenta; si falla, no se toca nada del móvil.
@@ -85,7 +87,15 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,stats={routes
  function openMenu(key:(typeof MENU)[number]['key']){
   if(key==='premium'){onPremium();return;}
   if(key==='settings'){void Linking.openSettings().catch(()=>{});return;}
+  if(key==='privacy'){onPrivacy?.();return;}
   Alert.alert('Ayuda de GHOVO','Para grabar con la pantalla bloqueada, GHOVO necesita ubicación precisa y en segundo plano. En Xiaomi/POCO revisa también el ahorro de batería y «iniciar automáticamente». Las copias se guardan en «Mis rutas → Copias y opciones».',[{text:'Entendido'}]);
+ }
+
+ // Abre la lista de apps exentas de optimización de batería: es donde MIUI/HyperOS deja
+ // marcar GHOVO como «sin restricciones», que es lo que evita que mate la grabación.
+ function openBatterySettings(){
+  if(Platform.OS!=='android'){void Linking.openSettings().catch(()=>{});return;}
+  void IntentLauncher.startActivityAsync(IntentLauncher.ActivityAction.IGNORE_BATTERY_OPTIMIZATION_SETTINGS).catch(()=>{void Linking.openSettings().catch(()=>{});});
  }
 
  return <View style={{flex:1}}>
@@ -130,6 +140,15 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,stats={routes
       </View>
       <Ionicons name="chevron-forward" size={18} color="#6E6690"/>
      </Pressable>)}
+   </View>}
+
+   {!premiumPage&&Platform.OS==='android'&&<View style={[s.card,{gap:8}]}>
+    <Text style={s.cardTitle}>Grabar con la pantalla bloqueada</Text>
+    <Text style={s.caption}>En Xiaomi, POCO o Redmi, GHOVO puede cerrarse al bloquear el móvil si el sistema lo considera una app con restricciones. Marca GHOVO como «sin restricciones» en la lista que se abre aquí.</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel="Configurar batería sin restricciones" onPress={openBatterySettings} style={[s.button,s.secondary,{flexDirection:'row',gap:8}]}>
+     <Ionicons name="battery-charging-outline" size={16} color="#FFFFFF"/>
+     <Text style={s.lightText}>Batería sin restricciones</Text>
+    </Pressable>
    </View>}
 
    {(!premiumPage||!account.user)&&<AccountPanel active={active}/>}

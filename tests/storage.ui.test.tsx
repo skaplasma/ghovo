@@ -74,3 +74,24 @@ test('a failed first database open can be retried', async () => {
   await expect(storage.history()).rejects.toThrow('temporalmente ocupado');
   await expect(storage.history()).resolves.toEqual([]); expect(sqlite.openDatabaseAsync).toHaveBeenCalledTimes(2);
 });
+test('el recorrido en curso se anexa por puntos y se lee completo', async () => {
+  const draft: Run = {...run, endedAt: undefined};
+  await storage.write('active', draft);
+  const extra = {latitude: 40.002, longitude: -3, timestamp: 3000, accuracy: 5};
+  await storage.saveActive({...draft, points: [...draft.points, extra]}, [extra]);
+  const live = await storage.active();
+  expect(live?.points).toHaveLength(3);
+  expect(live?.points.at(-1)?.timestamp).toBe(3000);
+  // La cabecera guardada no lleva las posiciones: solo la tabla.
+  const header = JSON.parse(db.prepare('SELECT value FROM state WHERE key=?').get('active')!.value);
+  expect(header.points).toEqual([]);
+  expect(db.prepare('SELECT COUNT(*) AS total FROM active_points').get().total).toBe(3);
+});
+test('una escritura completa posterior reemplaza la tabla de posiciones', async () => {
+  const draft: Run = {...run, endedAt: undefined};
+  await storage.write('active', draft);
+  await storage.write('active', {...draft, points: draft.points.slice(0, 1)});
+  const live = await storage.active();
+  expect(live?.points).toHaveLength(1);
+  expect(db.prepare('SELECT COUNT(*) AS total FROM active_points').get().total).toBe(1);
+});

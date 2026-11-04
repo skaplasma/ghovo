@@ -10,13 +10,15 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import {advanceComparison,arrivalReady,courseModel,initialComparison,type CourseModel} from './comparison';
 import { accepts,length, appendFix, type Point, type Run } from './core';
-import { active,history, serial, write,writeMany } from './storage';
+import { active,history, saveActive, serial, write,writeMany } from './storage';
 let cachedModel:CourseModel|undefined;let cachedInterval:Run['checkpointKm'];
 function modelFor(reference:Run,interval:Run['checkpointKm']){if(cachedModel?.reference!==reference||cachedInterval!==interval){cachedModel=courseModel(reference,interval);cachedInterval=interval;}return cachedModel;}
 export const TASK='ghovo-route-location';
 TaskManager.defineTask<{locations:Location.LocationObject[]}>(TASK,async({data,error})=>{
   await serial(async()=>{
     let run=await active(); if(!run)return;
+    // Posiciones que ya estaban guardadas: al final solo se anexan las nuevas.
+    const basePoints=run.points.length;
     if(run.pausedAt) return;
     if(error){recordGpsEvent('provider');await write('active',{...run,error:error.message});return;}
     const previous=run.referenceId?(await history()).find(r=>r.id===run!.referenceId&&r.routeId===run!.routeId&&r.mode===run!.mode):undefined;
@@ -77,7 +79,8 @@ TaskManager.defineTask<{locations:Location.LocationObject[]}>(TASK,async({data,e
         return;
       }
     }
-    await write('active',run);
+    // Solo se anexan las posiciones nuevas: el recorrido en curso no se reescribe entero.
+    await saveActive(run,run.points.slice(basePoints));
     if(newNotice&&run.notice)void speakNotice(run.notice,run.voiceEnabled!==false).catch(()=>{});
   });
 });

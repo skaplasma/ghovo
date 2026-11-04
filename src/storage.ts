@@ -12,7 +12,10 @@ let historySnapshot:{keys:string;runs:Run[]}|undefined;
 const HISTORY_ERROR='No se pudieron leer los datos locales (history). No se han borrado. Utiliza la copia de recuperación.';
 const SCHEMA='PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL; '+
   'CREATE TABLE IF NOT EXISTS state (key TEXT PRIMARY KEY, value TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0); '+
-  'CREATE TABLE IF NOT EXISTS runs (seq INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT UNIQUE NOT NULL, sig TEXT NOT NULL, json TEXT NOT NULL)';
+  'CREATE TABLE IF NOT EXISTS runs (seq INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT UNIQUE NOT NULL, sig TEXT NOT NULL, json TEXT NOT NULL); '+
+  // Posiciones del recorrido en curso, una fila por punto: anexar es barato y evita
+  // reescribir el recorrido entero cada vez que llega una posición GPS.
+  'CREATE TABLE IF NOT EXISTS active_points (idx INTEGER PRIMARY KEY, value TEXT NOT NULL)';
 type Connection=Awaited<ReturnType<typeof SQLite.openDatabaseAsync>>;
 
 // Copia la biblioteca antigua (una sola fila JSON) a la tabla runs y retira la fila.
@@ -64,7 +67,24 @@ export async function read<T>(key:string, fallback:T):Promise<T> {
   if(!row) return fallback;
   try { const value=JSON.parse(row.value);if(!validStateValue(key,value))throw Error('Estructura incorrecta');cache.set(key,{revision:row.revision,value});return value; } catch { throw Error(`No se pudieron leer los datos locales (${key}). No se han borrado. Utiliza la copia de recuperación.`); }
 }
-export async function write(key:string,value:unknown) {if(key==='history'){await writeMany({history:value});return;}if(!validStateValue(key,value))throw Error(`No se pueden guardar datos incompletos (${key}).`);await (await db()).runAsync(STATE_UPSERT,key,JSON.stringify(value));cache.delete(key);}
+export async function write(key:string,value:unknown) {
+  if(key==='history'){await writeMany({history:value});return;}
+  if(key==='active'){await writeActive(value as Run|null);return;}
+  if(!validStateValue(key,value))throw Error(`No se pueden guardar datos incompletos (${key}).`);
+  await (await db()).runAsync(STATE_UPSERT,key,JSON.stringify(value));
+  cache.delete(key);
+}
+// Escritura completa del recorrido: cabecera sin puntos y tabla de posiciones reemplazada.
+async function writeActive(run:Run|null){
+  if(run!==null&&!validStateValue('active',run))throw Error('No se pueden guardar datos incompletos (active).');
+  const connection=await db();
+  await connection.withExclusiveTransactionAsync(async transaction=>{
+    await transaction.runAsync('DELETE FROM active_points');
+    if(run)for(const [index,point] of (run.points??[]).entries())await transaction.runAsync('INSERT INTO active_points(idx,value) VALUES(?,?)',index,JSON.stringify(point));
+    await transaction.runAsync(STATE_UPSERT,'active',JSON.stringify(run?{...run,points:[]}:null));
+  });
+  cache.delete('active');
+}
 export type RecoverySnapshot = { savedAt: number; history: Run[]; routeDetails: Record<string, { favorite: boolean; note: string }>; lastResult: string | null };
 // Call within serial() when updating related records. SQLite commits every key or none.
 export async function writeMany(values: Record<string, unknown>, checkpoint = false) {
@@ -111,7 +131,44 @@ export async function history():Promise<Run[]> {
   historySnapshot={keys,runs};
   return runs;
 }
-export const active = () => read<Run|null>('active',null);
+// El recorrido en curso se guarda en dos partes: la cabecera (sin puntos) en `state` y
+// las posiciones en `active_points`, una fila por punto.
+export async function active():Promise<Run|null>{
+  const header=await read<Run|null>('active',null);
+  if(!header)return null;
+  // Una cabecera con puntos viene de una escritura completa antigua: se respeta tal cual.
+  if(header.points?.length)return header;
+  const connection=await db();
+  const rows=await connection.getAllAsync<{value:string}>('SELECT value FROM active_points ORDER BY idx');
+  const points:Run['points']=[];
+  for(const row of rows){try{points.push(JSON.parse(row.value));}catch{/* punto ilegible: se ignora */}}
+  return {...header,points};
+}
+
+// Anexa solo las posiciones nuevas y actualiza la cabecera. Es el camino caliente: una
+// inserta por punto en vez de reescribir el recorrido completo.
+export async function saveActive(run:Run,added:Run['points']){
+  const connection=await db();
+  const header={...run,points:[] as Run['points']};
+  await connection.withExclusiveTransactionAsync(async transaction=>{
+    const stored=await transaction.getFirstAsync<{value:string}>('SELECT value FROM state WHERE key=?','active');
+    let storedRun:Run|null=null;
+    try{storedRun=stored?JSON.parse(stored.value):null;}catch{storedRun=null;}
+    // Se reemplaza la tabla si la cabecera guardada traía puntos (escritura completa),
+    // si es otro recorrido, o si no hay cabecera. Solo se anexa en el camino normal.
+    const replace=!storedRun||storedRun.id!==run.id||!!storedRun.points?.length;
+    if(replace){
+      await transaction.runAsync('DELETE FROM active_points');
+      for(const [index,point] of run.points.entries())await transaction.runAsync('INSERT INTO active_points(idx,value) VALUES(?,?)',index,JSON.stringify(point));
+    }else if(added.length){
+      const top=await transaction.getFirstAsync<{top:number|null}>('SELECT MAX(idx) AS top FROM active_points');
+      let next=(top?.top??-1)+1;
+      for(const point of added)await transaction.runAsync('INSERT INTO active_points(idx,value) VALUES(?,?)',next++,JSON.stringify(point));
+    }
+    await transaction.runAsync(STATE_UPSERT,'active',JSON.stringify(header));
+  });
+  cache.delete('active');
+}
 
 // Borra los datos locales del usuario que elimina su cuenta: rutas, ajustes, copias y
 // cualquier resto en la base. No toca nada del servidor.
@@ -120,6 +177,7 @@ export async function wipeLocalData(){
   await connection.withExclusiveTransactionAsync(async transaction=>{
     await transaction.runAsync('DELETE FROM state');
     await transaction.runAsync('DELETE FROM runs');
+    await transaction.runAsync('DELETE FROM active_points');
   });
   cache.clear();
   runsCache.clear();

@@ -1,3 +1,13 @@
+## Privacidad en Perfil, escritura incremental y batería de MIUI — 04/11/2026 (sin APK)
+
+Cierra los dos pendientes técnicos y añade la privacidad dentro de la app.
+
+- **Privacidad accesible desde Perfil**: nueva fila «Privacidad» que abre una pantalla con el resumen de datos (qué se guarda en el móvil, qué viaja al servidor, ubicación, anuncios, terceros, diagnóstico, derechos y menores) y un botón que abre la política completa en el navegador. La URL se configura con `EXPO_PUBLIC_PRIVACY_URL`, así que se puede cambiar sin recompilar.
+- **Escritura incremental del recorrido en curso**: las posiciones dejan de ir dentro del JSON del recorrido. Ahora viven en la tabla `active_points`, una fila por punto, y la cabecera (sin puntos) en `state`. Cada posición GPS anexa una fila en vez de reescribir el recorrido completo; en una ruta larga eso pasa de cientos de kilobytes por segundo a unos pocos bytes. `write('active')` sigue funcionando como escritura completa y reemplaza la tabla, y `saveActive(run, nuevas)` es el camino caliente que usa la tarea de fondo. Si la cabecera guardada es de otro recorrido, la tabla se reemplaza para no mezclar posiciones.
+- **Batería sin restricciones en Perfil**: en Android, un botón abre la lista de exclusión de optimización de batería (`IGNORE_BATTERY_OPTIMIZATION_SETTINGS` mediante `expo-intent-launcher`) para marcar GHOVO como «sin restricciones», que es lo que evita que MIUI/HyperOS mate la grabación al bloquear. No pide permisos nuevos.
+
+178 pruebas de interfaz (cuatro nuevas: privacidad desde Perfil, contenido de la pantalla y dos del almacén incremental) y 97 de lógica, `tsc` limpio y `eslint` 0 errores. Dependencia nueva: `expo-intent-launcher`, que obliga a compilar.
+
 ## Preparación para Google Play — 04/11/2026 (sin APK)
 
 - **Perfil `production`** en `eas.json`: `.aab`, `distribution: store`, `autoIncrement` para que el `versionCode` suba solo en cada subida y `submit.production`.

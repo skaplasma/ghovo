@@ -37,6 +37,7 @@ import { date, decimal, km } from './src/format';
 import { describeError } from './src/errors';
 import { RouteCard } from './src/RouteCard';
 import { WelcomeScreen } from './src/WelcomeScreen';
+import { PrivacyScreen } from './src/PrivacyScreen';
 import { AppSplash } from './src/AppSplash';
 import { type Point, type Run, type TravelMode, clock, duration, ghostAt, isComparable, isFullCourse, length, recordingQuality } from './src/core';
 import { active, history, read, serial, write, writeMany } from './src/storage';
@@ -133,6 +134,8 @@ export function AppProvider({children}:{children:React.ReactNode}) {
   // Portada de bienvenida y acceso provisional sin cuenta (se retira al publicar).
   const [welcomeForm, setWelcomeForm] = useState(false);
   const [guestAccess, setGuestAccess] = useState(false);
+  // Política de privacidad accesible desde Perfil.
+  const [privacyOpen, setPrivacyOpen] = useState(false);
 
   const [detailTab,setDetailTab]=useState<'summary'|'settings'|'trips'>('summary');
   const [showPlayback,setShowPlayback]=useState(false);
@@ -466,7 +469,8 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     }
   }
   else if(simulator)content= <View style={s.root}><StatusBar style="light"/><Simulator onClose={()=>setSimulator(false)} origin={reference?.points[0]}/></View>;
-  else if(pathname==='/credits'||pathname==='/premium')content=<View style={s.root}><StatusBar style="light"/><CreditsScreen premiumPage={pathname==='/premium'} active={!!run} onHome={goHome} onPremium={()=>router.push('/premium')} stats={{routes:summaries.length,km:activity.meters/1000,favorites:favoriteRoutes.length}}/>{!run&&navigation}</View>;
+  else if(privacyOpen)content=<PrivacyScreen onClose={()=>setPrivacyOpen(false)}/>;
+  else if(pathname==='/credits'||pathname==='/premium')content=<View style={s.root}><StatusBar style="light"/><CreditsScreen premiumPage={pathname==='/premium'} active={!!run} onHome={goHome} onPremium={()=>router.push('/premium')} onPrivacy={()=>setPrivacyOpen(true)} stats={{routes:summaries.length,km:activity.meters/1000,favorites:favoriteRoutes.length}}/>{!run&&navigation}</View>;
   else if((section==='home'&&!run||homeDuringRun&&run&&pathname!=='/gps')&&!loadError)content= <View style={s.root}><StatusBar style="light"/>{run&&foreground&&keepScreenOn&&<RecordingAwake/>}
 
     <ScrollView contentContainerStyle={[s.content,{paddingTop:4}]} showsVerticalScrollIndicator={false}>

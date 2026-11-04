@@ -1,4 +1,4 @@
-import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
+﻿import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {Image,Pressable,Text,TextInput,View} from 'react-native';
 import {appStyles as s} from './design';
 import {accountConfigured,accountSnapshot,subscribeAccount,initializeAccounts,loginAccount,loginWithGoogle,loginDevAccount,registerAccount,resendConfirmation,requestRecovery,changeRecoveredPassword,logoutAccount,refreshAccount,accountError} from './account-client';
@@ -26,7 +26,7 @@ export function AccountPanel({active}:{active:boolean}){
   </>:account.user?<>
    <View style={{alignItems:'center',gap:6,paddingBottom:12}}>
     <View style={{width:84,height:84,borderRadius:42,backgroundColor:'#2A1F4D',borderWidth:2,borderColor:'#8B5CF6',alignItems:'center',justifyContent:'center',marginBottom:4}}>
-     <Image source={require('../assets/ghovo-mascot-2d-v1.png')} style={{width:52,height:52}} resizeMode="contain" />
+     <Image source={require('../assets/ghovo-logo-3d-v1.png')} style={{width:58,height:58}} resizeMode="contain" />
     </View>
     <Text style={{color:'#ffffff',fontSize:17,fontWeight:'700',letterSpacing:-0.3}}>{account.user.email}</Text>
    </View>

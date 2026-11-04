@@ -33,7 +33,7 @@ export const RouteThumbnail=memo(function RouteThumbnail({points}:{points:Point[
   </View>;
 });
 export function MascotMessage({title,message}:{title:string;message:string}){
-  return <View style={styles.message}><Image source={require('../assets/ghovo-mascot-2d-v1.png')} style={styles.mascot} resizeMode="contain" accessible={false}/><View style={{flex:1,gap:5}}><Text style={styles.title}>{title}</Text><Text style={styles.caption}>{message}</Text></View></View>;
+  return <View style={styles.message}><Image source={require('../assets/ghovo-logo-3d-v1.png')} style={styles.mascot} resizeMode="contain" accessible={false}/><View style={{flex:1,gap:5}}><Text style={styles.title}>{title}</Text><Text style={styles.caption}>{message}</Text></View></View>;
 }
 const styles=StyleSheet.create({
   thumbnail:{width:84,height:84,backgroundColor:'#15112D',borderRadius:18,overflow:'hidden',borderWidth:1.5,borderColor:palette.border},

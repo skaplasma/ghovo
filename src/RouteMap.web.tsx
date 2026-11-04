@@ -207,7 +207,7 @@ export function RouteMap({
               ]}
             >
               <Image
-                source={require('../assets/ghovo-mascot-2d-v1.png')}
+                source={require('../assets/ghovo-logo-3d-v1.png')}
                 style={{ width: 28, height: 28 }}
                 resizeMode="contain"
                 accessible={false}

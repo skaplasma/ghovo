@@ -446,7 +446,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     if(account.status === 'loading') {
       content = <View style={[s.root, { justifyContent: 'center', alignItems: 'center', gap: 16 }]}>
         <StatusBar style="light" />
-        <View style={s.brandMark}><Image source={require('./assets/ghovo-mascot-2d-v1.png')} style={s.brandMascot} resizeMode="contain" accessible={false} /></View>
+        <View style={s.brandMark}><Image source={require('./assets/ghovo-logo-3d-v1.png')} style={s.brandMascot} resizeMode="contain" accessible={false} /></View>
         <Text style={s.homeTitle}>Iniciando GHOVO...</Text>
         <Text style={s.muted}>Cargando tu sesión segura</Text>
       </View>;
@@ -688,7 +688,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           {dataOptions&&<DataTools disabled={disabled} onChanged={refresh} />}
         </> : <>
           {result && <View style={[s.card,s.resultCard]}>
-            <View style={s.resultHero}><Image source={require('./assets/ghovo-mascot-2d-v1.png')} style={s.resultMascot} resizeMode="contain" accessible={false}/><View style={{flex:1,gap:5}}><Text style={s.resultEyebrow}>RUTA GUARDADA</Text><Text style={s.caption}>Tu huella ya está en Mis rutas.</Text></View></View>
+            <View style={s.resultHero}><Image source={require('./assets/ghovo-logo-3d-v1.png')} style={s.resultMascot} resizeMode="contain" accessible={false}/><View style={{flex:1,gap:5}}><Text style={s.resultEyebrow}>RUTA GUARDADA</Text><Text style={s.caption}>Tu huella ya está en Mis rutas.</Text></View></View>
             <Text style={s.resultTitle}>{result.run.incomplete?'Recorrido guardado':result.status === 'incomplete'?'Recorrido con interrupciones GPS':result.run.mode==='driving'?'Felicidades, has llegado':result.status === 'first' ? 'Tu primera huella en esta ruta' : result.status === 'record' ? 'Nueva mejor huella personal' : result.status === 'tie' ? 'Has igualado tu mejor tiempo' : 'Una nueva huella completada'}</Text>
             {result.run.notice?.kind==='arrival'&&<Text accessibilityLiveRegion="polite" style={s.tabSelected}>{result.run.notice.message}</Text>}
             <Text style={s.muted}>{result.run.name} · {date(result.run)}</Text>

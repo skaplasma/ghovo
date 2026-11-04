@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+﻿import React, {useState} from 'react';
 import {Image, Pressable, ScrollView, Text, View} from 'react-native';
 import {StatusBar} from 'expo-status-bar';
 import {Ionicons} from '@expo/vector-icons';
@@ -70,7 +70,7 @@ export function WelcomeScreen({onSignIn, onGuest}: {onSignIn: () => void; onGues
     <ScrollView contentContainerStyle={{flexGrow: 1, paddingHorizontal: 24, paddingTop: 64, paddingBottom: 28, justifyContent: 'space-between'}}>
       <View style={{alignItems: 'center', gap: 16}}>
         <View style={{width: 92, height: 92, borderRadius: 28, backgroundColor: '#211B3C', borderWidth: 2, borderColor: '#6A0DAD', alignItems: 'center', justifyContent: 'center'}}>
-          <Image source={require('../assets/ghovo-mascot-2d-v1.png')} style={{width: 78, height: 78}} resizeMode="contain" accessible={false} />
+          <Image source={require('../assets/ghovo-logo-3d-v1.png')} style={{width: 90, height: 90}} resizeMode="contain" accessible={false} />
         </View>
         <Text style={{fontFamily: fonts.extrabold, fontSize: 44, letterSpacing: 1, color: '#FFFFFF'}}>GHOVO</Text>
         <Text style={{fontFamily: fonts.medium, fontSize: 15, color: '#B4AED2', textAlign: 'center'}}>Rutas, récords y mucho más</Text>

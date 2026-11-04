@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+﻿import React, {useEffect, useState} from 'react';
 import {Animated, Easing, Image, View} from 'react-native';
 import {palette} from './design';
 
@@ -39,7 +39,7 @@ export function AppSplash({ready}: {ready: boolean}) {
     style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: palette.background, alignItems: 'center', justifyContent: 'center', opacity: fade}}
   >
     <View style={{width: 120, height: 120, borderRadius: 34, backgroundColor: '#211B3C', borderWidth: 2, borderColor: '#6A0DAD', alignItems: 'center', justifyContent: 'center'}}>
-      <Image source={require('../assets/ghovo-mascot-2d-v1.png')} style={{width: 100, height: 100}} resizeMode="contain" accessible={false} />
+      <Image source={require('../assets/ghovo-logo-3d-v1.png')} style={{width: 114, height: 114}} resizeMode="contain" accessible={false} />
     </View>
   </Animated.View>;
 }

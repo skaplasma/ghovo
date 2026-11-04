@@ -1,4 +1,4 @@
-import React,{useCallback,useEffect,useRef,useState} from 'react';
+﻿import React,{useCallback,useEffect,useRef,useState} from 'react';
 import {decimal} from './format';
 import {Alert,Image,Linking,Platform,Pressable,ScrollView,Text,View} from 'react-native';
 import * as IntentLauncher from 'expo-intent-launcher';
@@ -109,7 +109,7 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,onPrivacy,sta
   <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
    {!premiumPage&&<View style={{flexDirection:'row',alignItems:'center',gap:14}}>
     <View style={{width:72,height:72,borderRadius:36,backgroundColor:'#2A1F4D',borderWidth:2,borderColor:'#6A0DAD',alignItems:'center',justifyContent:'center'}}>
-     <Image source={require('../assets/ghovo-mascot-2d-v1.png')} style={{width:62,height:62}} resizeMode="contain" accessible={false}/>
+     <Image source={require('../assets/ghovo-logo-3d-v1.png')} style={{width:70,height:70}} resizeMode="contain" accessible={false}/>
     </View>
     <View style={{flex:1,gap:3}}>
      <Text style={[s.heroTitle,{fontSize:24,lineHeight:30}]} numberOfLines={1}>{displayName}</Text>

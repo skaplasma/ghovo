@@ -7,9 +7,9 @@ const base={run,now:61000,distance:'2.10 km',serviceRunning:true,keepScreenOn:tr
 test('healthy recording keeps secondary and destructive actions grouped away',async()=>{
   await render(<RecordingPanel {...base}/>);
   expect(screen.getByText('Grabación activa')).toBeOnTheScreen();
+  // El bloque de opciones y ayuda se retiró: esas acciones viven en la barra inferior.
+  expect(screen.queryByRole('button',{name:'Opciones y ayuda'})).not.toBeOnTheScreen();
   expect(screen.queryByRole('button',{name:'Guardar para más tarde'})).not.toBeOnTheScreen();
-  await userEvent.setup().press(screen.getByRole('button',{name:'Opciones y ayuda'}));
-  expect(screen.getByRole('button',{name:'Guardar para más tarde'})).toBeOnTheScreen();
   expect(base.onDiscard).not.toHaveBeenCalled();
 });
 test('stopped or stale GPS makes recovery directly available without expanding options',async()=>{

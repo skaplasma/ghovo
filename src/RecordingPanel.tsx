@@ -1,4 +1,3 @@
-import { GpsDiagnostics } from './GpsDiagnostics';
 import {decimal} from './format';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -39,7 +38,6 @@ export function RecordingPanel({
   comparisonReference,
   onToggleVoice,
 }: Props) {
-  const [options, setOptions] = useState(false);
   const age = Math.max(0, Math.floor((now - (run.lastFixAt ?? run.points.at(-1)?.timestamp ?? run.startedAt)) / 1000));
   const paused = !!run.pausedAt;
   const stale = age > 15;
@@ -96,7 +94,9 @@ export function RecordingPanel({
   const hasDiff = diff != null;
   const isAhead = hasDiff && diff < -200;
   const isBehind = hasDiff && diff > 200;
-  const diffSeconds = hasDiff ? decimal(Math.abs(diff) / 1000, 1) : null;
+  const diffMs = hasDiff ? Math.abs(diff!) : 0;
+ // Por debajo del minuto, segundos con un decimal; a partir de ahí, minutos y segundos.
+ const diffText = diffMs >= 60000 ? `${clock(diffMs)} min` : `${decimal(diffMs / 1000, 1)} s`;
 
   return (
     <>
@@ -126,7 +126,7 @@ export function RecordingPanel({
           ) : hasDiff ? (
             <>
               <Text style={[styles.deltaValue,isAhead?{color:'#34D399'}:isBehind?{color:'#FB7185'}:{color:palette.lavender}]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-                {isAhead ? `▲ -${diffSeconds} s` : isBehind ? `▼ +${diffSeconds} s` : '= 0,0 s'}
+                {isAhead ? `▲ -${diffText}` : isBehind ? `▼ +${diffText}` : '= 0,0 s'}
               </Text>
               <Text style={styles.deltaCaption}>{isAhead ? 'Vas ganando al fantasma' : isBehind ? 'Por detrás de tu referencia' : 'Mismo tiempo'}</Text>
             </>
@@ -139,29 +139,28 @@ export function RecordingPanel({
         </View>}
       </View>
 
-      {/* 3-Column Cockpit Telemetry Grid */}
+      {/* Tres cifras con la misma estructura: etiqueta, valor y unidad */}
       <View style={s.cockpitGrid}>
-        <View style={s.cockpitMetricBox}>
-          <Text style={s.cockpitMetricLabel}>{run.referenceId && run.circuitStartedAt ? 'En ruta' : 'Tiempo'}</Text>
-          <Text style={s.cockpitMetricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
-            {clock(elapsedMs)}
-          </Text>
+        <View style={[s.cockpitMetricBox, styles.metricBox]}>
+          <Text style={styles.metricLabel} numberOfLines={1}>{run.referenceId && run.circuitStartedAt ? 'EN RUTA' : 'TIEMPO'}</Text>
+          <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{clock(elapsedMs)}</Text>
+          <Text style={styles.metricUnit}>min</Text>
         </View>
 
-        <View style={s.cockpitMetricBox}>
-          <Text style={s.cockpitMetricLabel}>Distancia</Text>
-          <Text style={s.cockpitMetricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
-            {distance}
-          </Text>
+        <View style={[s.cockpitMetricBox, styles.metricBox]}>
+          <Text style={styles.metricLabel} numberOfLines={1}>DISTANCIA</Text>
+          <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{decimal(distNumKm,2)}</Text>
+          <Text style={styles.metricUnit}>km</Text>
         </View>
 
-        <View style={s.cockpitMetricBox}>
-          <Text style={s.cockpitMetricLabel}>{run.mode === 'running' ? 'Ritmo medio' : 'Vel. media · km/h'}</Text>
-          <Text style={s.cockpitMetricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+        <View style={[s.cockpitMetricBox, styles.metricBox]}>
+          <Text style={styles.metricLabel} numberOfLines={1}>{run.mode === 'running' ? 'RITMO MEDIO' : 'VEL. MEDIA'}</Text>
+          <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
             {run.mode === 'running'
               ? (avgSpeedKmh > 0 ? formatPace(avgSpeedKmh) : '—')
               : decimal(avgSpeedKmh,1)}
           </Text>
+          <Text style={styles.metricUnit}>{run.mode === 'running' ? 'min/km' : 'km/h'}</Text>
         </View>
       </View>
 
@@ -231,53 +230,6 @@ export function RecordingPanel({
           <Text style={s.lightText}>Recuperar señal GPS</Text>
         </Pressable>
       )}
-
-      {/* Secondary Options and Diagnostics Collapsible */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={options ? 'Ocultar opciones' : 'Opciones y ayuda'}
-        accessibilityState={{ expanded: options }}
-        onPress={() => setOptions(value => !value)}
-        style={s.optionsLink}
-      >
-        <Text style={s.caption}>{options ? 'Ocultar opciones' : 'Opciones y ayuda'}</Text>
-        <Text style={s.caption}>{options ? '−' : '+'}</Text>
-      </Pressable>
-
-      {options && (
-        <View style={s.card}>
-          <GpsDiagnostics />
-          <Text style={s.caption}>
-            Última posición válida: hace {age} s. {run.rejectedFixes ?? 0} posiciones descartadas por precisión o saltos.
-          </Text>
-          <Text style={s.caption}>
-            Puedes bloquear el móvil con su botón físico. La grabación está preparada para continuar en segundo plano.
-          </Text>
-          <Pressable accessibilityRole="button" onPress={onHelp} style={[s.button, s.secondary]}>
-            <Text style={s.lightText}>Ayuda con pantalla bloqueada</Text>
-          </Pressable>
-          {!needsAttention && (
-            <Pressable
-              accessibilityRole="button"
-              disabled={disabled}
-              accessibilityState={{ disabled }}
-              onPress={onRecover}
-              style={[s.button, s.secondary]}
-            >
-              <Text style={s.lightText}>Recuperar señal GPS</Text>
-            </Pressable>
-          )}
-          <Pressable
-            accessibilityRole="button"
-            disabled={disabled}
-            accessibilityState={{ disabled }}
-            onPress={onDiscard}
-            style={[s.button, s.secondary]}
-          >
-            <Text style={s.lightText}>Guardar para más tarde</Text>
-          </Pressable>
-        </View>
-      )}
     </>
   );
 }
@@ -292,4 +244,10 @@ const styles = StyleSheet.create({
   divider: { width: 1, alignSelf: 'stretch', backgroundColor: '#332959', marginVertical: 2 },
   deltaValue: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 26, letterSpacing: -0.5, fontVariant: ['tabular-nums'] },
   deltaCaption: { fontFamily: fonts.medium, fontSize: 10, color: '#8E87AB' },
+  // Misma estructura en las tres cifras: la etiqueta y la unidad ocupan su línea, así los
+  // valores quedan a la misma altura aunque el texto de arriba sea más largo o más corto.
+  metricBox: { alignItems: 'center', justifyContent: 'flex-start', gap: 1 },
+  metricLabel: { fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', color: '#8E87AB', height: 14 },
+  metricValue: { fontFamily: fonts.extrabold, fontSize: 26, lineHeight: 30, color: '#FFFFFF', letterSpacing: -0.8, fontVariant: ['tabular-nums'] },
+  metricUnit: { fontFamily: fonts.medium, fontSize: 10, color: palette.purpleLight, height: 13 },
 });

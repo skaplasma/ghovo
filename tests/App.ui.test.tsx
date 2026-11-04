@@ -353,7 +353,7 @@ test('a habitual route starts recording immediately upon confirmation even off-r
 
 test('saving for later keeps all draft points and offers recovery from Home',async()=>{
  const draft={...run,id:'long-pending',endedAt:undefined};mockState.active=draft;
- await render(<App/>);await act(async()=>{await jest.advanceTimersByTimeAsync(1);});const user=userEvent.setup();await user.press(screen.getByRole('button',{name:'Opciones y ayuda'}));await user.press(screen.getByRole('button',{name:'Guardar para más tarde'}));await act(async()=>{jest.mocked(Alert.alert).mock.calls.at(-1)![2]!.find(button=>button.text==='Sí, cancelar')!.onPress!();});
+ await render(<App/>);await act(async()=>{await jest.advanceTimersByTimeAsync(1);});const user=userEvent.setup();await user.press(screen.getByRole('button',{name:'Guardar el recorrido para continuarlo más tarde'}));await act(async()=>{jest.mocked(Alert.alert).mock.calls.at(-1)![2]!.find(button=>button.text==='Sí, cancelar')!.onPress!();});
  await waitFor(()=>expect(mockState.active).toBeNull());expect((mockState.pendingRecordings as Run[])[0].points).toEqual(draft.points);await user.press(await screen.findByRole('button',{name:'Recuperar Paseo del río'}));await waitFor(()=>expect((mockState.active as Run).id).toBe('long-pending'));expect((mockState.active as Run).points).toEqual(draft.points);expect(mockState.pendingRecordings).toEqual([]);
 });
 

@@ -1,3 +1,11 @@
+## Pantalla de grabación: minutos en la diferencia, cifras alineadas y menos ruido — 05/11/2026 (sin APK)
+
+- **La diferencia con el fantasma pasa a minutos** cuando hace falta: por debajo de 60 s sigue en segundos con un decimal (`▲ -2,4 s`) y a partir de ahí muestra `▲ -1:20 min`. Se acabó tener que dividir mentalmente entre 60.
+- **Las tres cifras quedan alineadas**: tiempo, distancia y velocidad media usan ahora la misma estructura de tres líneas (etiqueta, valor y unidad), con la etiqueta y la unidad a altura fija. El valor de la velocidad media ya no cae más abajo porque su etiqueta fuera más larga. Los números suben de 18 a 26 px y la unidad sale en su propia línea, así que también dejan de encogerse para caber.
+- **Se elimina el bloque «Opciones y ayuda»** del final del panel: el diagnóstico, la ayuda de pantalla bloqueada y «Guardar para más tarde» duplicaban acciones que ya están en la barra inferior («Guardar y salir») o que aparecen solas cuando hay un problema de GPS («Recuperar señal GPS»). El diagnóstico sigue disponible en la pantalla de GPS. Con ello el panel termina en las cifras y los interruptores de pantalla y voz.
+
+179 pruebas de interfaz y 97 de lógica, `tsc` limpio y `eslint` 0 errores. Dos pruebas cambian de expectativa a propósito: la de «guardar para más tarde» usa el botón de la barra inferior y la de opciones comprueba que el bloque ya no existe.
+
 ## Privacidad en Perfil, escritura incremental y batería de MIUI — 04/11/2026 (sin APK)
 
 Cierra los dos pendientes técnicos y añade la privacidad dentro de la app.

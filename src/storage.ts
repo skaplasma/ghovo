@@ -83,6 +83,7 @@ async function writeActive(run:Run|null){
     if(run)for(const [index,point] of (run.points??[]).entries())await transaction.runAsync('INSERT INTO active_points(idx,value) VALUES(?,?)',index,JSON.stringify(point));
     await transaction.runAsync(STATE_UPSERT,'active',JSON.stringify(run?{...run,points:[]}:null));
   });
+  activeCache=undefined;
   cache.delete('active');
 }
 export type RecoverySnapshot = { savedAt: number; history: Run[]; routeDetails: Record<string, { favorite: boolean; note: string }>; lastResult: string | null };
@@ -132,17 +133,27 @@ export async function history():Promise<Run[]> {
   return runs;
 }
 // El recorrido en curso se guarda en dos partes: la cabecera (sin puntos) en `state` y
-// las posiciones en `active_points`, una fila por punto.
+// las posiciones en `active_points`, una fila por punto. La caché evita releer y volver
+// a interpretar todo el recorrido en cada refresco: solo añade las filas nuevas.
+let activeCache:{id:string;maxIdx:number;points:Run['points']}|undefined;
 export async function active():Promise<Run|null>{
   const header=await read<Run|null>('active',null);
   if(!header)return null;
   // Una cabecera con puntos viene de una escritura completa antigua: se respeta tal cual.
   if(header.points?.length)return header;
   const connection=await db();
-  const rows=await connection.getAllAsync<{value:string}>('SELECT value FROM active_points ORDER BY idx');
-  const points:Run['points']=[];
-  for(const row of rows){try{points.push(JSON.parse(row.value));}catch{/* punto ilegible: se ignora */}}
-  return {...header,points};
+  if(!activeCache||activeCache.id!==header.id){
+    const rows=await connection.getAllAsync<{idx:number;value:string}>('SELECT idx,value FROM active_points ORDER BY idx');
+    const points:Run['points']=[];
+    for(const row of rows){try{points.push(JSON.parse(row.value));}catch{/* punto ilegible: se ignora */}}
+    activeCache={id:header.id,maxIdx:rows.at(-1)?.idx??-1,points};
+    return {...header,points};
+  }
+  const fresh=await connection.getAllAsync<{idx:number;value:string}>('SELECT idx,value FROM active_points WHERE idx>? ORDER BY idx',activeCache.maxIdx);
+  for(const row of fresh){
+    try{activeCache.points.push(JSON.parse(row.value));activeCache.maxIdx=row.idx;}catch{/* punto ilegible: se ignora */}
+  }
+  return {...header,points:activeCache.points};
 }
 
 // Anexa solo las posiciones nuevas y actualiza la cabecera. Es el camino caliente: una
@@ -150,6 +161,7 @@ export async function active():Promise<Run|null>{
 export async function saveActive(run:Run,added:Run['points']){
   const connection=await db();
   const header={...run,points:[] as Run['points']};
+  let replaced=false;
   await connection.withExclusiveTransactionAsync(async transaction=>{
     const stored=await transaction.getFirstAsync<{value:string}>('SELECT value FROM state WHERE key=?','active');
     let storedRun:Run|null=null;
@@ -157,6 +169,7 @@ export async function saveActive(run:Run,added:Run['points']){
     // Se reemplaza la tabla si la cabecera guardada traía puntos (escritura completa),
     // si es otro recorrido, o si no hay cabecera. Solo se anexa en el camino normal.
     const replace=!storedRun||storedRun.id!==run.id||!!storedRun.points?.length;
+    replaced=replace;
     if(replace){
       await transaction.runAsync('DELETE FROM active_points');
       for(const [index,point] of run.points.entries())await transaction.runAsync('INSERT INTO active_points(idx,value) VALUES(?,?)',index,JSON.stringify(point));
@@ -168,6 +181,9 @@ export async function saveActive(run:Run,added:Run['points']){
     await transaction.runAsync(STATE_UPSERT,'active',JSON.stringify(header));
   });
   cache.delete('active');
+  // Si solo se anexaron filas, la caché sigue siendo válida y recogerá las nuevas en la
+  // siguiente lectura; si la tabla se reemplazó, hay que descartarla.
+  if(replaced)activeCache=undefined;
 }
 
 // Borra los datos locales del usuario que elimina su cuenta: rutas, ajustes, copias y

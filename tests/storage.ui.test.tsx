@@ -7,7 +7,7 @@ jest.mock('expo-sqlite', () => ({ openDatabaseAsync: jest.fn(async () => mockCon
 function connection(native: DatabaseSync) {
   const adapter = {
     execAsync: async (sql: string) => { native.exec(sql); },
-    getAllAsync: async (sql: string) => native.prepare(sql).all(),
+    getAllAsync: async (sql: string, ...args: (string | number | null)[]) => native.prepare(sql).all(...args),
     getFirstAsync: async <T,>(sql: string, ...args: (string | number | null)[]) => (native.prepare(sql).get(...args) ?? null) as T | null,
     runAsync: async (sql: string, ...args: (string | number | null)[]) => native.prepare(sql).run(...args),
     withExclusiveTransactionAsync: async (task: (transaction: StateConnection) => Promise<void>) => {
@@ -94,4 +94,17 @@ test('una escritura completa posterior reemplaza la tabla de posiciones', async 
   const live = await storage.active();
   expect(live?.points).toHaveLength(1);
   expect(db.prepare('SELECT COUNT(*) AS total FROM active_points').get().total).toBe(1);
+});
+test('la caché del recorrido recoge solo las posiciones nuevas sin duplicarlas', async () => {
+  const draft: Run = {...run, endedAt: undefined};
+  await storage.write('active', draft);
+  expect((await storage.active())?.points).toHaveLength(2);
+  const third = {latitude: 40.003, longitude: -3, timestamp: 4000, accuracy: 5};
+  await storage.saveActive({...draft, points: [...draft.points, third]}, [third]);
+  expect((await storage.active())?.points).toHaveLength(3);
+  const fourth = {latitude: 40.004, longitude: -3, timestamp: 5000, accuracy: 5};
+  await storage.saveActive({...draft, points: [...draft.points, third, fourth]}, [fourth]);
+  const live = await storage.active();
+  expect(live?.points).toHaveLength(4);
+  expect(live?.points.map(point => point.timestamp)).toEqual([1000, 2000, 4000, 5000]);
 });

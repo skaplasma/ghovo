@@ -1,3 +1,13 @@
+## Preparación para Google Play — 04/11/2026 (sin APK)
+
+- **Perfil `production`** en `eas.json`: `.aab`, `distribution: store`, `autoIncrement` para que el `versionCode` suba solo en cada subida y `submit.production`.
+- **`expo-dev-client` sale de `dependencies`**: el menú de desarrollo no viaja en la compilación de tienda. El `package-lock.json` se ha regenerado con la nueva ubicación.
+- **Acceso invitado desactivado de serie**: el botón «Entrar sin registrarse» solo se renderiza con `EXPO_PUBLIC_GUEST_ACCESS=1`, así que una compilación de tienda no tiene puerta trasera al muro de cuenta. La prueba de la portada activa la variable para seguir cubriendo ese camino.
+- **Recursos de ficha** en `store/`: `icon-512.png` (512×512, sin alfa) y `feature-graphic-1024x500.png` (1024×500, RGB, con degradado morado, fantasma, logotipo y lema).
+- **`PLAY-STORE.md`**: orden de la consola, textos de ficha (descripción corta y larga), declaración de anuncios, tabla de Data safety, justificación del permiso de ubicación en segundo plano lista para pegar, credenciales de revisión, clasificación de contenido y comandos de compilación y envío.
+
+174 pruebas de interfaz y 97 de lógica, `tsc` limpio y `eslint` 0 errores. Sin compilación: se acumula.
+
 ## Fallos de la prueba real: guardado, fantasma e imagen de arranque — 03/11/2026 (sin APK)
 
 Tres fallos comunicados después de usar la app en la calle.

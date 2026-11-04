@@ -3,6 +3,9 @@ import {render,screen,userEvent} from '@testing-library/react-native';
 import {WelcomeScreen} from '../src/WelcomeScreen';
 import {loginWithGoogle} from '../src/account-client';
 
+// El acceso invitado es provisional y solo aparece con esta variable de entorno.
+process.env.EXPO_PUBLIC_GUEST_ACCESS='1';
+
 jest.mock('../src/account-client',()=>({loginWithGoogle:jest.fn(async()=>{}),accountError:()=> 'No disponible'}));
 beforeEach(()=>jest.mocked(loginWithGoogle).mockResolvedValue(undefined));
 

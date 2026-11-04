@@ -111,10 +111,10 @@ export function WelcomeScreen({onSignIn, onGuest}: {onSignIn: () => void; onGues
           <Text style={{fontFamily: fonts.semibold, fontSize: 15, color: '#1F1F1F'}}>{busy ? 'Conectando…' : 'Iniciar sesión con Google'}</Text>
         </Pressable>
 
-        {/* Provisional: se retira cuando la cuenta sea obligatoria de verdad. */}
-        <Pressable accessibilityRole="button" accessibilityLabel="Entrar sin registrarse (provisional)" onPress={onGuest} style={({pressed}) => ({minHeight: 44, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1})}>
+        {/* Solo para pruebas: en release no existe si no se pide expresamente por entorno. */}
+        {process.env.EXPO_PUBLIC_GUEST_ACCESS==='1'&&<Pressable accessibilityRole="button" accessibilityLabel="Entrar sin registrarse (provisional)" onPress={onGuest} style={({pressed}) => ({minHeight: 44, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1})}>
           <Text style={{fontFamily: fonts.medium, fontSize: 13, color: '#8E87AB', textDecorationLine: 'underline'}}>Entrar sin registrarse · provisional</Text>
-        </Pressable>
+        </Pressable>}
 
         <Text style={{fontFamily: fonts.regular, fontSize: 11, lineHeight: 16, color: '#6E6690', textAlign: 'center'}}>
           Para grabar necesitas una cuenta: tus rutas y tus créditos se guardan en ella.

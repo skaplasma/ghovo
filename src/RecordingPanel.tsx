@@ -246,8 +246,10 @@ const styles = StyleSheet.create({
   deltaCaption: { fontFamily: fonts.medium, fontSize: 10, color: '#8E87AB' },
   // Misma estructura en las tres cifras: la etiqueta y la unidad ocupan su línea, así los
   // valores quedan a la misma altura aunque el texto de arriba sea más largo o más corto.
-  metricBox: { alignItems: 'center', justifyContent: 'flex-start', gap: 1 },
-  metricLabel: { fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', color: '#8E87AB', height: 14 },
-  metricValue: { fontFamily: fonts.extrabold, fontSize: 26, lineHeight: 30, color: '#FFFFFF', letterSpacing: -0.8, fontVariant: ['tabular-nums'] },
-  metricUnit: { fontFamily: fonts.medium, fontSize: 10, color: palette.purpleLight, height: 13 },
+  metricBox: { alignItems: 'center', justifyContent: 'flex-start', gap: 2 },
+  // lineHeight propio en cada línea: sin él, la caja de la etiqueta se comía la mitad
+  // superior de la cifra y ambas se veían pegadas.
+  metricLabel: { fontFamily: fonts.semibold, fontSize: 11, lineHeight: 16, letterSpacing: 1.2, textTransform: 'uppercase', color: '#8E87AB' },
+  metricValue: { fontFamily: fonts.extrabold, fontSize: 26, lineHeight: 32, color: '#FFFFFF', letterSpacing: -0.8, fontVariant: ['tabular-nums'] },
+  metricUnit: { fontFamily: fonts.medium, fontSize: 10, lineHeight: 14, color: palette.purpleLight },
 });

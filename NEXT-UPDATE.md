@@ -1,3 +1,9 @@
+## Aire entre la etiqueta y la cifra en la cabina — 05/11/2026 (sin APK)
+
+Las tres cajas de la pantalla de grabación tenían la etiqueta pegada (y a ratos solapada) con la cifra: la etiqueta llevaba una altura fija de 14 px que recortaba la línea y el valor quedaba justo debajo. Ahora cada línea tiene su `lineHeight` propio (16 para la etiqueta, 32 para la cifra y 14 para la unidad) y el hueco entre ellas sube a 2 px, así que se lee «TIEMPO» arriba, «00:27» en medio y «min» abajo sin tocarse.
+
+179 pruebas de interfaz y 97 de lógica, `tsc` limpio y `eslint` 0 errores.
+
 ## Pantalla de grabación: minutos en la diferencia, cifras alineadas y menos ruido — 05/11/2026 (sin APK)
 
 - **La diferencia con el fantasma pasa a minutos** cuando hace falta: por debajo de 60 s sigue en segundos con un decimal (`▲ -2,4 s`) y a partir de ahí muestra `▲ -1:20 min`. Se acabó tener que dividir mentalmente entre 60.

@@ -1,3 +1,12 @@
+## Compartir ruta — 05/11/2026 (sin APK)
+
+- **Botón «Compartir ruta»** en la ficha de cada ruta, junto a Ajustes y Viajes. Abre el menú del sistema con el trazado en un archivo GPX, listo para WhatsApp, correo o cualquier app de mapas. Debajo, una línea explica qué se comparte.
+- **El archivo lleva el nombre de la ruta**: `GHOVO-Casa-Trabajo.gpx` en vez de `GHOVO-1730…`. Se limpian acentos y emojis para que el nombre sea válido en cualquier sistema.
+- **Solo se comparten intentos cerrados**: si el recorrido está a medias, el botón da un aviso claro en lugar de generar un GPX incompleto.
+- Se reutiliza la infraestructura de exportación que ya existía (`runToGpx` + `expo-sharing`), sin dependencias nuevas ni permisos.
+
+181 pruebas de interfaz (dos nuevas: el GPX con nombre limpio y el rechazo de un recorrido sin terminar) y 97 de lógica, `tsc` limpio y `eslint` 0 errores.
+
 ## Aire entre la etiqueta y la cifra en la cabina — 05/11/2026 (sin APK)
 
 Las tres cajas de la pantalla de grabación tenían la etiqueta pegada (y a ratos solapada) con la cifra: la etiqueta llevaba una altura fija de 14 px que recortaba la línea y el valor quedaba justo debajo. Ahora cada línea tiene su `lineHeight` propio (16 para la etiqueta, 32 para la cifra y 14 para la unidad) y el hueco entre ellas sube a 2 px, así que se lee «TIEMPO» arriba, «00:27» en medio y «min» abajo sin tocarse.

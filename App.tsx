@@ -30,7 +30,7 @@ import {RecordingAwake} from './src/RecordingAwake';
 import {RecordingPanel} from './src/RecordingPanel';
 import {MascotMessage} from './src/RouteVisuals';
 import {TravelModePicker} from './src/TravelModePicker';
-import { exportGpx,exportRouteReport } from './src/data-transfer';
+import { exportGpx,exportRouteReport,shareRoute } from './src/data-transfer';
 import { appStyles as s, palette } from './src/design';
 import { fonts } from './src/fonts';
 import { date, decimal, km } from './src/format';
@@ -717,6 +717,8 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           {!gps.ready&&<GpsDiagnostics/>}
 
               <View style={s.row}><View style={{flex:1}}><Button label="Ajustes" secondary onPress={()=>setDetailTab('settings')}/></View><View style={{flex:1}}><Button label="Viajes" secondary onPress={()=>setDetailTab('trips')}/></View></View>
+              <Button label="Compartir ruta" secondary disabled={disabled||!reference} onPress={()=>{if(reference)void act(()=>shareRoute(reference));}}/>
+              <Text style={s.caption}>Comparte el trazado en un archivo GPX con el nombre de la ruta. Sirve para abrirlo en otra app de mapas o enviarlo por WhatsApp o correo.</Text>
               <Button label="Ver mapa de la ruta" secondary onPress={()=>{Keyboard.dismiss();router.push('/map');}}/>
               <Button label="Análisis premium" secondary onPress={()=>{Keyboard.dismiss();router.push('/insights');}}/>
               {reference&&<RouteInformation key={`${reference.routeId}:${reference.mode??'legacy'}`} reference={reference} attempts={detail.attempts}/>}

@@ -7,14 +7,23 @@ import { active, history, read, serial, writeMany } from './storage';
 import { MAX_BACKUP_BYTES, type Backup, makeBackup, mergeBackup, parseBackup, runToGpx } from './backup';
 import {routeReportCsv} from './premium';
 
-async function shareFile(content: string, extension: 'json' | 'gpx' | 'csv', title: string) {
+async function shareFile(content: string, extension: 'json' | 'gpx' | 'csv', title: string, baseName?: string) {
   if (!(await Sharing.isAvailableAsync())) throw Error('El menú para guardar o compartir archivos no está disponible en este dispositivo.');
-  const file = new File(Paths.cache, `GHOVO-${Date.now()}.${extension}`);
+  const file = new File(Paths.cache, `${baseName ?? `GHOVO-${Date.now()}`}.${extension}`);
   file.create(); file.write(content);
   // Android may return after selecting a destination, before it finishes reading.
   // Keep the file in the app cache so the receiver can open its content URI.
   const formats={json:{mimeType:'application/json',UTI:'public.json'},gpx:{mimeType:'application/gpx+xml',UTI:'public.xml'},csv:{mimeType:'text/csv',UTI:'public.comma-separated-values-text'}};
   await Sharing.shareAsync(file.uri, {...formats[extension],dialogTitle:title});
+}
+// Comparte una ruta con su nombre en el archivo, para que al receptor no le llegue un
+// «GHOVO-1730…» sino «GHOVO-Casa-Trabajo.gpx».
+export async function shareRoute(run: Run) {
+  // Solo se comparten intentos cerrados: un borrador a medias no sirve para nada fuera.
+  const endedAt = run.endedAt;
+  if (!endedAt) throw Error('Este recorrido todavía no se puede compartir: aún no está terminado.');
+  const safe = (run.name || 'ruta').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  await shareFile(runToGpx({ ...run, endedAt }), 'gpx', `Compartir ${run.name || 'ruta'}`, `GHOVO-${safe || 'ruta'}`);
 }
 export async function exportRouteReport(reference:Run,runs:Run[]){await shareFile(routeReportCsv(reference,runs),'csv','Guardar informe de la ruta');}
 export async function exportLibrary() {

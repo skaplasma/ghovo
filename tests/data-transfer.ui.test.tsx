@@ -1,7 +1,7 @@
 import * as Picker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
 import { File } from 'expo-file-system';
-import { exportLibrary, pickBackup, applyBackup,exportRouteReport } from '../src/data-transfer';
+import { exportLibrary, pickBackup, applyBackup,exportRouteReport,shareRoute } from '../src/data-transfer';
 import { makeBackup } from '../src/backup';
 import { writeMany } from '../src/storage';
 import type { Run } from '../src/core';
@@ -72,4 +72,18 @@ test('a new import uses one checkpointed write for routes and their metadata', a
   mockRuns = [];
   expect(await applyBackup(makeBackup([run], { route: { favorite: true, note: 'Puente' } }, 3000))).toEqual({ added: 1, skipped: 0 });
   expect(writeMany).toHaveBeenCalledWith({ history: [run], routeDetails: { route: { favorite: true, note: 'Puente' } } }, true);
+});
+test('compartir ruta genera un GPX con el nombre de la ruta en el archivo', async () => {
+  await shareRoute(run);
+  const content = mockWrite.mock.calls.at(-1)![0];
+  expect(content).toContain('<gpx');
+  expect(content).toContain('<trkpt lat="40" lon="-3"');
+  // Sin acentos ni emojis en el nombre del archivo: «Río 👻» queda como «Rio».
+  expect(Sharing.shareAsync).toHaveBeenCalledWith('file:///cache/GHOVO-Rio.gpx', expect.objectContaining({ mimeType: 'application/gpx+xml', dialogTitle: 'Compartir Río 👻' }));
+  expect(mockDelete).not.toHaveBeenCalled();
+});
+test('no se comparte un recorrido sin terminar', async () => {
+  const draft: Run = { ...run, endedAt: undefined, points: [{ latitude: 40, longitude: -3, timestamp: 1000, accuracy: 5 }] };
+  await expect(shareRoute(draft)).rejects.toThrow(/todavía no se puede compartir/);
+  expect(Sharing.shareAsync).not.toHaveBeenCalledWith(expect.stringContaining('GHOVO-'), expect.anything());
 });

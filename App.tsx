@@ -330,11 +330,12 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     await serial(async () => writeMany({ history: (await history()).map(r => r.routeId === selected ? { ...r, name: editName.trim() } : r) }, true));
     setEditing(false);
   }
-  async function updateRouteDetails(change: { favorite?: boolean; note?: string; checkpointKm?:CheckpointInterval|null; referenceChoice?:string;autoFinish?:boolean;voiceEnabled?:boolean }) {
-    if (!selected) return;
+  // routeId permite tocar la favorita desde la lista, sin abrir la ruta.
+  async function updateRouteDetails(change: { favorite?: boolean; note?: string; checkpointKm?:CheckpointInterval|null; referenceChoice?:string;autoFinish?:boolean;voiceEnabled?:boolean }, routeId = selected) {
+    if (!routeId) return;
     await serial(async () => {
       const metadata = await read<RouteDetails>('routeDetails', {});
-      const updated = { ...metadata, [selected]: { ...(metadata[selected] ?? { favorite: false, note: '' }), ...change } };
+      const updated = { ...metadata, [routeId]: { ...(metadata[routeId] ?? { favorite: false, note: '' }), ...change } };
       await writeMany({ routeDetails: updated }, true);
     });
     setEditingNote(false);
@@ -677,7 +678,15 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           </>}
           {!!summaries.length && !visibleRoutes.length && <Text style={s.muted}>{favoritesOnly ? 'No hay favoritas que coincidan. Marca una ruta con la estrella o desactiva este filtro.' : 'No hay rutas con ese nombre. Prueba otra búsqueda.'}</Text>}
           {!summaries.length && <View style={s.card}><MascotMessage title="Tu primera huella empieza aquí" message="Graba un recorrido. Aquí guardarás su trazado y los tiempos de cada salida."/></View>}
-          {visibleRoutes.map(summary => <RouteCard key={summary.reference.routeId} summary={summary} favorite={!!routeDetails[summary.reference.routeId]?.favorite} disabled={disabled} onPress={() => choose(summary.reference.routeId)} />)}
+          {visibleRoutes.map(summary => <RouteCard
+            key={summary.reference.routeId}
+            summary={summary}
+            favorite={!!routeDetails[summary.reference.routeId]?.favorite}
+            disabled={disabled}
+            onPress={() => choose(summary.reference.routeId)}
+            onFavorite={() => void act(() => updateRouteDetails({favorite: !routeDetails[summary.reference.routeId]?.favorite}, summary.reference.routeId))}
+            onShare={() => void act(() => shareRoute(summary.reference))}
+          />)}
           <Button label={activityOpen?'Ocultar actividad acumulada':`Tu actividad · ${activity.routes} rutas · ${decimal(activity.meters/1000,2)} km`} secondary onPress={()=>setActivityOpen(value=>!value)}/>
           {activityOpen&&<>
           <View style={s.card}>
@@ -818,7 +827,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
       </View>}
       {!run&&!result&&section==='route'&&(!selected||!routeMode)&&<TravelModePicker value={travelMode} onChange={setTravelMode} disabled={disabled}/>}
       <Button finish={!!run} label={run?(busy?'Guardando…':'Finalizar ruta'):section==='library'?'Nueva ruta':result?'Ver recorrido':(busy?'Preparando GPS…':selected?(comparisonReference?'Iniciar esta ruta':'Iniciar sin comparación'):'CONFIRMAR Y EMPEZAR')} disabled={disabled||(!run&&!result&&section==='route'&&(!gps.ready&&!comparisonReference))} onPress={run?()=>void act(finish):section==='library'?()=>choose(null):result?()=>{setResultId(null);setShowGhost(false);setReplay(resetReplay);}:start}/>
-      {section==='route'&&!result&&<Text style={s.dockHint}>{run?'Detente antes de finalizar.':'🕒 Asegurando señal GPS...'}</Text>}
+      {section==='route'&&!result&&!run&&<Text style={s.dockHint}>🕒 Asegurando señal GPS...</Text>}
     </View>}
     {!run&&navigation}
   </View>;

@@ -1,11 +1,11 @@
-﻿import React from 'react';
+import React from 'react';
 import { Alert, AppState, type AppStateStatus } from 'react-native';
 import { act, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { history, writeMany } from '../src/storage';
 import App from '../App';
 import type { Run } from '../src/core';
 import {startTracking,stopTracking} from '../src/tracking';
-import {exportRouteReport} from '../src/data-transfer';
+import {exportRouteReport,shareRoute} from '../src/data-transfer';
 jest.mock('../src/account-client',()=>{const state={status:'unavailable',user:null,recovery:false};return {accountConfigured:false,accountSnapshot:()=>state,subscribeAccount:()=>()=>{},initializeAccounts:jest.fn(async()=>{}),refreshAccount:jest.fn(async()=>{}),accountError:()=> 'No disponible'};});
 jest.mock('../src/speech',()=>({speakNotice:jest.fn(async()=>true),stopVoice:jest.fn(async()=>{}),testVoice:jest.fn(async()=>true)}));
 
@@ -37,7 +37,7 @@ jest.mock('../src/tracking', () => ({
   ensureTracking: jest.fn(async()=>{}), recoverTracking:jest.fn(async()=>{}),
 }));
 jest.mock('../src/data-transfer', () => ({
-  exportRouteReport:jest.fn(async()=>{}),
+  exportRouteReport:jest.fn(async()=>{}), shareRoute:jest.fn(async()=>{}),
   exportGpx: jest.fn(async () => {}), exportLibrary: jest.fn(async () => {}),
   pickBackup: jest.fn(async () => null), applyBackup: jest.fn(async () => ({ added: 0, skipped: 0 })),
 }));
@@ -78,6 +78,18 @@ test('mode selected in the fixed start controls is used for the new recording',a
   await user.press(screen.getByRole('button',{name:'Empezar ruta'}));
   await act(async()=>{jest.mocked(Alert.alert).mock.calls.at(-1)![2]!.find(button=>button.text==='Estoy parado · iniciar')!.onPress!();});
   await waitFor(()=>expect(startTracking).toHaveBeenCalledWith(expect.objectContaining({mode:'walking',name:'Mi ruta'}),undefined));
+});
+test('la tarjeta de la ruta da favorita y compartir sin abrirla', async () => {
+  await openApp();
+  const user = userEvent.setup();
+  await user.press(screen.getByRole('tab', { name: /Mis rutas/ }));
+  // Favorita desde la tarjeta: se guarda sin entrar en la ruta.
+  await user.press(screen.getByRole('button', { name: 'Añadir Paseo del río a favoritas' }));
+  await waitFor(() => expect(mockState.routeDetails).toEqual({ route: { favorite: true, note: '' } }));
+  expect(await screen.findByRole('button', { name: 'Quitar Paseo del río de favoritas' })).toBeOnTheScreen();
+  // Compartir desde la tarjeta: abre el menú del sistema con el GPX.
+  await user.press(screen.getByRole('button', { name: 'Compartir la ruta Paseo del río' }));
+  await waitFor(() => expect(shareRoute).toHaveBeenCalledTimes(1));
 });
 test('library search handles accents and favorite empty state', async () => {
   await openApp();

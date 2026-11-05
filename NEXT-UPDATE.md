@@ -1,3 +1,15 @@
+## Favorita y compartir en la lista de rutas — 05/11/2026 (sin APK)
+
+- **Dos acciones en cada tarjeta de «Mis rutas»**, arriba a la derecha: el corazón y el icono de compartir. Tocar el corazón marca o desmarca la favorita en el momento, y compartir abre el menú del sistema con el GPX, **sin tener que abrir la ruta**. Se retira la flecha de la tarjeta, que ya no hace falta para nada.
+- La tarjeta sigue abriendo la ruta al tocarla en cualquier otro punto; los dos iconos capturan su propio toque.
+- **Fuera el aviso «Detente antes de finalizar»** de la barra inferior: ocupaba una línea y no aportaba nada. El aviso de «Asegurando señal GPS» se mantiene, que ese sí informa.
+- La favorita desde la lista usa el mismo almacén que la de dentro de la ruta, así que coincide con el filtro de favoritas.
+
+182 pruebas de interfaz (una nueva: favorita y compartir desde la tarjeta sin abrir la ruta) y 97 de lógica, `tsc` limpio y `eslint` 0 errores.
+
+## Compartir ruta — 05/11/2026 (sin APK)
+
+- **Botón «⤴ Compartir» en la cabecera de la ruta**, en dos columnas junto a la favorita (`☆ Favorita` / `⤴ Compartir`), así está a un toque desde cualquier pestaña de la ruta. Se retira el botón que había quedado suelto en el contenido.
 ## Compartir ruta — 05/11/2026 (sin APK)
 
 - **Botón «⤴ Compartir» en la cabecera de la ruta**, en dos columnas junto a la favorita (`☆ Favorita` / `⤴ Compartir`), así está a un toque desde cualquier pestaña de la ruta. Se retira el botón que había quedado suelto en el contenido.

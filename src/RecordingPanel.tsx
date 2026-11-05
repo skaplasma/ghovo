@@ -82,8 +82,12 @@ export function RecordingPanel({
     }
   }
 
-  // Elapsed duration (el tiempo en pausa no cuenta)
-  const elapsedMs = Math.max(0, now - (run.circuitStartedAt ?? run.startedAt) - (run.pausedAt ? now - run.pausedAt : 0));
+  // La línea de salida manda: en una ruta con referencia, el cronómetro no corre hasta
+  // cruzarla. En una ruta libre no hay línea y cuenta desde que pulsas.
+  const awaitingEntry = !!run.referenceId && !run.circuitStartedAt;
+  // Al cruzar la meta el tiempo se congela; lo de después (aparcar, esperar) no cuenta.
+  const endOfRun = run.comparison?.finishedAt ?? now;
+  const elapsedMs = awaitingEntry ? 0 : Math.max(0, endOfRun - (run.circuitStartedAt ?? run.startedAt) - (run.pausedAt ? now - run.pausedAt : 0));
 
   // Average speed
   const distNumKm = parseFloat(distance.replace(',', '.'));

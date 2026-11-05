@@ -1,7 +1,7 @@
 import {accepts,distance,isComparable,isTraceBreak,type Point,type Run} from './core.ts';
 import {checkpointsFor,type CheckpointInterval} from './checkpoints.ts';
 export type Split={meters:number;elapsed:number|null;referenceElapsed:number;difference:number|null};
-export type ComparisonState={progress:number;segment:number;lastFixAt:number;lastMatchedAt:number;unavailable:boolean;difference:number|null;splits:Split[];arrivalSince?:number;arrivalAnchor?:Point};
+export type ComparisonState={progress:number;segment:number;lastFixAt:number;lastMatchedAt:number;unavailable:boolean;difference:number|null;splits:Split[];arrivalSince?:number;arrivalAnchor?:Point;finishedAt?:number};
 export type CourseModel={reference:Run;meters:number[];total:number;controls:{meters:number;referenceElapsed:number}[];valid:boolean};
 // A destination is an area (e.g. nearby parking), not a single GPS coordinate.
 export const destinationRadius=(total:number)=>Math.round(Math.min(150,Math.max(60,total*.15)));
@@ -49,8 +49,19 @@ export function advanceComparison(model:CourseModel,state:ComparisonState,point:
   const reachedEnd=!!best&&best.progress>=model.total-30;
   const finishZone=reachedEnd||(!!best&&best.progress>=model.total-radius&&distanceToEnd<=radius);
   if(!best||best.offset>(finishZone?Math.max(radius,250):30))return lost;
-  const progress=Math.max(state.progress,best.progress),elapsed=point.timestamp-startedAt;
-  const continuous=!state.unavailable&&point.timestamp-state.lastFixAt<=15000;
+  const progress=Math.max(state.progress,best.progress),continuous=!state.unavailable&&point.timestamp-state.lastFixAt<=15000;
+  // Al cruzar la meta se congela el cronómetro: aparcar, esperar o seguir moviéndose
+  // después de la línea no debe sumar segundos al resultado. Se interpola el instante
+  // exacto del cruce entre la posición anterior y esta.
+  let finishedAt=state.finishedAt;
+  if(finishedAt===undefined&&progress>=model.total-0.5&&continuous){
+    const span=progress-state.progress;
+    const fraction=span>0.01?Math.max(0,Math.min(1,(model.total-state.progress)/span)):1;
+    finishedAt=state.lastFixAt+(point.timestamp-state.lastFixAt)*fraction;
+  }
+  const referenceTotal=model.reference.points.at(-1)!.timestamp-model.reference.startedAt;
+  const elapsed=(finishedAt??point.timestamp)-startedAt;
+  const referenceElapsed=finishedAt!==undefined?referenceTotal:referenceTime(model,progress,best.segment);
   const splits=[...state.splits];
   for(const cp of model.controls){if(cp.meters>progress+0.01||splits.some(s=>Math.abs(s.meters-cp.meters)<0.01))continue;
     const f=progress>state.progress?(cp.meters-state.progress)/(progress-state.progress):1;
@@ -62,12 +73,13 @@ export function advanceComparison(model:CourseModel,state:ComparisonState,point:
   const stopped=atFinish&&(speed===undefined||!Number.isFinite(speed)||speed<0||speed<=1.5);
   const stability=typeof speed==='number'&&Number.isFinite(speed)&&speed>=0?Math.max(8,Math.min(25,point.accuracy)):Math.max(6,Math.min(12,point.accuracy));
   const anchored=stopped&&state.arrivalAnchor&&distance(state.arrivalAnchor,point)<=stability;
-  return {progress,segment:best.segment,lastFixAt:point.timestamp,lastMatchedAt:point.timestamp,unavailable:false,difference:elapsed-referenceTime(model,progress,best.segment),splits,arrivalSince:stopped?(anchored?state.arrivalSince??point.timestamp:point.timestamp):undefined,arrivalAnchor:stopped?(anchored?state.arrivalAnchor:point):undefined};
+  return {progress,segment:best.segment,lastFixAt:point.timestamp,lastMatchedAt:point.timestamp,unavailable:false,difference:elapsed-referenceElapsed,splits,arrivalSince:stopped?(anchored?state.arrivalSince??point.timestamp:point.timestamp):undefined,arrivalAnchor:stopped?(anchored?state.arrivalAnchor:point):undefined,finishedAt};
 }
 export function arrivalReady(state:ComparisonState,now:number){return !state.unavailable&&state.arrivalSince!==undefined&&now-state.arrivalSince>=3000&&now-state.lastFixAt<=15000;}
 export function validComparison(value:unknown):value is ComparisonState{
   if(typeof value!=='object'||value===null)return false;const v=value as ComparisonState;
   if(v.arrivalAnchor!==undefined&&(typeof v.arrivalAnchor!=='object'||v.arrivalAnchor===null||!accepts([],v.arrivalAnchor)||v.arrivalAnchor.timestamp<0))return false;
+  if(v.finishedAt!==undefined&&(!Number.isFinite(v.finishedAt)||v.finishedAt<0))return false;
   return Number.isFinite(v.progress)&&v.progress>=0&&Number.isInteger(v.segment)&&v.segment>=0&&Number.isFinite(v.lastFixAt)&&v.lastFixAt>=0&&Number.isFinite(v.lastMatchedAt)&&v.lastMatchedAt>=0&&typeof v.unavailable==='boolean'&&(v.difference===null||Number.isFinite(v.difference))&&(v.arrivalSince===undefined||Number.isFinite(v.arrivalSince)&&v.arrivalSince>=0)&&Array.isArray(v.splits)&&v.splits.length<=1002&&v.splits.every((s,i)=>typeof s==='object'&&s!==null&&Number.isFinite(s.meters)&&s.meters>=0&&(i===0||s.meters>v.splits[i-1].meters)&&Number.isFinite(s.referenceElapsed)&&s.referenceElapsed>=0&&(s.elapsed===null||Number.isFinite(s.elapsed)&&s.elapsed>=0)&&(s.difference===null||Number.isFinite(s.difference)));
 }
 export function finishComparison(model:CourseModel,state:ComparisonState,elapsed:number):ComparisonState{

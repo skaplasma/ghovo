@@ -22,3 +22,26 @@ test('automatic arrival accepts an accurate fix 45 metres to the side after rout
  state=advanceComparison(model,state,p(1000,307000,151),200000);assert.equal(arrivalReady(state,307000),false);
 });
 test('a failed minimum-data check does not mutate the draft',()=>{const short={...draft,points:[p(0,200000)],lastFixAt:200000};assert.throws(()=>completeRun(short,reference,200000),/posiciones/);assert.equal(short.endedAt,undefined);});
+
+test('aparcar treinta segundos en la meta no suma segundos al resultado',()=>{
+ const model=courseModel(reference);
+ const points=Array.from({length:501},(_,i)=>p(i*10,200000+i*1000));
+ let state=initialComparison(200000);
+ for(const point of points)state=advanceComparison(model,state,point,200000);
+ const parked=Array.from({length:30},(_,i)=>p(5000,201000+i*1000));
+ for(const point of parked)state=advanceComparison(model,state,point,200000,0);
+ const run:Run={...draft,startedAt:200000,circuitStartedAt:200000,points:[...points,...parked],comparison:state,lastFixAt:parked.at(-1)!.timestamp};
+ const saved=completeRun(run,reference,parked.at(-1)!.timestamp,true);
+ assert.equal(saved.incomplete,false);
+ assert.ok(Math.abs(saved.comparison!.splits.at(-1)!.difference!)<=1000,`diferencia final ${saved.comparison!.splits.at(-1)!.difference}`);
+});
+test('parar a veinte metros de la meta estima el tiempo que faltaba',()=>{
+ const model=courseModel(reference);
+ const points=Array.from({length:499},(_,i)=>p(i*10,200000+i*1000));
+ let state=initialComparison(200000);
+ for(const point of points)state=advanceComparison(model,state,point,200000);
+ const run:Run={...draft,startedAt:200000,circuitStartedAt:200000,points,comparison:state,lastFixAt:points.at(-1)!.timestamp};
+ const saved=completeRun(run,reference,points.at(-1)!.timestamp,true);
+ assert.equal(saved.incomplete,false);
+ assert.ok(Math.abs(saved.comparison!.splits.at(-1)!.difference!)<=1500,`diferencia final ${saved.comparison!.splits.at(-1)!.difference}`);
+});

@@ -69,7 +69,10 @@ TaskManager.defineTask<{locations:Location.LocationObject[]}>(TASK,async({data,e
       if(accepted&&p.timestamp-(run.lastFixAt??run.startedAt)>30000)recordGpsEvent('recovered',p.accuracy);
       if(!accepted&&p.timestamp>(run.lastFixAt??run.startedAt))recordGpsEvent(!accepts([],p)?'weak':'jump',p.accuracy);
       run=updated;
-      if(accepted&&model&&run.autoFinish&&run.comparison&&arrivalReady(run.comparison,p.timestamp)&&run.points.length>=2&&length(run.points)>=50){
+      // La meta es una línea: al cruzarla se cierra sola, sin exigir que pares. La regla
+      // de «parado un par de segundos cerca de B» se mantiene como respaldo.
+      const crossedLine=run.comparison?.finishedAt!==undefined;
+      if(accepted&&model&&run.autoFinish&&run.comparison&&(crossedLine||arrivalReady(run.comparison,p.timestamp))&&run.points.length>=2&&length(run.points)>=50){
         const completed=completeRun(run,previous,p.timestamp,true);
         const saved=await history();
         try{await writeMany({history:[...saved.filter(item=>item.id!==completed.id),completed],lastResult:completed.id,active:null},true);}

@@ -255,7 +255,10 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     return () => listener.remove();
   }, [total, refresh]);
   const points = run?.points ?? reference?.points ?? noPoints;
-  const currentDistance = `${decimal(length(points)/1000,2)} km`;
+  // Kilómetros del intento: en una ruta con referencia empiezan a contar al cruzar la
+  // salida, así que acercarse hasta la línea no suma distancia.
+  const livePoints = run?.referenceId ? (run.circuitStartedAt ? run.points.filter(point => point.timestamp >= run.circuitStartedAt!) : noPoints) : points;
+  const currentDistance = `${decimal(length(livePoints)/1000,2)} km`;
   const liveComparisonAvailable=!!run?.comparison&&!run.comparison.unavailable&&now-run.comparison.lastFixAt<=15000&&serviceRunning&&!run.error;
   const ghost=run?(comparisonReference&&liveComparisonAvailable&&run.circuitStartedAt?ghostAt(comparisonReference,now-run.circuitStartedAt):undefined):replayReference&&showGhost?ghostAt(replayReference,playback):undefined;
   const disabled = busy || !ready;
@@ -376,6 +379,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           lastFixAt:current.comparison.lastFixAt+shift,
           lastMatchedAt:current.comparison.lastMatchedAt+shift,
           arrivalSince:moveAt(current.comparison.arrivalSince),
+          finishedAt:moveAt(current.comparison.finishedAt),
           arrivalAnchor:current.comparison.arrivalAnchor?{...current.comparison.arrivalAnchor,timestamp:current.comparison.arrivalAnchor.timestamp+shift}:undefined,
         }:current.comparison,
         notice:current.notice?{...current.notice,createdAt:current.notice.createdAt+shift}:current.notice,

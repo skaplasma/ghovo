@@ -241,3 +241,19 @@ test('one precise fix or repeated timestamps never pass the recording start gate
   await Promise.resolve();mockFix!(location());mockFix!(location());mockFix!(location());
   await jest.advanceTimersByTimeAsync(3001);await checked;
 });
+
+test('cruzar la línea de meta cierra la ruta sin necesidad de parar',async()=>{
+  const now=Date.now(),startedAt=now-120000;
+  const point=(m:number,t:number)=>({latitude:0,longitude:m/6371000*180/Math.PI,timestamp:t,accuracy:5});
+  const reference:Run={id:'ref-line',routeId:'commute',name:'Casa',mode:'driving',startedAt:startedAt-1000000,endedAt:startedAt-500000,points:Array.from({length:101},(_,i)=>point(i*10,startedAt-1000000+i*1000)),gpsGaps:0};
+  mockHistory=[reference];
+  mockActive={id:'line',routeId:'commute',name:'Casa',mode:'driving',referenceId:reference.id,autoFinish:true,startedAt,circuitStartedAt:startedAt,points:Array.from({length:100},(_,i)=>point(i*10,startedAt+i*1000)),lastFixAt:startedAt+99000,
+    comparison:{progress:990,segment:98,lastFixAt:startedAt+99000,lastMatchedAt:startedAt+99000,unavailable:false,difference:0,splits:[]}};
+  // Cruza la meta a velocidad de carretera y sin frenar.
+  await executeTask({data:{locations:[location({timestamp:startedAt+100000,coords:{...location().coords,latitude:0,longitude:1000/6371000*180/Math.PI,speed:11}})]},error:null,executionInfo:{eventId:'line-crossing',taskName:'ghovo-route-location',appState:'background'}} as never);
+  expect(mockActive).toBeNull();
+  expect(mockHistory).toHaveLength(2);
+  expect(mockHistory[1].autoCompleted).toBe(true);
+  expect(mockHistory[1].incomplete).toBe(false);
+  expect(mockHistory[1].endedAt).toBe(startedAt+100000);
+});

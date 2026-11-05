@@ -1,3 +1,28 @@
+## Salida y llegada al detalle: el cronómetro empieza en la línea y se congela en la meta — 05/11/2026 (sin APK)
+
+El fallo de los «+13 segundos» salía de aquí: al llegar, el cronómetro seguía corriendo y se comparaba contra el fantasma, que ya estaba parado en la meta. Cada segundo aparcado sumaba un segundo de desventaja.
+
+### Lo que cambia
+
+- **El cronómetro se congela al cruzar la meta.** Cuando el avance llega al final del trazado se guarda el instante exacto del cruce, interpolado entre las dos últimas posiciones, y la diferencia deja de moverse. Aparcar, esperar o quedarse mirando el móvil ya no suma segundos.
+- **La ruta se cierra al cruzar la meta, sin exigir que pares.** Antes hacía falta estar parado tres segundos; ahora el cruce de la línea es suficiente. La regla de «parado un par de segundos cerca de B» se queda como respaldo por si aparcas antes de la línea.
+- **Lo grabado después de la meta no cuenta.** Al guardar se recorta la cola posterior al cruce: el tiempo y la distancia terminan en la línea, no en la última posición. La frescura del GPS se sigue midiendo con la última posición recibida, para que aparcar no marque el intento como «sin verificar».
+- **Antes de cruzar la salida no corre nada.** En una ruta con referencia, la cabina muestra `00:00` y `0,00 km` hasta que entras: acercarte hasta la salida ya no suma ni tiempo ni distancia. En una ruta libre, sin línea, sigue contando desde que pulsas.
+- **La distancia del intento se mide de línea a línea.** El resumen, las estadísticas y el tiempo medio usan el tramo recorrido entre la salida y la meta, sin el acercamiento ni el aparcamiento.
+- **Entrar a mitad ya no falsea el resultado.** La diferencia final contra el fantasma se toma del último parcial comparado, no de la duración total, así que un intento que entra en el kilómetro 2 no parece «más rápido» que la ruta completa. Además, ese intento ya no puede arrebatarle el récord a uno completo.
+- **El aviso de voz de llegada usa el mismo cálculo**, para que lo que oyes coincida con lo que ves.
+
+### Pruebas nuevas
+
+- Aparcar 30 s en la meta no altera la diferencia (antes crecía hasta +30 s).
+- Parar a 20 m de la meta estima el tiempo que faltaba en lugar de inventar una ventaja.
+- Cruzar la línea a 40 km/h cierra y guarda sin frenar.
+- Antes de la salida, `00:00`; al cruzar la meta, el tiempo congelado.
+- Un intento que entra a mitad compara su tramo y no se marca como récord.
+
+101 pruebas de lógica y 185 de interfaz, `tsc` limpio y `eslint` 0 errores.
+
+## Favorita y compartir en la lista de rutas — 05/11/2026 (sin APK)
 ## Favorita y compartir en la lista de rutas — 05/11/2026 (sin APK)
 
 - **Dos acciones en cada tarjeta de «Mis rutas»**, arriba a la derecha: el corazón y el icono de compartir. Tocar el corazón marca o desmarca la favorita en el momento, y compartir abre el menú del sistema con el GPX, **sin tener que abrir la ruta**. Se retira la flecha de la tarjeta, que ya no hace falta para nada.

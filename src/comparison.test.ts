@@ -2,6 +2,7 @@ import {makeBackup,parseBackup} from './backup.ts';
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {advanceComparison,arrivalReady,courseModel,initialComparison,selectReference,finishComparison} from './comparison.ts';
+import {referenceForRun} from './route-entry.ts';
 import {resultFor} from './results.ts';
 import type {Point,Run} from './core.ts';
 const p=(meters:number,timestamp:number,latitude=0):Point=>({latitude,longitude:meters/6371000*180/Math.PI,timestamp,accuracy:5});
@@ -42,4 +43,27 @@ test('selected reference and split records survive backup round trip',()=>{
   today.comparison=advanceComparison(courseModel(original,2),today.comparison,p(10,1001000),today.startedAt);
   const backup=parseBackup(JSON.stringify(makeBackup([original,today],{commute:{favorite:true,note:'',referenceChoice:original.id,checkpointKm:2,autoFinish:true}},2000000)));
   assert.equal(backup.runs[1].referenceId,original.id);assert.deepEqual(backup.runs[1].comparison,JSON.parse(JSON.stringify(today.comparison)));assert.equal(backup.routeDetails.commute.referenceChoice,original.id);
+});
+
+test('aparcar en la meta no suma segundos a la diferencia',()=>{
+  const model=courseModel(reference(),2),startedAt=1000000;
+  let state=initialComparison(startedAt);
+  for(let i=1;i<=500;i++)state=advanceComparison(model,state,p(i*10,startedAt+i*1000),startedAt);
+  assert.equal(Math.round(state.difference!),0);
+  // Treinta posiciones más con el coche ya parado en la meta.
+  for(let i=1;i<=30;i++)state=advanceComparison(model,state,p(5000,startedAt+500000+i*1000),startedAt,0);
+  assert.ok(Math.abs(state.difference!)<=1000,`la diferencia creció a ${state.difference} ms`);
+});
+
+test('un intento que entra a mitad se compara con su tramo, no con la ruta entera',()=>{
+  const full=reference('full',0,1000);
+  const entryOffset=200000;
+  const tail=courseModel(referenceForRun({...full,referenceOffsetMs:entryOffset},full)!);
+  let state=initialComparison(1000000);
+  const points=Array.from({length:301},(_,i)=>p(2000+i*10,1000000+i*1000));
+  for(const point of points)state=advanceComparison(tail,state,point,1000000);
+  const joined:Run={...full,id:'joined',startedAt:1000000,circuitStartedAt:1000000,endedAt:1300000,referenceId:'full',referenceOffsetMs:entryOffset,points,comparison:state};
+  const result=resultFor(joined,[full,joined]);
+  assert.ok(Math.abs(result.difference!)<=1000,`diferencia ${result.difference}`);
+  assert.notEqual(result.status,'record');
 });

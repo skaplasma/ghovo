@@ -30,6 +30,14 @@ export function ghostAt(run: Run, elapsed: number): Point | undefined {
 export const isComparable=(run:Run)=>!run.incomplete&&(run.gpsGaps??0)===0;
 // Para récords sí hace falta haber recorrido el circuito completo desde la salida.
 export const isFullCourse=(run:Run)=>!run.referenceOffsetMs;
+// Lo recorrido dentro del intento: desde la línea de salida hasta la de meta. El
+// acercamiento hasta la ruta y el aparcamiento posterior no cuentan como distancia.
+export const attemptPoints=(run:Run)=>{
+  const points=run.circuitStartedAt?run.points.filter(point=>point.timestamp>=run.circuitStartedAt!):run.points;
+  const finish=run.comparison?.finishedAt;
+  return finish===undefined?points:points.filter(point=>point.timestamp<=finish);
+};
+export const attemptDistance=(run:Run)=>length(attemptPoints(run));
 export function accepts(points: Point[], p: Point, mode:TravelMode='walking') {
   if (![p.latitude,p.longitude,p.timestamp,p.accuracy].every(Number.isFinite) || Math.abs(p.latitude)>90 || Math.abs(p.longitude)>180 || p.accuracy < 0 || p.accuracy > 25) return false;
   const prev=points.at(-1);

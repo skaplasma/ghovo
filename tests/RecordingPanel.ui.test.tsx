@@ -21,3 +21,18 @@ test('stopped or stale GPS makes recovery directly available without expanding o
   expect(screen.getByText('Buscando una posición precisa')).toBeOnTheScreen();
   expect(screen.getByRole('button',{name:'Recuperar señal GPS'})).toBeOnTheScreen();
 });
+
+test('antes de cruzar la salida el cronómetro marca cero',async()=>{
+  const routed:Run={...run,referenceId:'ref'};
+  const view=await render(<RecordingPanel {...base} run={routed} distance="0,00 km"/>);
+  expect(screen.getAllByText('00:00').length).toBeGreaterThan(0);
+  // Al cruzar la línea arranca desde ese punto.
+  await view.rerender(<RecordingPanel {...base} run={{...routed,circuitStartedAt:40000}} distance="0,21 km"/>);
+  expect(screen.getByText('00:21')).toBeOnTheScreen();
+});
+
+test('al cruzar la meta el tiempo se congela aunque sigas parado allí',async()=>{
+  const finished:Run={...run,referenceId:'ref',circuitStartedAt:1000,comparison:{progress:1000,segment:99,lastFixAt:61000,lastMatchedAt:61000,unavailable:false,difference:0,splits:[],finishedAt:61000}};
+  const view=await render(<RecordingPanel {...base} run={finished} now={120000} distance="1,00 km"/>);
+  expect(screen.getByText('01:00')).toBeOnTheScreen();
+});

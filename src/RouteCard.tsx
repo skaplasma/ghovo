@@ -1,5 +1,5 @@
 import React from 'react';
-import {Pressable, Text, View} from 'react-native';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {clock, duration, isComparable, type Run} from './core';
 import {appStyles as s, palette} from './design';
@@ -63,13 +63,21 @@ export function RouteCard({
           <Text style={s.caption} numberOfLines={1}>
             {date(latest)} · {km(route)} · {trips} {trips === 1 ? 'salida' : 'salidas'}
           </Text>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 1}}>
-            <Ionicons name="trophy" size={13} color={palette.yellowGold} />
-            <Text style={{fontFamily: fonts.bold, color: palette.yellowGold, fontSize: 15, fontVariant: ['tabular-nums']}}>{clock(duration(best))}</Text>
-            <Text style={[s.caption, {fontSize: 10.5}]}>{isComparable(best) ? 'mejor tiempo' : 'referencia'}</Text>
-          </View>
         </View>
+      </View>
+
+      {/* El mejor tiempo va en su propia franja: es el dato que se busca al abrir la lista. */}
+      <View style={styles.bestStrip}>
+        <Ionicons name="trophy" size={15} color={palette.yellowGold} />
+        <Text style={styles.bestLabel}>{isComparable(best) ? 'MEJOR TIEMPO' : 'TIEMPO DE REFERENCIA'}</Text>
+        <Text style={styles.bestValue}>{clock(duration(best))}</Text>
       </View>
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  bestStrip: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#1E1838', borderWidth: 1, borderColor: '#332959' },
+  bestLabel: { flex: 1, fontFamily: fonts.semibold, fontSize: 10, letterSpacing: 1.1, color: '#8E87AB' },
+  bestValue: { fontFamily: fonts.extrabold, fontSize: 26, color: palette.yellowGold, letterSpacing: -0.5, fontVariant: ['tabular-nums'] },
+});

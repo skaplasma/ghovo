@@ -1,3 +1,23 @@
+## El mejor tiempo, en su propia franja — 06/11/2026 (sin APK)
+
+En «Mis rutas» el mejor tiempo iba en una línea pequeña, perdido entre la fecha y el número de salidas. Ahora cada tarjeta tiene una **franja propia** debajo, con el trofeo, la etiqueta y el tiempo a 26 px en dorado:
+
+```
+┌──────────────────────────────────────────┐
+│ [miniatura]  COCHE              ♥   ⤴    │
+│              Paseo del río               │
+│              12 mar · 4,20 km · 3 salidas│
+│  ┌────────────────────────────────────┐  │
+│  │ 🏆  MEJOR TIEMPO            24:31  │  │
+│  └────────────────────────────────────┘  │
+└──────────────────────────────────────────┘
+```
+
+Si el intento con mejor tiempo no es comparable (por ejemplo, tiene cortes de GPS), la etiqueta pasa a «TIEMPO DE REFERENCIA» en vez de «MEJOR TIEMPO», para no prometer un récord que no es tal.
+
+186 pruebas de interfaz y 102 de lógica, `tsc` limpio y `eslint` 0 errores.
+
+## Salida y llegada: remates de robustez — 06/11/2026 (sin APK)
 ## Salida y llegada: remates de robustez — 06/11/2026 (sin APK)
 
 Sobre el arreglo anterior, tres remates para que no queden casos raros.

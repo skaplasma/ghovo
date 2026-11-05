@@ -33,6 +33,12 @@ test('antes de cruzar la salida el cronómetro marca cero',async()=>{
 
 test('al cruzar la meta el tiempo se congela aunque sigas parado allí',async()=>{
   const finished:Run={...run,referenceId:'ref',circuitStartedAt:1000,comparison:{progress:1000,segment:99,lastFixAt:61000,lastMatchedAt:61000,unavailable:false,difference:0,splits:[],finishedAt:61000}};
-  const view=await render(<RecordingPanel {...base} run={finished} now={120000} distance="1,00 km"/>);
+  await render(<RecordingPanel {...base} run={finished} now={120000} distance="1,00 km"/>);
   expect(screen.getByText('01:00')).toBeOnTheScreen();
+});
+
+test('mientras se acerca a la salida indica cuántos metros faltan',async()=>{
+  const routed:Run={...run,referenceId:'ref'};
+  await render(<RecordingPanel {...base} run={routed} toStart={243}/>);
+  expect(screen.getByText('A 240 m de la salida')).toBeOnTheScreen();
 });

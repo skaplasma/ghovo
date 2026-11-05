@@ -22,6 +22,8 @@ type Props = {
   disabled: boolean;
   comparisonReference?: Run;
   onToggleVoice?: () => void;
+  // Metros que faltan hasta la línea de salida, para explicar por qué no corre el reloj.
+  toStart?: number;
 };
 
 export function RecordingPanel({
@@ -37,6 +39,7 @@ export function RecordingPanel({
   disabled,
   comparisonReference,
   onToggleVoice,
+  toStart,
 }: Props) {
   const age = Math.max(0, Math.floor((now - (run.lastFixAt ?? run.points.at(-1)?.timestamp ?? run.startedAt)) / 1000));
   const paused = !!run.pausedAt;
@@ -125,7 +128,7 @@ export function RecordingPanel({
           {!run.circuitStartedAt ? (
             <>
               <Text style={[styles.deltaValue,{color:palette.lavender}]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{run.entryPendingAt ? 'Confirmando…' : 'Esperando…'}</Text>
-              <Text style={styles.deltaCaption}>{run.entryPendingAt ? 'Una posición más sobre el trazado' : 'El fantasma arranca al entrar'}</Text>
+              <Text style={styles.deltaCaption}>{run.entryPendingAt ? 'Una posición más sobre el trazado' : typeof toStart === 'number' && toStart > 30 ? `A ${Math.round(toStart / 10) * 10} m de la salida` : 'El fantasma arranca al entrar'}</Text>
             </>
           ) : hasDiff ? (
             <>

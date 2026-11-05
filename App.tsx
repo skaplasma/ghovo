@@ -39,7 +39,7 @@ import { RouteCard } from './src/RouteCard';
 import { WelcomeScreen } from './src/WelcomeScreen';
 import { PrivacyScreen } from './src/PrivacyScreen';
 import { AppSplash } from './src/AppSplash';
-import { type Point, type Run, type TravelMode, clock, duration, ghostAt, isComparable, isFullCourse, length, recordingQuality } from './src/core';
+import { type Point, type Run, type TravelMode, clock, distance as geoDistance, duration, ghostAt, isComparable, isFullCourse, length, recordingQuality } from './src/core';
 import { active, history, read, serial, write, writeMany } from './src/storage';
 import { activityTotals, filterRoutes, resultFor, type RouteDetails, type RouteOrder } from './src/results';
 import { ensureTracking, recoverTracking, resumeTracking, stopTracking, trackingRunning } from './src/tracking';
@@ -259,6 +259,9 @@ export function AppProvider({children}:{children:React.ReactNode}) {
   // salida, así que acercarse hasta la línea no suma distancia.
   const livePoints = run?.referenceId ? (run.circuitStartedAt ? run.points.filter(point => point.timestamp >= run.circuitStartedAt!) : noPoints) : points;
   const currentDistance = `${decimal(length(livePoints)/1000,2)} km`;
+  // Mientras no se cruza la salida, la cabina dice a cuántos metros está.
+  const lastLivePoint = run?.points.at(-1);
+  const toStart = run && lastLivePoint && !run.circuitStartedAt && comparisonReference ? geoDistance(lastLivePoint, comparisonReference.points[0]) : undefined;
   const liveComparisonAvailable=!!run?.comparison&&!run.comparison.unavailable&&now-run.comparison.lastFixAt<=15000&&serviceRunning&&!run.error;
   const ghost=run?(comparisonReference&&liveComparisonAvailable&&run.circuitStartedAt?ghostAt(comparisonReference,now-run.circuitStartedAt):undefined):replayReference&&showGhost?ghostAt(replayReference,playback):undefined;
   const disabled = busy || !ready;
@@ -627,7 +630,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           <Text style={s.muted}>No hemos borrado las rutas. Puedes reintentar la lectura o usar una copia de recuperación.</Text>
           <Button label="Volver a leer datos" disabled={busy} onPress={()=>void act(refresh)}/>
           <DataTools disabled={busy} onChanged={refresh}/>
-        </> : run ? <>{pendingRecovery&&<View style={s.card}><Text style={s.cardTitle}>Tienes un recorrido sin terminar</Text><Text style={s.muted}>Los puntos guardados siguen aquí. El tiempo incluye la interrupción.</Text><Button label="Continuar recorrido" disabled={disabled} onPress={()=>void act(recover)}/><Button label="Guardar pendiente y volver a Inicio" secondary disabled={disabled} onPress={discard}/></View>}<RecordingPanel run={run} now={now} distance={currentDistance} serviceRunning={serviceRunning} keepScreenOn={keepScreenOn} disabled={disabled} onToggleScreen={()=>setKeepScreenOn(value=>!value)} onRecover={()=>void act(recover)} onDiscard={discard} comparisonReference={comparisonReference} onToggleVoice={()=>void act(toggleVoice)} onHelp={()=>Alert.alert('Grabación con pantalla bloqueada','Revisa el permiso de ubicación precisa y en segundo plano. En el POCO, comprueba también que GHOVO puede trabajar en segundo plano y que su batería no esté restringida. Los nombres de estos ajustes cambian según MIUI/HyperOS.',[{text:'Cerrar'},{text:'Abrir ajustes de GHOVO',onPress:()=>{void Linking.openSettings();}}])}/></> : section === 'library' ? <>
+        </> : run ? <>{pendingRecovery&&<View style={s.card}><Text style={s.cardTitle}>Tienes un recorrido sin terminar</Text><Text style={s.muted}>Los puntos guardados siguen aquí. El tiempo incluye la interrupción.</Text><Button label="Continuar recorrido" disabled={disabled} onPress={()=>void act(recover)}/><Button label="Guardar pendiente y volver a Inicio" secondary disabled={disabled} onPress={discard}/></View>}<RecordingPanel run={run} now={now} distance={currentDistance} serviceRunning={serviceRunning} keepScreenOn={keepScreenOn} disabled={disabled} onToggleScreen={()=>setKeepScreenOn(value=>!value)} onRecover={()=>void act(recover)} onDiscard={discard} comparisonReference={comparisonReference} onToggleVoice={()=>void act(toggleVoice)} onHelp={()=>Alert.alert('Grabación con pantalla bloqueada','Revisa el permiso de ubicación precisa y en segundo plano. En el POCO, comprueba también que GHOVO puede trabajar en segundo plano y que su batería no esté restringida. Los nombres de estos ajustes cambian según MIUI/HyperOS.',[{text:'Cerrar'},{text:'Abrir ajustes de GHOVO',onPress:()=>{void Linking.openSettings();}}])} toStart={toStart}/></> : section === 'library' ? <>
           <Text style={s.title}>Mis rutas</Text>
           <View style={s.row}>
           <View style={{flex:1}}>

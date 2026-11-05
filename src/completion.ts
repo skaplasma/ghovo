@@ -11,7 +11,7 @@ function finishElapsed(run:Run,model:{total:number},base:number,endedAt:number){
  const meters=length(run.points);
  const shortfall=model.total-(run.comparison?.progress??0);
  // Los metros que faltaban se reparten al ritmo medio del intento (metros por ms).
- if(shortfall>0&&shortfall<=30&&walked>0&&meters>0)return walked+shortfall*walked/meters;
+ if(shortfall>0&&shortfall<=50&&walked>0&&meters>0)return walked+shortfall*walked/meters;
  return walked;
 }
 

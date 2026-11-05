@@ -1,3 +1,19 @@
+## Salida y llegada: remates de robustez — 06/11/2026 (sin APK)
+
+Sobre el arreglo anterior, tres remates para que no queden casos raros.
+
+- **La cabina dice a cuántos metros está la salida.** Mientras no cruzas la línea, debajo de «Esperando…» aparece `A 240 m de la salida`, redondeado a decenas. Así se entiende por qué el reloj y los kilómetros siguen a cero, en vez de parecer que la app se ha quedado parada.
+- **Margen de meta ampliado a 50 m.** La estimación de los metros que faltaban al parar cubría 30 m; ahora cubre 50, que es justo la tolerancia con la que el recorrido se considera completo. Parar a 40 m de B ya no regala 4 segundos de ventaja.
+- **Pruebas nuevas**: la distancia a la salida en la cabina y el caso de parar a 40 m de la meta.
+
+102 pruebas de lógica y 186 de interfaz, `tsc` limpio y `eslint` 0 errores.
+
+### Lo que queda fuera a propósito
+
+- **Recalcular las referencias antiguas.** Sus tiempos incluyen el aparcamiento de cuando se grabaron, porque en ese momento no se congelaba el cronómetro. Se corrigen solas al volver a grabar la ruta. Recalcularlas desde los puntos sería adivinar dónde estaba la meta en cada una, y prefiero no tocar tus datos históricos sin poder comprobarlo.
+- **Entrada en sentido contrario.** Si entras en la ruta en dirección opuesta, el fantasma avanza en contra. Detectarlo bien requiere comparar rumbos con el trazado y no compensa ahora.
+
+## Salida y llegada al detalle: el cronómetro empieza en la línea y se congela en la meta — 05/11/2026 (sin APK)
 ## Salida y llegada al detalle: el cronómetro empieza en la línea y se congela en la meta — 05/11/2026 (sin APK)
 
 El fallo de los «+13 segundos» salía de aquí: al llegar, el cronómetro seguía corriendo y se comparaba contra el fantasma, que ya estaba parado en la meta. Cada segundo aparcado sumaba un segundo de desventaja.

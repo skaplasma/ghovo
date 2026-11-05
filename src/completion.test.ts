@@ -45,3 +45,13 @@ test('parar a veinte metros de la meta estima el tiempo que faltaba',()=>{
  assert.equal(saved.incomplete,false);
  assert.ok(Math.abs(saved.comparison!.splits.at(-1)!.difference!)<=1500,`diferencia final ${saved.comparison!.splits.at(-1)!.difference}`);
 });
+test('parar cuarenta metros antes de la meta tampoco inventa ventaja',()=>{
+ const model=courseModel(reference);
+ const points=Array.from({length:497},(_,i)=>p(i*10,200000+i*1000));
+ let state=initialComparison(200000);
+ for(const point of points)state=advanceComparison(model,state,point,200000);
+ const run:Run={...draft,startedAt:200000,circuitStartedAt:200000,points,comparison:state,lastFixAt:points.at(-1)!.timestamp};
+ const saved=completeRun(run,reference,points.at(-1)!.timestamp,true);
+ assert.equal(saved.incomplete,false);
+ assert.ok(Math.abs(saved.comparison!.splits.at(-1)!.difference!)<=1500,`diferencia final ${saved.comparison!.splits.at(-1)!.difference}`);
+});

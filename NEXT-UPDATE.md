@@ -1,8 +1,9 @@
 ## Compartir ruta — 05/11/2026 (sin APK)
 
-- **Botón «Compartir ruta»** en la ficha de cada ruta, junto a Ajustes y Viajes. Abre el menú del sistema con el trazado en un archivo GPX, listo para WhatsApp, correo o cualquier app de mapas. Debajo, una línea explica qué se comparte.
+- **Botón «⤴ Compartir» en la cabecera de la ruta**, en dos columnas junto a la favorita (`☆ Favorita` / `⤴ Compartir`), así está a un toque desde cualquier pestaña de la ruta. Se retira el botón que había quedado suelto en el contenido.
+- **Comparte el trazado en un archivo GPX**, listo para WhatsApp, correo o cualquier app de mapas.
 - **El archivo lleva el nombre de la ruta**: `GHOVO-Casa-Trabajo.gpx` en vez de `GHOVO-1730…`. Se limpian acentos y emojis para que el nombre sea válido en cualquier sistema.
-- **Solo se comparten intentos cerrados**: si el recorrido está a medias, el botón da un aviso claro en lugar de generar un GPX incompleto.
+- **Solo se comparten intentos cerrados**: si el recorrido está a medias, avisa en lugar de generar un GPX incompleto.
 - Se reutiliza la infraestructura de exportación que ya existía (`runToGpx` + `expo-sharing`), sin dependencias nuevas ni permisos.
 
 181 pruebas de interfaz (dos nuevas: el GPX con nombre limpio y el rechazo de un recorrido sin terminar) y 97 de lógica, `tsc` limpio y `eslint` 0 errores.

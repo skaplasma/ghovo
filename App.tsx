@@ -609,7 +609,10 @@ export function AppProvider({children}:{children:React.ReactNode}) {
       {!run&&!result&&selected&&section==='route'&&<View style={{paddingHorizontal:18,paddingVertical:10,gap:8}}>
         {detailTab!=='summary'&&<Pressable accessibilityRole="button" accessibilityLabel="Volver al detalle de la ruta" onPress={()=>setDetailTab('summary')} style={s.optionsLink}><Text style={s.tabSelected}>← {reference?.name}</Text></Pressable>}
         <Text style={s.cardTitle} numberOfLines={1}>{detailTab==='summary'?reference?.name:detailTab==='settings'?'Ajustes de la ruta':'Historial de viajes'}</Text>
-        <Button label={personal?.favorite ? '★ Quitar de favoritas' : '☆ Añadir a favoritas'} secondary disabled={disabled} onPress={() => void act(() => updateRouteDetails({ favorite: !personal?.favorite }))} />
+        <View style={{flexDirection:'row',gap:8}}>
+          <View style={{flex:1}}><Button label={personal?.favorite ? '★ Favorita' : '☆ Favorita'} secondary disabled={disabled} onPress={() => void act(() => updateRouteDetails({ favorite: !personal?.favorite }))} /></View>
+          <View style={{flex:1}}><Button label="⤴ Compartir" secondary disabled={disabled||!reference} onPress={() => { if (reference) void act(() => shareRoute(reference)); }} /></View>
+        </View>
       </View>}
       <ScrollView key={`${section}:${selected??'new'}:${detailTab}`} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
         {!ready && !loadError && <Text style={s.muted}>Cargando tus rutas…</Text>}
@@ -717,8 +720,6 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           {!gps.ready&&<GpsDiagnostics/>}
 
               <View style={s.row}><View style={{flex:1}}><Button label="Ajustes" secondary onPress={()=>setDetailTab('settings')}/></View><View style={{flex:1}}><Button label="Viajes" secondary onPress={()=>setDetailTab('trips')}/></View></View>
-              <Button label="Compartir ruta" secondary disabled={disabled||!reference} onPress={()=>{if(reference)void act(()=>shareRoute(reference));}}/>
-              <Text style={s.caption}>Comparte el trazado en un archivo GPX con el nombre de la ruta. Sirve para abrirlo en otra app de mapas o enviarlo por WhatsApp o correo.</Text>
               <Button label="Ver mapa de la ruta" secondary onPress={()=>{Keyboard.dismiss();router.push('/map');}}/>
               <Button label="Análisis premium" secondary onPress={()=>{Keyboard.dismiss();router.push('/insights');}}/>
               {reference&&<RouteInformation key={`${reference.routeId}:${reference.mode??'legacy'}`} reference={reference} attempts={detail.attempts}/>}

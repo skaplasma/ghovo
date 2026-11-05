@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Alert, AppState, type AppStateStatus } from 'react-native';
 import { act, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { history, writeMany } from '../src/storage';
@@ -91,8 +91,8 @@ test('library search handles accents and favorite empty state', async () => {
 });
 test('favorite and note edits persist without modifying recorded coordinates', async () => {
   const user = await openRoute();
-  await user.press(screen.getByRole('button', { name: '☆ Añadir a favoritas' }));
-  expect(await screen.findByRole('button', { name: '★ Quitar de favoritas' })).toBeEnabled();
+  await user.press(screen.getByRole('button', { name: '☆ Favorita' }));
+  expect(await screen.findByRole('button', { name: '★ Favorita' })).toBeEnabled();
   await user.press(screen.getByRole('button', { name: 'Añadir notas' }));
   await user.type(screen.getByLabelText('Notas personales del recorrido'), 'Cruzar por el puente');
   await user.press(screen.getByRole('button', { name: 'Guardar notas' }));
@@ -140,13 +140,13 @@ test('premium report waits for the users sharing choice and does not change save
 
 test('favorites have their own Home section, appear once, and can be removed from route detail',async()=>{
   const user=await openRoute('summary');
-  await user.press(screen.getByRole('button',{name:'☆ Añadir a favoritas'}));
+  await user.press(screen.getByRole('button',{name:'☆ Favorita'}));
   await user.press(screen.getByRole('tab',{name:'Inicio'}));
   expect(screen.getByText('Favoritas')).toBeOnTheScreen();
   expect(screen.getAllByText('Paseo del río')).toHaveLength(1);
   expect(screen.getByRole('button',{name:'Iniciar Paseo del río'})).toBeEnabled();
   await user.press(screen.getByRole('button',{name:'Ver Paseo del río'}));
-  await user.press(screen.getByRole('button',{name:'★ Quitar de favoritas'}));
+  await user.press(screen.getByRole('button',{name:'★ Favorita'}));
   await user.press(screen.getByRole('tab',{name:'Inicio'}));
   expect(screen.queryByText('Favoritas')).not.toBeOnTheScreen();
   expect(screen.getByText('Tus rutas habituales')).toBeOnTheScreen();
@@ -258,10 +258,10 @@ test('failed favorite save cannot mutate the cached metadata',async()=>{
   mockState.routeDetails=original;
   const user=await openRoute();
   jest.mocked(writeMany).mockRejectedValueOnce(Error('No hay espacio'));
-  await user.press(screen.getByRole('button',{name:'☆ Añadir a favoritas'}));
+  await user.press(screen.getByRole('button',{name:'☆ Favorita'}));
   await waitFor(()=>expect(Alert.alert).toHaveBeenCalledWith('GHOVO','No hay espacio'));
   expect(original.route.favorite).toBe(false);expect(mockState.routeDetails).toBe(original);
-  expect(screen.getByRole('button',{name:'☆ Añadir a favoritas'})).toBeOnTheScreen();
+  expect(screen.getByRole('button',{name:'☆ Favorita'})).toBeOnTheScreen();
 });
 test('failed deletion cannot remove a note from cached metadata',async()=>{
   const original={route:{favorite:true,note:'Conservar'}};mockState.routeDetails=original;

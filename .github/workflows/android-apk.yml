@@ -4,6 +4,18 @@ name: APK Android
 # Se lanza a mano desde la pestaña Actions (Run workflow) y deja el APK como artefacto.
 
 on:
+  # Se compila solo al subir cambios de la app: no depende del botón «Run workflow»,
+  # que no aparece en todas las cuentas.
+  push:
+    branches: [main]
+    paths:
+      - 'App.tsx'
+      - 'src/**'
+      - 'assets/**'
+      - 'app.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/android-apk.yml'
   workflow_dispatch:
     inputs:
       ref:

@@ -43,12 +43,31 @@ const mapStyle: StyleSpecification = {
   layers: [{ id: 'osm', type: 'raster', source: 'osm', paint: { 'raster-saturation': -0.55, 'raster-contrast': 0.08 } }],
 };
 const coordinate = (p: Point): LngLat => [p.longitude, p.latitude];
-const Track=memo(function Track({ id, points, color, width }: { id: string; points: Point[]; color: string; width: number }) {
-  const data=useMemo(()=>({type:'Feature' as const,properties:{},geometry:{type:'MultiLineString' as const,coordinates:traceSegments(points).map(segment=>segment.map(coordinate))}}),[points]);
+// Tope de puntos que se envían al mapa. En una ruta larga son miles, y regenerar la
+// geometría entera en cada posición bloqueaba el hilo de JavaScript: es lo que dejaba la
+// grabación sin responder al llegar.
+const MAX_MAP_POINTS = 1200;
+function simplified(points: Point[]): [number, number][][] {
+  const segments = traceSegments(points);
+  const total = segments.reduce((sum, segment) => sum + segment.length, 0);
+  const stride = Math.max(1, Math.ceil(total / MAX_MAP_POINTS));
+  const out: [number, number][][] = [];
+  for (const segment of segments) {
+    if (segment.length < 2) continue;
+    const reduced: [number, number][] = [];
+    for (let index = 0; index < segment.length; index += stride) reduced.push(coordinate(segment[index]));
+    const last = coordinate(segment[segment.length - 1]);
+    if (reduced.at(-1)?.[0] !== last[0] || reduced.at(-1)?.[1] !== last[1]) reduced.push(last);
+    if (reduced.length > 1) out.push(reduced);
+  }
+  return out;
+}
+const Track=memo(function Track({ id, points, color, width, outline='#F7FFF1', outlineWidth=4, opacity=1 }: { id: string; points: Point[]; color: string; width: number; outline?: string; outlineWidth?: number; opacity?: number }) {
+  const data=useMemo(()=>({type:'Feature' as const,properties:{},geometry:{type:'MultiLineString' as const,coordinates:simplified(points)}}),[points]);
   if (!data.geometry.coordinates.length) return null;
   return <GeoJSONSource id={id} data={data}>
-    <Layer id={`${id}-outline`} type="line" paint={{'line-color':'#F7FFF1','line-width':width+4,'line-opacity':0.9}} layout={{'line-cap':'round','line-join':'round'}}/>
-    <Layer id={`${id}-line`} type="line" paint={{ 'line-color': color, 'line-width': width }} layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
+    <Layer id={`${id}-outline`} type="line" paint={{'line-color':outline,'line-width':width+outlineWidth,'line-opacity':0.9*opacity}} layout={{'line-cap':'round','line-join':'round'}}/>
+    <Layer id={`${id}-line`} type="line" paint={{ 'line-color': color, 'line-width': width, 'line-opacity': opacity }} layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
   </GeoJSONSource>;
 });
 function Pin({ point, label, color }: { point: Point; label: string; color: string }) {
@@ -144,9 +163,9 @@ export function RouteMap({ points, reference, ghost, recording,preparing=false,p
   return <View style={styles.container}>
     {focus ? <Map mapStyle={mapStyle} dragPan={!recording} touchZoom={!recording} touchRotate={!recording} touchPitch={false} attribution={false} onDidFailLoadingMap={() => setFailed(true)} onDidFinishLoadingMap={() => { setFailed(false); setMapReady(true); }}>
       <Camera ref={camera} initialViewState={{ center: coordinate(focus), zoom: 15 }} maxZoom={19} />
-      {reference && recording && <Track id="reference" points={reference} color="#9685ff" width={5} />}
-      {/* Lo ya recorrido, en rojo: es la línea que se sigue de un vistazo mientras grabas. */}
-      <Track id="recording" points={points} color="#F43F5E" width={4} />
+      {reference && recording && <Track id="reference" points={reference} color="#9685ff" width={4} outline="#2A2350" outlineWidth={2} opacity={0.7} />}
+      {/* Lo ya recorrido, en rojo y más grueso: tiene que verse por encima de la referencia. */}
+      <Track id="recording" points={points} color="#FF2D55" width={7} outline="#2B0713" outlineWidth={2} />
       {checkpoints.map(checkpoint=><Pin key={checkpoint.index} point={checkpoint.point} label={`${checkpoint.meters/1000} km`} color="#B9AEF5"/>)}
       {first && <Pin point={first} label={tr("A")} color="#a1f27a" />}
       {!recording && last && <Pin point={last} label={tr("B")} color="#ffc58a" />}

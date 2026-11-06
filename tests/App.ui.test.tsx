@@ -234,7 +234,8 @@ test('finishing a valid run saves it with its result and clears the draft',async
 test('failed final commit leaves the unfinished run intact for recovery',async()=>{
   const now=Date.now();
   mockState.active={...run,id:'pending',startedAt:now-56000,endedAt:undefined,points:run.points.map((p,i)=>({...p,timestamp:now-56000+i*8000})),lastFixAt:now,gpsGaps:0};
-  jest.mocked(writeMany).mockRejectedValueOnce(Error('Disco lleno'));
+  // Falla el guardado completo y también el de emergencia: la grabación debe sobrevivir.
+  jest.mocked(writeMany).mockRejectedValueOnce(Error('Disco lleno')).mockRejectedValueOnce(Error('Disco lleno'));
   await render(<App/>);
   await act(async()=>{await jest.advanceTimersByTimeAsync(1);});
   const user=userEvent.setup();

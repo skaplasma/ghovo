@@ -128,8 +128,8 @@ export function RouteMap({
                 <path
                   d={recordingPath}
                   fill="none"
-                  stroke="#F43F5E"
-                  strokeWidth="4"
+                  stroke="#FF2D55"
+                  strokeWidth="7"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />

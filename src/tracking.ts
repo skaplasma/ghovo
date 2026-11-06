@@ -76,7 +76,16 @@ TaskManager.defineTask<{locations:Location.LocationObject[]}>(TASK,async({data,e
         const completed=completeRun(run,previous,p.timestamp,true);
         const saved=await history();
         try{await writeMany({history:[...saved.filter(item=>item.id!==completed.id),completed],lastResult:completed.id,active:null},true);}
-        catch{recordGpsEvent('save_failed');await write('active',{...run,error:'No se pudo guardar la llegada. La grabación se conserva; puedes pulsar Finalizar ruta para reintentar.'});return;}
+        catch{
+          // Igual que al finalizar a mano: antes se guarda el recorrido sin comparación
+          // que perderlo por un detalle del tiempo.
+          const safe={...completed,comparison:undefined,incomplete:true};
+          delete safe.error;
+          try{await writeMany({history:[...saved.filter(item=>item.id!==safe.id),safe],lastResult:safe.id,active:null},true);}
+          catch{recordGpsEvent('save_failed');await write('active',{...run,error:'No se pudo guardar la llegada. La grabación se conserva; puedes pulsar Finalizar ruta para reintentar.'});return;}
+          void stopTracking().catch(()=>{});
+          return;
+        }
         void speakNotice(completed.notice!,completed.voiceEnabled!==false).catch(()=>{});
         void stopTracking().catch(()=>{});
         return;
@@ -137,7 +146,12 @@ export async function startTracking(run:Run,_origin?:Point,prepared?:Point) {
   try {await Location.startLocationUpdatesAsync(TASK,{...trackingOptions,timeInterval:run.mode==='driving'||run.mode==='bicycling'?1000:2000});}catch(e){await serial(async()=>{if((await active())?.id===run.id)await write('active',null);});throw e;}
   if(run.notice)void speakNotice(run.notice,run.voiceEnabled!==false).catch(()=>{});
 }
-export async function stopTracking(){if(await Location.hasStartedLocationUpdatesAsync(TASK))await Location.stopLocationUpdatesAsync(TASK);}
+// La parada del GPS es una llamada nativa que puede quedarse colgada si el servicio está
+// atascado: con un tope de tiempo la interfaz nunca se queda esperando.
+export async function stopTracking(){
+  const stop=async()=>{if(await Location.hasStartedLocationUpdatesAsync(TASK))await Location.stopLocationUpdatesAsync(TASK);};
+  await Promise.race([stop().catch(()=>{}),new Promise<void>(resolve=>setTimeout(resolve,4000))]);
+}
 export async function resumeTracking() {
   const pending=await active();if(!pending)throw Error('No hay una grabación pendiente para reanudar.');
   if(!(await Location.hasServicesEnabledAsync()))throw Error('Activa la ubicación del dispositivo.');

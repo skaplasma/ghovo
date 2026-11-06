@@ -36,7 +36,7 @@ import { exportGpx,exportRouteReport,shareRoute } from './src/data-transfer';
 import { appStyles as s, palette } from './src/design';
 import { fonts } from './src/fonts';
 import { date, decimal, km } from './src/format';
-import { describeError } from './src/errors';
+import { describeError, technicalDetail } from './src/errors';
 import { RouteCard } from './src/RouteCard';
 import { WelcomeScreen } from './src/WelcomeScreen';
 import { PrivacyScreen } from './src/PrivacyScreen';
@@ -322,14 +322,38 @@ export function AppProvider({children}:{children:React.ReactNode}) {
   }
   async function finish() {
     let completed:Run|undefined;
+    let alreadySaved:Run|undefined;
     await serial(async () => {
-      const saved = await active(); if (!saved) return;
+      const saved = await active();
+      // Sin grabación activa puede ser que la tarea de fondo ya la haya guardado al cruzar
+      // la meta: en ese caso hay que abrir su resumen en vez de no hacer nada.
+      if (!saved) {
+        const tracked=observedActive.current;
+        const h=await history();
+        alreadySaved=(tracked?h.find(item=>item.id===tracked):undefined)??h.filter(item=>item.autoCompleted).at(-1);
+        return;
+      }
       const h=await history();
       const reference=h.find(item=>item.id===saved.referenceId&&item.routeId===saved.routeId&&item.mode===saved.mode)??h.find(item=>item.routeId===saved.routeId&&item.mode===saved.mode&&!item.incomplete);
       const a=completeRun(saved,reference,Date.now());
-      await writeMany({ history: [...h.filter(x => x.id !== a.id), a], lastResult: a.id, active: null }, true);
+      try {
+        await writeMany({ history: [...h.filter(x => x.id !== a.id), a], lastResult: a.id, active: null }, true);
+      } catch (error) {
+        // Nunca perder el recorrido por un detalle de la comparación: se guarda sin ella.
+        const safe: Run = { ...a, comparison: undefined, incomplete: true, autoCompleted: true };
+        delete safe.error;
+        await writeMany({ history: [...h.filter(x => x.id !== safe.id), safe], lastResult: safe.id, active: null }, true);
+        Alert.alert('Recorrido guardado', `Se guardó el recorrido, pero sin comparación de tiempo: ${technicalDetail(error)}`);
+        completed = safe;
+        return;
+      }
       completed=a;
     });
+    if (alreadySaved) {
+      void stopTracking().catch(()=>{});
+      choose(alreadySaved.routeId);setResultId(alreadySaved.id);
+      return;
+    }
     // A failed save must leave GPS running and the active draft recoverable.
     if(!completed)return;
     void stopTracking().catch(()=>{});

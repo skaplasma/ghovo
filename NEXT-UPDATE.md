@@ -1,4 +1,16 @@
-﻿## Arreglo del cierre al arrancar — 06/11/2026 (APK en GitHub)
+﻿## La ruta nunca se pierde, el mapa no se atasca y el rojo se ve — 06/11/2026 (APK en GitHub)
+
+Tres fallos del uso real, todos con la misma sensación: la app se quedaba sin responder al llegar.
+
+- **Guardado de emergencia**: si el intento no pasa la validación (por un detalle de la comparación o del tiempo), antes se rechazaba entero y la ruta se perdía. Ahora se reintenta guardarla **sin comparación**, marcada como no comparable, y se avisa con el detalle técnico. Se aplica tanto al botón «Finalizar ruta» como al cierre automático al cruzar la meta. Solo si ese segundo intento también falla se conserva el borrador.
+- **Finalizar ya no se queda mudo**: si el botón se pulsaba cuando la tarea de fondo ya había guardado la ruta, no pasaba nada. Ahora busca ese intento y abre su resumen.
+- **El mapa deja de ahogar el hilo**: en rutas largas se enviaban miles de puntos a MapLibre y se regeneraba la geometría entera en cada posición; eso bloqueaba JavaScript y dejaba la pantalla sin responder. Se envían como máximo 1.200 puntos, suficientes para que el trazado se vea igual.
+- **Parar el GPS ya no puede colgarse**: la parada nativa tiene un tope de 4 segundos, así que nunca deja la interfaz esperando.
+- **Línea del recorrido realmente visible**: ahora es rojo intenso de 7 px con halo oscuro, y la ruta de referencia baja a 4 px con opacidad 70 %. Antes el trazado grabado iba por debajo del halo blanco de la referencia y no se distinguía.
+
+104 pruebas de lógica y 187 de interfaz, `tsc` limpio y `eslint` 0 errores.
+
+## Arreglo del cierre al arrancar — 06/11/2026 (APK en GitHub)
 
 El APK compilado en GitHub se cerraba nada más tocar el icono. La causa era una variable vacía en el entorno: `.env` define `EXPO_PUBLIC_ADMOB_ANDROID_APP_ID=` sin valor, y `??` solo sustituye `undefined`, no la cadena vacía. El manifiesto acababa con un App ID de anuncios en blanco y el SDK de Google mata el proceso al inicializarse.
 

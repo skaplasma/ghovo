@@ -1,4 +1,4 @@
-import {speakNotice} from '../src/speech';
+﻿import {speakNotice} from '../src/speech';
 import {writeMany} from '../src/storage';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
@@ -145,7 +145,8 @@ test('failed automatic save keeps the draft and does not stop GPS',async()=>{
   mockHistory=[reference];mockActive={id:'today',routeId:'commute',name:'Casa',mode:'driving',referenceId:reference.id,autoFinish:true,startedAt,points:[point(0,startedAt)],lastFixAt:startedAt};
   const draft=structuredClone(mockActive);
   const locations=Array.from({length:105},(_,i)=>{const index=i+1,pt=point(Math.min(index*10,1000),startedAt+index*1000);return location({timestamp:pt.timestamp,coords:{...location().coords,latitude:pt.latitude,longitude:pt.longitude}});});
-  jest.mocked(writeMany).mockRejectedValueOnce(Error('Disco lleno'));
+  // Falla el guardado completo y el de emergencia: el borrador debe conservarse.
+  jest.mocked(writeMany).mockRejectedValueOnce(Error('Disco lleno')).mockRejectedValueOnce(Error('Disco lleno'));
   await executeTask({data:{locations},error:null,executionInfo:{eventId:'failed-arrival',taskName:'ghovo-route-location',appState:'background'}} as never);
   expect(mockActive?.id).toBe(draft.id);expect(mockActive!.points.length).toBeGreaterThan(draft.points.length);expect(mockActive?.error).toMatch(/No se pudo guardar/);expect(mockHistory).toHaveLength(1);expect(Location.stopLocationUpdatesAsync).not.toHaveBeenCalled();expect(speakNotice).not.toHaveBeenCalled();
   await executeTask({data:{locations:[...locations,location({timestamp:now+1000,coords:{...location().coords,latitude:0,longitude:point(1000,now).longitude}})]},error:null,executionInfo:{eventId:'retry-arrival',taskName:'ghovo-route-location',appState:'background'}} as never);

@@ -6,12 +6,13 @@ import Svg, {Circle, Defs, LinearGradient, Path, RadialGradient, Rect, Stop} fro
 import {palette} from './design';
 import {fonts} from './fonts';
 import {accountError, loginWithGoogle} from './account-client';
+import {useLanguage} from './i18n';
 
 const MODES = [
-  {icon: 'walk', label: 'Andar'},
-  {icon: 'fitness', label: 'Correr'},
-  {icon: 'bicycle', label: 'Bici'},
-  {icon: 'car-sport', label: 'Coche'},
+  {icon: 'walk', key: 'mode.walking'},
+  {icon: 'fitness', key: 'mode.running'},
+  {icon: 'bicycle', key: 'mode.bicycling'},
+  {icon: 'car-sport', key: 'mode.driving'},
 ] as const;
 
 function Hero() {
@@ -50,6 +51,7 @@ function Hero() {
 export function WelcomeScreen({onSignIn, onGuest}: {onSignIn: () => void; onGuest: () => void}) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const {t: tr} = useLanguage();
 
   async function google() {
     if (busy) return;
@@ -73,17 +75,17 @@ export function WelcomeScreen({onSignIn, onGuest}: {onSignIn: () => void; onGues
           <Image source={require('../assets/ghovo-logo-3d-v1.png')} style={{width: 90, height: 90}} resizeMode="contain" accessible={false} />
         </View>
         <Text style={{fontFamily: fonts.extrabold, fontSize: 44, letterSpacing: 1, color: '#FFFFFF'}}>GHOVO</Text>
-        <Text style={{fontFamily: fonts.medium, fontSize: 15, color: '#B4AED2', textAlign: 'center'}}>Rutas, récords y mucho más</Text>
+        <Text style={{fontFamily: fonts.medium, fontSize: 15, color: '#B4AED2', textAlign: 'center'}}>{tr('welcome.tagline')}</Text>
       </View>
 
       <View style={{gap: 18}}>
         <View style={{flexDirection: 'row', justifyContent: 'center', gap: 12}}>
           {MODES.map(mode => (
-            <View key={mode.label} style={{alignItems: 'center', gap: 6}}>
+            <View key={mode.key} style={{alignItems: 'center', gap: 6}}>
               <View style={{width: 54, height: 54, borderRadius: 18, backgroundColor: 'rgba(26,20,53,0.92)', borderWidth: 1, borderColor: '#3A2E63', alignItems: 'center', justifyContent: 'center'}}>
                 <Ionicons name={mode.icon} size={24} color={palette.purpleLight} />
               </View>
-              <Text style={{fontFamily: fonts.medium, fontSize: 11, color: '#8E87AB'}}>{mode.label}</Text>
+              <Text style={{fontFamily: fonts.medium, fontSize: 11, color: '#8E87AB'}}>{tr(mode.key)}</Text>
             </View>
           ))}
         </View>
@@ -92,23 +94,23 @@ export function WelcomeScreen({onSignIn, onGuest}: {onSignIn: () => void; onGues
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Comenzar"
+          accessibilityLabel={tr('welcome.start')}
           disabled={busy}
           onPress={onSignIn}
           style={({pressed}) => ({minHeight: 58, borderRadius: 22, backgroundColor: '#8B5CF6', alignItems: 'center', justifyContent: 'center', opacity: pressed || busy ? 0.85 : 1, shadowColor: '#8B5CF6', shadowOffset: {width: 0, height: 6}, shadowOpacity: 0.45, shadowRadius: 14})}
         >
-          <Text style={{fontFamily: fonts.bold, fontSize: 16, color: '#FFFFFF'}}>Comenzar</Text>
+          <Text style={{fontFamily: fonts.bold, fontSize: 16, color: '#FFFFFF'}}>{tr('welcome.start')}</Text>
         </Pressable>
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Iniciar sesión con Google"
+          accessibilityLabel={tr('welcome.google')}
           disabled={busy}
           onPress={() => void google()}
           style={({pressed}) => ({minHeight: 54, borderRadius: 20, backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: pressed || busy ? 0.85 : 1})}
         >
           <Ionicons name="logo-google" size={18} color="#1F1F1F" />
-          <Text style={{fontFamily: fonts.semibold, fontSize: 15, color: '#1F1F1F'}}>{busy ? 'Conectando…' : 'Iniciar sesión con Google'}</Text>
+          <Text style={{fontFamily: fonts.semibold, fontSize: 15, color: '#1F1F1F'}}>{busy ? tr('welcome.connecting') : tr('welcome.google')}</Text>
         </Pressable>
 
         {/* Solo para pruebas: en release no existe si no se pide expresamente por entorno. */}
@@ -117,7 +119,7 @@ export function WelcomeScreen({onSignIn, onGuest}: {onSignIn: () => void; onGues
         </Pressable>}
 
         <Text style={{fontFamily: fonts.regular, fontSize: 11, lineHeight: 16, color: '#6E6690', textAlign: 'center'}}>
-          Para grabar necesitas una cuenta: tus rutas y tus créditos se guardan en ella.
+          {tr('welcome.accountNote')}
         </Text>
       </View>
     </ScrollView>

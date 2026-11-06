@@ -1,3 +1,13 @@
+## Voces por idioma, acceso a descargarlas y más traducciones — 06/11/2026 (sin APK)
+
+- **Aviso sobre las voces**: en la tarjeta «Idioma» de Perfil aparece, en Android, una nota que explica que el euskara y el catalán necesitan la voz descargada en el teléfono y que, si el aviso suena en otro idioma, hay que descargarla.
+- **Botón «Descargar voces»**: abre la pantalla de texto a voz del sistema (`com.android.settings.TTS_SETTINGS`), que es donde se instalan los paquetes de voz; si el fabricante cambia esa ruta, abre la ficha de Google TTS en la tienda. Al lado, **«Probar voz»** pronuncia una frase con el locale elegido para comprobar que suena en el idioma correcto.
+- **Más pantallas traducidas a los cuatro idiomas**: portada de acceso (lema, «Comenzar», «Iniciar sesión con Google», «Conectando…» y la nota de cuenta), selector de tipo de actividad, información del viaje (salida, llegada, medias, precisión, interrupciones) y el menú de Perfil (Premium, Ajustes de la app, Privacidad y Ayuda con sus descripciones). También las fechas y horas usan el formato del idioma del sistema.
+- **Lo que sigue en español**, para no dar una impresión falsa: la tarjeta de cuenta (iniciar sesión, registro, recuperación de contraseña), el detalle de créditos y anuncios, la pantalla de premium, ajustes, ayuda, herramientas de copia y los mensajes de error. Son textos largos y con matices legales o técnicos; irán en el siguiente paso, pantalla a pantalla.
+
+104 pruebas de lógica y 187 de interfaz, `tsc` limpio y `eslint` 0 errores. Dependencia ya instalada: `expo-localization` (obliga a compilar).
+
+## Trazado rojo, botón «Inicio» e idiomas (es, eu, ca, fr) — 06/11/2026 (sin APK)
 ## Trazado rojo, botón «Inicio» e idiomas (es, eu, ca, fr) — 06/11/2026 (sin APK)
 
 - **El recorrido ya pasado se pinta en rojo** (`#F43F5E`) sobre el mapa, tanto en la app como en la vista web. La ruta de referencia sigue en violeta, así que se distinguen sin confundirlas.

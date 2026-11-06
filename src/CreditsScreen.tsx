@@ -1,4 +1,4 @@
-import React,{useCallback,useEffect,useRef,useState} from 'react';
+﻿import React,{useCallback,useEffect,useRef,useState} from 'react';
 import {decimal} from './format';
 import {Alert,Image,Linking,Platform,Pressable,ScrollView,Text,View} from 'react-native';
 import * as IntentLauncher from 'expo-intent-launcher';
@@ -12,16 +12,17 @@ import {billingRequest,billingError,monetizationEnforced,claimAdReward,type Wall
 import {pendingBilling,recoverBilling} from './monetized-tracking';
 import {adsConfigured,useRewardedAd} from './ads';
 import {setLanguage,useLanguage,type LanguageChoice} from './i18n';
+import {testVoice} from './speech';
 
 function Action({label,onPress,disabled=false}:{label:string;onPress:()=>void;disabled?:boolean}){return <Pressable accessibilityRole="button" accessibilityState={{disabled}} disabled={disabled} onPress={onPress} style={[s.button,s.secondary,{opacity:disabled?0.45:1}]}><Text style={s.lightText}>{label}</Text></Pressable>;}
 type Entry={id:string;kind:'initial'|'reward'|'route';delta:number;created_at:string};
 export type ProfileStats={routes:number;km:number;favorites:number};
 
 const MENU=[
-  {key:'premium',icon:'star-outline',label:'Premium',hint:'Rutas ilimitadas, sin créditos ni anuncios'},
-  {key:'settings',icon:'options-outline',label:'Ajustes de la app',hint:'Permisos, ubicación y batería'},
-  {key:'privacy',icon:'shield-checkmark-outline',label:'Privacidad',hint:'Qué datos usa GHOVO y cómo borrarlos'},
-  {key:'help',icon:'help-circle-outline',label:'Ayuda',hint:'Pantalla bloqueada, GPS y copias'},
+  {key:'premium',icon:'star-outline',label:'profile.premium',hint:'profile.premiumHint'},
+  {key:'settings',icon:'options-outline',label:'profile.settings',hint:'profile.settingsHint'},
+  {key:'privacy',icon:'shield-checkmark-outline',label:'profile.privacy',hint:'profile.privacyHint'},
+  {key:'help',icon:'help-circle-outline',label:'profile.help',hint:'profile.helpHint'},
 ] as const;
 
 export function CreditsScreen({premiumPage,active,onHome,onPremium,onPrivacy,stats={routes:0,km:0,favorites:0}}:{premiumPage:boolean;active:boolean;onHome:()=>void;onPremium:()=>void;onPrivacy?:()=>void;stats?:ProfileStats}){
@@ -69,8 +70,7 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,onPrivacy,sta
  };
 
  const displayName=account.user?.email?account.user.email.split('@')[0]:'Invitado';
- const menuHint={premium:currentWallet?.premium?'Activo en tu cuenta':'Rutas ilimitadas de por vida',settings:'Permisos, ubicación y batería',privacy:'Qué datos usa GHOVO y cómo borrarlos',help:'Pantalla bloqueada, GPS y copias'};
-
+ 
  // Doble confirmación: primero se avisa de lo que se pierde y luego se ejecuta.
  // El servidor borra la cuenta; si falla, no se toca nada del móvil.
  const confirmDelete=()=>{
@@ -95,6 +95,15 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,onPrivacy,sta
 
  // Abre la lista de apps exentas de optimización de batería: es donde MIUI/HyperOS deja
  // marcar GHOVO como «sin restricciones», que es lo que evita que mate la grabación.
+ // Las voces de euskara y catalán no vienen instaladas en todos los móviles. Este botón
+ // lleva a la pantalla del sistema donde se descargan; si el fabricante cambia la ruta,
+ // se abre la ficha de Google TTS en la tienda como alternativa.
+ function openVoiceSettings(){
+  if(Platform.OS!=='android'){void Linking.openSettings().catch(()=>{});return;}
+  const fallback=()=>{void Linking.openURL('market://details?id=com.google.android.tts').catch(()=>{void Linking.openSettings().catch(()=>{});});};
+  void IntentLauncher.startActivityAsync('com.android.settings.TTS_SETTINGS' as never).catch(fallback);
+ }
+
  function openBatterySettings(){
   if(Platform.OS!=='android'){void Linking.openSettings().catch(()=>{});return;}
   void IntentLauncher.startActivityAsync(IntentLauncher.ActivityAction.IGNORE_BATTERY_OPTIMIZATION_SETTINGS).catch(()=>{void Linking.openSettings().catch(()=>{});});
@@ -132,13 +141,13 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,onPrivacy,sta
 
    {!premiumPage&&<View style={{backgroundColor:'#15112D',borderRadius:20,borderWidth:1,borderColor:'#241C40',paddingHorizontal:16}}>
     {MENU.map((item,index)=>
-     <Pressable key={item.key} accessibilityRole="button" accessibilityLabel={item.label} onPress={()=>openMenu(item.key)} style={{flexDirection:'row',alignItems:'center',gap:12,paddingVertical:14,borderBottomWidth:index===MENU.length-1?0:1,borderBottomColor:'#241C40',minHeight:56}}>
+     <Pressable key={item.key} accessibilityRole="button" accessibilityLabel={tr(item.label)} onPress={()=>openMenu(item.key)} style={{flexDirection:'row',alignItems:'center',gap:12,paddingVertical:14,borderBottomWidth:index===MENU.length-1?0:1,borderBottomColor:'#241C40',minHeight:56}}>
       <View style={{width:38,height:38,borderRadius:19,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
        <Ionicons name={item.icon} size={19} color={palette.purpleLight}/>
       </View>
       <View style={{flex:1,gap:1}}>
-       <Text style={{fontFamily:fonts.semibold,color:'#FFFFFF',fontSize:14}}>{item.label}</Text>
-       <Text style={s.caption} numberOfLines={1}>{menuHint[item.key]}</Text>
+       <Text style={{fontFamily:fonts.semibold,color:'#FFFFFF',fontSize:14}}>{tr(item.label)}</Text>
+       <Text style={s.caption} numberOfLines={1}>{tr(item.hint)}</Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color="#6E6690"/>
      </Pressable>)}
@@ -162,6 +171,17 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,onPrivacy,sta
        <Text style={{fontFamily:fonts.semibold,fontSize:13,color:languageChoice===option?'#FFFFFF':'#B9AEF5'}}>{option==='auto'?tr('profile.auto'):tr(`language.${option}`)}</Text>
       </Pressable>)}
     </View>
+    {Platform.OS==='android'&&<>
+     <Text style={s.caption}>{tr('voices.hint')}</Text>
+     <View style={{flexDirection:'row',gap:8}}>
+      <Pressable accessibilityRole="button" accessibilityLabel={tr('voices.open')} onPress={openVoiceSettings} style={[s.button,s.secondary,{flex:1}]}>
+       <Text style={s.lightText}>{tr('voices.open')}</Text>
+      </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel={tr('voices.test')} onPress={()=>void testVoice()} style={[s.button,s.secondary,{flex:1}]}>
+       <Text style={s.lightText}>{tr('voices.test')}</Text>
+      </Pressable>
+     </View>
+    </>}
    </View>}
 
    {(!premiumPage||!account.user)&&<AccountPanel active={active}/>}

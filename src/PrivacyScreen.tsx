@@ -7,7 +7,7 @@ import {fonts} from './fonts';
 
 // URL pública de la política completa (GitHub Pages, por ejemplo). Se puede cambiar sin
 // recompilar código con EXPO_PUBLIC_PRIVACY_URL.
-export const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL ?? 'https://skaplasma.github.io/ghovo/privacidad.html';
+export const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL?.trim() || 'https://skaplasma.github.io/ghovo/privacidad.html';
 
 type Block = {title: string; body: string};
 

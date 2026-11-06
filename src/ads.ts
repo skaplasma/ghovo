@@ -33,9 +33,11 @@ try {
 
 // Una unidad real se configura por entorno; mientras no exista se anuncian los de prueba
 // de Google, que no generan ingresos pero permiten probar el flujo completo.
-export const adUnitId: string =
-  process.env.EXPO_PUBLIC_ADMOB_REWARDED_UNIT ?? TestIds?.REWARDED ?? TEST_REWARDED_AD_UNIT;
-export const adsConfigured = Boolean(process.env.EXPO_PUBLIC_ADMOB_REWARDED_UNIT);
+// Una variable vacía en .env llega como cadena vacía: se trata como si no existiera para
+// no acabar pidiendo un anuncio con identificador en blanco.
+const configuredUnit = process.env.EXPO_PUBLIC_ADMOB_REWARDED_UNIT?.trim() || undefined;
+export const adUnitId: string = configuredUnit ?? TestIds?.REWARDED ?? TEST_REWARDED_AD_UNIT;
+export const adsConfigured = Boolean(configuredUnit);
 
 let currentAd: any = null;
 let currentState: AdState = 'idle';

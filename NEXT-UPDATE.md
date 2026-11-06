@@ -1,4 +1,14 @@
-﻿## Traducción completa de la interfaz — 06/11/2026 (sin APK)
+﻿## Arreglo del cierre al arrancar — 06/11/2026 (APK en GitHub)
+
+El APK compilado en GitHub se cerraba nada más tocar el icono. La causa era una variable vacía en el entorno: `.env` define `EXPO_PUBLIC_ADMOB_ANDROID_APP_ID=` sin valor, y `??` solo sustituye `undefined`, no la cadena vacía. El manifiesto acababa con un App ID de anuncios en blanco y el SDK de Google mata el proceso al inicializarse.
+
+- **`app.config.ts`**: un ayudante trata los valores vacíos o con solo espacios como ausentes, así que con la variable vacía se usa el ID de prueba de Google. Verificado generando el proyecto Android: el manifiesto ya lleva `ca-app-pub-3940256099942544~3347511713`.
+- **`src/ads.ts`**: la unidad recompensada también ignora el valor vacío, y `adsConfigured` refleja si hay una unidad real.
+- **`src/PrivacyScreen.tsx`**: misma protección para la URL de la política.
+
+187 pruebas de interfaz y 104 de lógica, `tsc` limpio y `eslint` 0 errores.
+
+## Traducción completa de la interfaz — 06/11/2026 (sin APK)
 
 El problema no era el idioma, era la cobertura: media pantalla en un idioma y media en otro. Ahora **todo el texto visible pasa por el traductor**.
 

@@ -1,4 +1,4 @@
-﻿import React,{useCallback,useEffect,useRef,useState} from 'react';
+import React,{useCallback,useEffect,useRef,useState} from 'react';
 import {decimal} from './format';
 import {Alert,Image,Linking,Platform,Pressable,ScrollView,Text,View} from 'react-native';
 import * as IntentLauncher from 'expo-intent-launcher';
@@ -11,6 +11,7 @@ import {wipeLocalData} from './storage';
 import {billingRequest,billingError,monetizationEnforced,claimAdReward,type WalletSnapshot} from './monetization-api';
 import {pendingBilling,recoverBilling} from './monetized-tracking';
 import {adsConfigured,useRewardedAd} from './ads';
+import {setLanguage,useLanguage,type LanguageChoice} from './i18n';
 
 function Action({label,onPress,disabled=false}:{label:string;onPress:()=>void;disabled?:boolean}){return <Pressable accessibilityRole="button" accessibilityState={{disabled}} disabled={disabled} onPress={onPress} style={[s.button,s.secondary,{opacity:disabled?0.45:1}]}><Text style={s.lightText}>{label}</Text></Pressable>;}
 type Entry={id:string;kind:'initial'|'reward'|'route';delta:number;created_at:string};
@@ -25,6 +26,7 @@ const MENU=[
 
 export function CreditsScreen({premiumPage,active,onHome,onPremium,onPrivacy,stats={routes:0,km:0,favorites:0}}:{premiumPage:boolean;active:boolean;onHome:()=>void;onPremium:()=>void;onPrivacy?:()=>void;stats?:ProfileStats}){
  const account=useAccount(),mounted=useRef(true),requestId=useRef(0);
+ const {choice:languageChoice,t:tr}=useLanguage();
  const owner=account.user?.id;
  const [wallet,setWallet]=useState<WalletSnapshot>(),[entries,setEntries]=useState<Entry[]>([]),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[pending,setPending]=useState(false);
  const {isLoaded,showAd,reloadAd,consent,showPrivacyOptions}=useRewardedAd();
@@ -149,6 +151,17 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,onPrivacy,sta
      <Ionicons name="battery-charging-outline" size={16} color="#FFFFFF"/>
      <Text style={s.lightText}>Batería sin restricciones</Text>
     </Pressable>
+   </View>}
+
+   {!premiumPage&&<View style={[s.card,{gap:10}]}>
+    <Text style={s.cardTitle}>{tr('profile.language')}</Text>
+    <Text style={s.caption}>{tr('profile.languageHint')}</Text>
+    <View style={{flexDirection:'row',flexWrap:'wrap',gap:8}}>
+     {(['auto','es','eu','ca','fr'] as LanguageChoice[]).map(option=>
+      <Pressable key={option} accessibilityRole="radio" accessibilityState={{checked:languageChoice===option}} accessibilityLabel={option==='auto'?tr('profile.auto'):tr(`language.${option}`)} onPress={()=>void setLanguage(option)} style={{minHeight:40,paddingHorizontal:14,borderRadius:20,alignItems:'center',justifyContent:'center',backgroundColor:languageChoice===option?'#4C2A8A':'#1A1435',borderWidth:1.5,borderColor:languageChoice===option?palette.purpleBright:'#2D2350'}}>
+       <Text style={{fontFamily:fonts.semibold,fontSize:13,color:languageChoice===option?'#FFFFFF':'#B9AEF5'}}>{option==='auto'?tr('profile.auto'):tr(`language.${option}`)}</Text>
+      </Pressable>)}
+    </View>
    </View>}
 
    {(!premiumPage||!account.user)&&<AccountPanel active={active}/>}

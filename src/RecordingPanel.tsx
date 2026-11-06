@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { clock, distance as geoDistance, type Run } from './core';
 import { formatPace } from './TripDetails';
 import { appStyles as s, palette } from './design';
+import { useLanguage } from './i18n';
 import { fonts } from './fonts';
 
 // Fondo de escala del velocímetro: solo define cuánto se llena la barra, no limita la grabación.
@@ -41,6 +42,7 @@ export function RecordingPanel({
   onToggleVoice,
   toStart,
 }: Props) {
+  const {t: tr} = useLanguage();
   const age = Math.max(0, Math.floor((now - (run.lastFixAt ?? run.points.at(-1)?.timestamp ?? run.startedAt)) / 1000));
   const paused = !!run.pausedAt;
   const stale = age > 15;
@@ -116,7 +118,7 @@ export function RecordingPanel({
             </Text>
             <Text style={styles.speedUnit}>{run.mode === 'running' ? 'min/km' : 'km/h'}</Text>
           </View>
-          <Text style={styles.speedCaption}>{run.mode === 'running' ? 'ritmo actual' : 'velocidad actual'}</Text>
+          <Text style={styles.speedCaption}>{run.mode === 'running' ? tr('panel.pace') : tr('panel.speed')}</Text>
           <View style={styles.speedTrack}>
             <View style={[styles.speedFill,{width:`${Math.round(Math.max(0,Math.min(1,currentSpeedKmh/MAX_SPEED_KMH[run.mode ?? 'driving']))*100)}%`}]}/>
           </View>
@@ -128,14 +130,14 @@ export function RecordingPanel({
           {!run.circuitStartedAt ? (
             <>
               <Text style={[styles.deltaValue,{color:palette.lavender}]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{run.entryPendingAt ? 'Confirmando…' : 'Esperando…'}</Text>
-              <Text style={styles.deltaCaption}>{run.entryPendingAt ? 'Una posición más sobre el trazado' : typeof toStart === 'number' && toStart > 30 ? `A ${Math.round(toStart / 10) * 10} m de la salida` : 'El fantasma arranca al entrar'}</Text>
+              <Text style={styles.deltaCaption}>{run.entryPendingAt ? tr('panel.confirmingHint') : typeof toStart === 'number' && toStart > 30 ? tr('panel.toStart', {m: Math.round(toStart / 10) * 10}) : tr('panel.waitingHint')}</Text>
             </>
           ) : hasDiff ? (
             <>
               <Text style={[styles.deltaValue,isAhead?{color:'#34D399'}:isBehind?{color:'#FB7185'}:{color:palette.lavender}]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                 {isAhead ? `▲ -${diffText}` : isBehind ? `▼ +${diffText}` : '= 0,0 s'}
               </Text>
-              <Text style={styles.deltaCaption}>{isAhead ? 'Vas ganando al fantasma' : isBehind ? 'Por detrás de tu referencia' : 'Mismo tiempo'}</Text>
+              <Text style={styles.deltaCaption}>{isAhead ? tr('panel.ahead') : isBehind ? tr('panel.behind') : tr('panel.same')}</Text>
             </>
           ) : (
             <>
@@ -149,19 +151,19 @@ export function RecordingPanel({
       {/* Tres cifras con la misma estructura: etiqueta, valor y unidad */}
       <View style={s.cockpitGrid}>
         <View style={[s.cockpitMetricBox, styles.metricBox]}>
-          <Text style={styles.metricLabel} numberOfLines={1}>{run.referenceId && run.circuitStartedAt ? 'EN RUTA' : 'TIEMPO'}</Text>
+          <Text style={styles.metricLabel} numberOfLines={1}>{run.referenceId && run.circuitStartedAt ? tr('panel.running') : tr('panel.time')}</Text>
           <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{clock(elapsedMs)}</Text>
           <Text style={styles.metricUnit}>min</Text>
         </View>
 
         <View style={[s.cockpitMetricBox, styles.metricBox]}>
-          <Text style={styles.metricLabel} numberOfLines={1}>DISTANCIA</Text>
+          <Text style={styles.metricLabel} numberOfLines={1}>{tr('panel.distance')}</Text>
           <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{decimal(distNumKm,2)}</Text>
           <Text style={styles.metricUnit}>km</Text>
         </View>
 
         <View style={[s.cockpitMetricBox, styles.metricBox]}>
-          <Text style={styles.metricLabel} numberOfLines={1}>{run.mode === 'running' ? 'RITMO MEDIO' : 'VEL. MEDIA'}</Text>
+          <Text style={styles.metricLabel} numberOfLines={1}>{run.mode === 'running' ? tr('panel.averagePace') : tr('panel.average')}</Text>
           <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
             {run.mode === 'running'
               ? (avgSpeedKmh > 0 ? formatPace(avgSpeedKmh) : '—')

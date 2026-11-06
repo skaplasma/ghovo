@@ -6,6 +6,7 @@ import {appStyles as s, palette} from './design';
 import {fonts} from './fonts';
 import {date, km} from './format';
 import {RouteThumbnail} from './RouteVisuals';
+import {useLanguage} from './i18n';
 import {modeLabel} from './TripDetails';
 
 export type RouteCardSummary = {reference: Run; attempts: Run[]; best: Run; latest: Run};
@@ -38,6 +39,7 @@ export function RouteCard({
   onFavorite?: () => void;
   onShare?: () => void;
 }) {
+  const {t: tr} = useLanguage();
   const {reference: route, attempts, best, latest} = summary;
   const trips = attempts.length;
   return (
@@ -61,7 +63,7 @@ export function RouteCard({
           </View>
           <Text style={[s.cardTitle, {fontSize: 17}]} numberOfLines={1}>{route.name}</Text>
           <Text style={s.caption} numberOfLines={1}>
-            {date(latest)} · {km(route)} · {trips} {trips === 1 ? 'salida' : 'salidas'}
+            {date(latest)} · {km(route)} · {trips} {trips === 1 ? tr('card.tripOne') : tr('card.trips')}
           </Text>
         </View>
       </View>
@@ -69,7 +71,7 @@ export function RouteCard({
       {/* El mejor tiempo va en su propia franja: es el dato que se busca al abrir la lista. */}
       <View style={styles.bestStrip}>
         <Ionicons name="trophy" size={15} color={palette.yellowGold} />
-        <Text style={styles.bestLabel}>{isComparable(best) ? 'MEJOR TIEMPO' : 'TIEMPO DE REFERENCIA'}</Text>
+        <Text style={styles.bestLabel}>{isComparable(best) ? tr('card.best') : tr('card.reference')}</Text>
         <Text style={styles.bestValue}>{clock(duration(best))}</Text>
       </View>
     </Pressable>

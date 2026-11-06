@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Alert, AppState, type AppStateStatus } from 'react-native';
 import { act, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { history, writeMany } from '../src/storage';
@@ -65,7 +65,7 @@ async function openApp() {
 async function openRoute(section:'settings'|'playback'|'summary'='settings') {
   await openApp();
   const user = userEvent.setup();
-  await user.press(screen.getByRole('tab', { name: /Mis rutas/ }));
+  await user.press(screen.getByRole('tab', { name: 'Rutas' }));
   await user.press(screen.getByText(/Paseo del río/));
   if(section!=='summary')await user.press(screen.getByRole('button',{name:section==='settings'?'Ajustes':'Viajes'}));
   if(section==='playback'){await user.press(screen.getByRole('button',{name:'Reproducir recorrido'}));await user.press(screen.getByRole('button',{name:'Ajustes de reproducción'}));}
@@ -82,7 +82,7 @@ test('mode selected in the fixed start controls is used for the new recording',a
 test('la tarjeta de la ruta da favorita y compartir sin abrirla', async () => {
   await openApp();
   const user = userEvent.setup();
-  await user.press(screen.getByRole('tab', { name: /Mis rutas/ }));
+  await user.press(screen.getByRole('tab', { name: 'Rutas' }));
   // Favorita desde la tarjeta: se guarda sin entrar en la ruta.
   await user.press(screen.getByRole('button', { name: 'Añadir Paseo del río a favoritas' }));
   await waitFor(() => expect(mockState.routeDetails).toEqual({ route: { favorite: true, note: '' } }));
@@ -94,7 +94,7 @@ test('la tarjeta de la ruta da favorita y compartir sin abrirla', async () => {
 test('library search handles accents and favorite empty state', async () => {
   await openApp();
   const user = userEvent.setup();
-  await user.press(screen.getByRole('tab', { name: /Mis rutas/ }));
+  await user.press(screen.getByRole('tab', { name: 'Rutas' }));
   await user.type(screen.getByLabelText('Buscar rutas por nombre'), 'rio');
   expect(screen.getByText('Paseo del río')).toBeOnTheScreen();
   await user.press(screen.getByRole('button', {name:'Filtros de rutas'}));
@@ -337,7 +337,7 @@ test('car results use neutral wording without praising faster travel',async()=>{
   await userEvent.setup().press(await screen.findByRole('button',{name:'Finalizar ruta'}));
   expect(await screen.findByText('Felicidades, has llegado')).toBeOnTheScreen();
   expect(screen.queryByText(/Nueva mejor huella/)).not.toBeOnTheScreen();
-  expect(screen.getByRole('button',{name:'Ver recorrido'})).toBeEnabled();
+  expect(screen.getByRole('button',{name:'Inicio'})).toBeEnabled();
   await userEvent.setup().press(screen.getByRole('button',{name:'Volver a Inicio'}));
   expect(await screen.findByRole('button',{name:'Nueva ruta'})).toBeEnabled();
 });
@@ -451,8 +451,8 @@ test('GPS status can always be opened from Home without a GPS fix',async()=>{
 
 test('Credits navigation is available without changing saved routes or starting GPS recording',async()=>{
   await render(<App/>);await act(async()=>{await jest.advanceTimersByTimeAsync(1);});
-  const original=structuredClone(mockState.history),user=userEvent.setup();await user.press(screen.getByRole('tab',{name:'Cuenta'}));
-  expect(screen.getByText('Saldo sin verificar')).toBeOnTheScreen();expect(screen.getByRole('tab',{name:'Cuenta'})).toBeSelected();
+  const original=structuredClone(mockState.history),user=userEvent.setup();await user.press(screen.getByRole('tab',{name:'Perfil'}));
+  expect(screen.getByText('Saldo sin verificar')).toBeOnTheScreen();expect(screen.getByRole('tab',{name:'Perfil'})).toBeSelected();
   await user.press(screen.getByRole('button',{name:'Pasar a Premium'}));expect(screen.getByText('Precio previsto: 4,99 €')).toBeOnTheScreen();
   await user.press(screen.getByRole('button',{name:'Volver a Inicio'}));expect(screen.getByRole('button',{name:'Nueva ruta'})).toBeOnTheScreen();expect(mockState.history).toEqual(original);
 });

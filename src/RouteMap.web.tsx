@@ -127,7 +127,7 @@ export function RouteMap({
                 <path
                   d={recordingPath}
                   fill="none"
-                  stroke="#4A8B3B"
+                  stroke="#F43F5E"
                   strokeWidth="4"
                   strokeLinecap="round"
                   strokeLinejoin="round"

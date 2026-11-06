@@ -5,10 +5,10 @@ const admobIos = process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID ?? 'ca-app-pub-3940256
 const config:ExpoConfig={
   name:'GHOVO', slug:'ghovo', owner:'skacristian',
   extra:{eas:{projectId:'72f2347a-dad7-4daf-a387-8bb1ea0408be'}},
-  version:'0.1.29', icon:'./assets/ghovo-icon-3d.png',
+  version:'0.1.30', icon:'./assets/ghovo-icon-3d.png',
   scheme:'ghovo', orientation:'portrait', userInterfaceStyle:'dark',
   android:{
-    package:'app.ghovo.mobile', versionCode:30, allowBackup:false, softwareKeyboardLayoutMode:'resize',
+    package:'app.ghovo.mobile', versionCode:31, allowBackup:false, softwareKeyboardLayoutMode:'resize',
     blockedPermissions:['android.permission.READ_EXTERNAL_STORAGE','android.permission.WRITE_EXTERNAL_STORAGE'],
     adaptiveIcon:{foregroundImage:'./assets/ghovo-adaptive-3d.png',backgroundColor:'#101C22'},
   },

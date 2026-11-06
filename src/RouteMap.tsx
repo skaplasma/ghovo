@@ -144,7 +144,8 @@ export function RouteMap({ points, reference, ghost, recording,preparing=false,p
     {focus ? <Map mapStyle={mapStyle} dragPan={!recording} touchZoom={!recording} touchRotate={!recording} touchPitch={false} attribution={false} onDidFailLoadingMap={() => setFailed(true)} onDidFinishLoadingMap={() => { setFailed(false); setMapReady(true); }}>
       <Camera ref={camera} initialViewState={{ center: coordinate(focus), zoom: 15 }} maxZoom={19} />
       {reference && recording && <Track id="reference" points={reference} color="#9685ff" width={5} />}
-      <Track id="recording" points={points} color="#4A8B3B" width={4} />
+      {/* Lo ya recorrido, en rojo: es la línea que se sigue de un vistazo mientras grabas. */}
+      <Track id="recording" points={points} color="#F43F5E" width={4} />
       {checkpoints.map(checkpoint=><Pin key={checkpoint.index} point={checkpoint.point} label={`${checkpoint.meters/1000} km`} color="#B9AEF5"/>)}
       {first && <Pin point={first} label="A" color="#a1f27a" />}
       {!recording && last && <Pin point={last} label="B" color="#ffc58a" />}

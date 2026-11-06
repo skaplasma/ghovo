@@ -1,6 +1,7 @@
 import {CreditsScreen} from './src/CreditsScreen';
 import {AccountPanel, useAccount} from './src/AccountPanel';
 import {accountConfigured} from './src/account-client';
+import {initializeLanguage, useLanguage} from './src/i18n';
 import {modeLabel,TripDetails} from './src/TripDetails';
 import {startMonetizedTracking,settleMonetizedTracking,recoverBilling} from './src/monetized-tracking';
 import {billingError} from './src/monetization-api';
@@ -130,6 +131,9 @@ export function GhovoScreen(){return <>{useContext(ScreenContent)}</>;}
 export default function App(){return <AppProvider><GhovoScreen/></AppProvider>;}
 export function AppProvider({children}:{children:React.ReactNode}) {
   const account = useAccount();
+  // tr en vez de t: dentro del componente ya hay variables «t» para relojes y tiempos.
+  const {t: tr} = useLanguage();
+  useEffect(()=>{ void initializeLanguage().catch(()=>{}); },[]);
   const [expanded, setExpanded] = useState(false);
   // Portada de bienvenida y acceso provisional sin cuenta (se retira al publicar).
   const [welcomeForm, setWelcomeForm] = useState(false);
@@ -419,9 +423,9 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     router.replace('/');
   }
   const tabsList = [
-    { label: 'Inicio', display: 'Inicio', path: '/', on: 'home', off: 'home-outline' },
-    { label: 'Mis rutas', display: 'Rutas', path: '/library', on: 'map', off: 'map-outline' },
-    { label: 'Cuenta', display: 'Perfil', path: '/credits', on: 'person', off: 'person-outline' },
+    { label: tr('nav.home'), display: tr('nav.home'), path: '/', on: 'home', off: 'home-outline' },
+    { label: tr('nav.library'), display: tr('library.short'), path: '/library', on: 'map', off: 'map-outline' },
+    { label: tr('nav.profile'), display: tr('nav.profile'), path: '/credits', on: 'person', off: 'person-outline' },
   ] as const;
 
   const navigation = (
@@ -631,10 +635,10 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           <Button label="Volver a leer datos" disabled={busy} onPress={()=>void act(refresh)}/>
           <DataTools disabled={busy} onChanged={refresh}/>
         </> : run ? <>{pendingRecovery&&<View style={s.card}><Text style={s.cardTitle}>Tienes un recorrido sin terminar</Text><Text style={s.muted}>Los puntos guardados siguen aquí. El tiempo incluye la interrupción.</Text><Button label="Continuar recorrido" disabled={disabled} onPress={()=>void act(recover)}/><Button label="Guardar pendiente y volver a Inicio" secondary disabled={disabled} onPress={discard}/></View>}<RecordingPanel run={run} now={now} distance={currentDistance} serviceRunning={serviceRunning} keepScreenOn={keepScreenOn} disabled={disabled} onToggleScreen={()=>setKeepScreenOn(value=>!value)} onRecover={()=>void act(recover)} onDiscard={discard} comparisonReference={comparisonReference} onToggleVoice={()=>void act(toggleVoice)} onHelp={()=>Alert.alert('Grabación con pantalla bloqueada','Revisa el permiso de ubicación precisa y en segundo plano. En el POCO, comprueba también que GHOVO puede trabajar en segundo plano y que su batería no esté restringida. Los nombres de estos ajustes cambian según MIUI/HyperOS.',[{text:'Cerrar'},{text:'Abrir ajustes de GHOVO',onPress:()=>{void Linking.openSettings();}}])} toStart={toStart}/></> : section === 'library' ? <>
-          <Text style={s.title}>Mis rutas</Text>
+          <Text style={s.title}>{tr('library.title')}</Text>
           <View style={s.row}>
           <View style={{flex:1}}>
-            <TextInput accessibilityLabel="Buscar rutas por nombre" value={query} onChangeText={setQuery} placeholder="Buscar una ruta…" placeholderTextColor="#80949b" style={s.input} maxLength={80} />
+            <TextInput accessibilityLabel={tr('library.search')} value={query} onChangeText={setQuery} placeholder={tr('library.searchPlaceholder')} placeholderTextColor="#80949b" style={s.input} maxLength={80} />
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="Filtros de rutas" accessibilityState={{expanded:filterOptions}} onPress={()=>setFilterOptions(value=>!value)} style={[s.secondary,{minHeight:52,paddingHorizontal:14,justifyContent:'center'}]}>
             <Text style={s.tabSelected}>{favoritesOnly?'★ Filtros':'Filtros'}</Text>
@@ -833,7 +837,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
         </Pressable>
       </View>}
       {!run&&!result&&section==='route'&&(!selected||!routeMode)&&<TravelModePicker value={travelMode} onChange={setTravelMode} disabled={disabled}/>}
-      <Button finish={!!run} label={run?(busy?'Guardando…':'Finalizar ruta'):section==='library'?'Nueva ruta':result?'Ver recorrido':(busy?'Preparando GPS…':selected?(comparisonReference?'Iniciar esta ruta':'Iniciar sin comparación'):'CONFIRMAR Y EMPEZAR')} disabled={disabled||(!run&&!result&&section==='route'&&(!gps.ready&&!comparisonReference))} onPress={run?()=>void act(finish):section==='library'?()=>choose(null):result?()=>{setResultId(null);setShowGhost(false);setReplay(resetReplay);}:start}/>
+      <Button finish={!!run} label={run?(busy?tr('finish.saving'):tr('finish.finish')):section==='library'?tr('finish.new'):result?tr('finish.home'):(busy?tr('finish.prepare'):selected?(comparisonReference?tr('finish.start'):tr('finish.startNoRef')):tr('finish.confirm'))} disabled={disabled||(!run&&!result&&section==='route'&&(!gps.ready&&!comparisonReference))} onPress={run?()=>void act(finish):section==='library'?()=>choose(null):result?goHome:start}/>
       {section==='route'&&!result&&!run&&<Text style={s.dockHint}>🕒 Asegurando señal GPS...</Text>}
     </View>}
     {!run&&navigation}

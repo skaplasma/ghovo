@@ -1,3 +1,15 @@
+## Trazado rojo, botón «Inicio» e idiomas (es, eu, ca, fr) — 06/11/2026 (sin APK)
+
+- **El recorrido ya pasado se pinta en rojo** (`#F43F5E`) sobre el mapa, tanto en la app como en la vista web. La ruta de referencia sigue en violeta, así que se distinguen sin confundirlas.
+- **El botón del resumen dice «Inicio» y vuelve a la pantalla principal**, en vez de «Ver recorrido». Desde el resultado se sale directo a casa.
+- **Cuatro idiomas**: español, euskara, català y français. En Perfil hay una tarjeta «Idioma» con cinco opciones —Automático, Español, Euskara, Català, Français—; en automático manda el idioma del teléfono y, si no es ninguno de esos, español.
+- **La voz cambia con el idioma**: los avisos de control y de llegada se pronuncian con el locale del idioma elegido (`es-ES`, `eu-ES`, `ca-ES`, `fr-FR`), no siempre en español. Los textos de los avisos también se generan en ese idioma, porque se crean en la tarea de fondo.
+- **Traducidos**: barra de navegación, inicio, lista de rutas y sus tarjetas, panel de grabación (velocidad, tiempo, distancia, media, espera y salida), botón inferior de inicio y fin de ruta, tarjeta de idioma y los avisos de voz. El resto de pantallas (ajustes, ayuda, premium, textos largos) sigue en español y se traducirá en el siguiente paso.
+- **Arquitectura**: `i18n-core.ts` guarda los diccionarios y el traductor sin módulos nativos, para que las pruebas de lógica sigan corriendo en Node; `i18n.ts` detecta el idioma del teléfono, guarda la elección y expone el hook de pantalla. `expo-localization` se añade como dependencia.
+
+104 pruebas de lógica (dos nuevas de traducción) y 187 de interfaz (una nueva del selector de idioma), `tsc` limpio y `eslint` 0 errores.
+
+## El mejor tiempo, en su propia franja — 06/11/2026 (sin APK)
 ## El mejor tiempo, en su propia franja — 06/11/2026 (sin APK)
 
 En «Mis rutas» el mejor tiempo iba en una línea pequeña, perdido entre la fecha y el número de salidas. Ahora cada tarjeta tiene una **franja propia** debajo, con el trofeo, la etiqueta y el tiempo a 26 px en dorado:

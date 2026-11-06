@@ -1,3 +1,4 @@
+import { t as tr } from './i18n-core';
 import {useEffect} from 'react';
 import {AppState} from 'react-native';
 import {accountConfigured,accountForeground,initializeAccounts} from './account-client';

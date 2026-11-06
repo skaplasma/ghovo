@@ -1,4 +1,8 @@
 ﻿// Núcleo de idiomas sin dependencias nativas: lo comparten la app y las pruebas de lógica.
+import {eu as euPhrases} from './phrases-eu.ts';
+import {ca as caPhrases} from './phrases-ca.ts';
+import {fr as frPhrases} from './phrases-fr.ts';
+
 export type Language = 'es' | 'eu' | 'ca' | 'fr';
 export type LanguageChoice = Language | 'auto';
 export type Dictionary = Record<string, string>;
@@ -412,17 +416,22 @@ export const languageChoice = () => choice;
 export const currentLanguage = () => active;
 export const speechLocale = () => speechLocales[active];
 
-// La app decide el idioma (ajuste guardado o el del teléfono) y lo inyecta aquí.
+// Frases traducidas por su texto en español: así se puede envolver cualquier literal de la
+// interfaz sin inventar una clave, y lo que aún no esté traducido se queda en español en
+// vez de mostrar una clave rara.
+export const phrases: Record<Exclude<Language, 'es'>, Dictionary> = {eu: euPhrases, ca: caPhrases, fr: frPhrases};
+
 export function applyLanguage(value: LanguageChoice, language: Language) {
   choice = value;
   active = language;
   notify();
 }
 
-// Texto traducido con sustitución simple de {claves}. Si falta una traducción se usa el
-// español; si tampoco existe, se devuelve la propia clave para detectarlo en pruebas.
+// Texto traducido. Acepta claves ('nav.home') y también el propio texto en español.
+// Sustituye {claves} si se pasan parámetros; si no hay traducción, devuelve el español.
 export function t(key: string, params?: Record<string, string | number>): string {
-  const text = dictionaries[active][key] ?? dictionaries.es[key] ?? key;
+  const phrase = active === 'es' ? undefined : phrases[active][key];
+  const text = dictionaries[active][key] ?? phrase ?? key;
   if (!params) return text;
   return text.replace(/\{(\w+)\}/g, (match, name) => (name in params ? String(params[name]) : match));
 }

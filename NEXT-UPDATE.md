@@ -1,3 +1,14 @@
+﻿## Traducción completa de la interfaz — 06/11/2026 (sin APK)
+
+El problema no era el idioma, era la cobertura: media pantalla en un idioma y media en otro. Ahora **todo el texto visible pasa por el traductor**.
+
+- **Se envuelven todos los textos de interfaz** (211 frases distintas) con una herramienta propia que solo toca nodos de texto de JSX y los atributos visibles, y se comprobó con `tsc` y las 187 pruebas.
+- **Diccionarios por frase original**: catalán, euskara y francés completos. Si algún texto nuevo se queda sin traducir, se muestra en español en vez de una clave rara, así que nunca vuelve a haber pantallas mezcladas con identificadores.
+- **Comprobador automático** (`tools/i18n-check.mjs`): recorre los textos envueltos y avisa si falta la traducción en algún idioma. Ahora mismo: **0 huecos**.
+- Entran pantallas que faltaban: cuenta (acceso, registro, recuperación), créditos y anuncios, premium y análisis, ajustes, ayuda, copias, privacidad, simulador, mapa y todos los textos de estado.
+
+104 pruebas de lógica y 187 de interfaz, `tsc` limpio y `eslint` 0 errores.
+
 ## Voces por idioma, acceso a descargarlas y más traducciones — 06/11/2026 (sin APK)
 
 - **Aviso sobre las voces**: en la tarjeta «Idioma» de Perfil aparece, en Android, una nota que explica que el euskara y el catalán necesitan la voz descargada en el teléfono y que, si el aviso suena en otro idioma, hay que descargarla.

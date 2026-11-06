@@ -1,4 +1,5 @@
 ﻿import React,{useCallback,useEffect,useRef,useState} from 'react';
+import { t as tr } from './i18n-core';
 import {decimal} from './format';
 import {Alert,Image,Linking,Platform,Pressable,ScrollView,Text,View} from 'react-native';
 import * as IntentLauncher from 'expo-intent-launcher';
@@ -111,11 +112,11 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,onPrivacy,sta
 
  return <View style={{flex:1}}>
   <View style={s.header}>
-   <Pressable accessibilityRole="button" accessibilityLabel="Volver a Inicio" onPress={onHome} style={{width:42,height:42,borderRadius:21,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
+   <Pressable accessibilityRole="button" accessibilityLabel={tr("Volver a Inicio")} onPress={onHome} style={{width:42,height:42,borderRadius:21,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
     <Ionicons name="arrow-back" size={20} color="#FFFFFF"/>
    </Pressable>
    {/* La pestaña inferior ya dice dónde estamos: el título solo se mantiene en Premium. */}
-   {premiumPage&&<Text style={s.cardTitle}>GHOVO Premium</Text>}
+   {premiumPage&&<Text style={s.cardTitle}>{tr("GHOVO Premium")}</Text>}
   </View>
   <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
    {!premiumPage&&<View style={{flexDirection:'row',alignItems:'center',gap:14}}>
@@ -127,16 +128,16 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,onPrivacy,sta
      {currentWallet?.premium
       ? <View style={{flexDirection:'row',alignItems:'center',gap:5,alignSelf:'flex-start',paddingHorizontal:10,paddingVertical:4,borderRadius:10,backgroundColor:'#3A2A12',borderWidth:1,borderColor:'#7A5A1E'}}>
          <Ionicons name="star" size={12} color={palette.yellowGold}/>
-         <Text style={{fontFamily:fonts.semibold,fontSize:11,color:palette.yellowGold}}>Miembro Premium</Text>
+         <Text style={{fontFamily:fonts.semibold,fontSize:11,color:palette.yellowGold}}>{tr("Miembro Premium")}</Text>
         </View>
       : <Text style={s.caption}>{account.user?'Cuenta gratuita':'Sin sesión iniciada'}</Text>}
     </View>
    </View>}
 
    {!premiumPage&&<View style={{flexDirection:'row',gap:10}}>
-    <View style={s.statBox}><Text style={s.statValue}>{stats.routes}</Text><Text style={s.statLabel}>Rutas</Text></View>
-    <View style={s.statBox}><Text style={s.statValue}>{decimal(stats.km,1)}</Text><Text style={s.statLabel}>km recorridos</Text></View>
-    <View style={s.statBox}><Text style={s.statValue}>{stats.favorites}</Text><Text style={s.statLabel}>Favoritas</Text></View>
+    <View style={s.statBox}><Text style={s.statValue}>{stats.routes}</Text><Text style={s.statLabel}>{tr("Rutas")}</Text></View>
+    <View style={s.statBox}><Text style={s.statValue}>{decimal(stats.km,1)}</Text><Text style={s.statLabel}>{tr("km recorridos")}</Text></View>
+    <View style={s.statBox}><Text style={s.statValue}>{stats.favorites}</Text><Text style={s.statLabel}>{tr("Favoritas")}</Text></View>
    </View>}
 
    {!premiumPage&&<View style={{backgroundColor:'#15112D',borderRadius:20,borderWidth:1,borderColor:'#241C40',paddingHorizontal:16}}>
@@ -154,11 +155,11 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,onPrivacy,sta
    </View>}
 
    {!premiumPage&&Platform.OS==='android'&&<View style={[s.card,{gap:8}]}>
-    <Text style={s.cardTitle}>Grabar con la pantalla bloqueada</Text>
-    <Text style={s.caption}>En Xiaomi, POCO o Redmi, GHOVO puede cerrarse al bloquear el móvil si el sistema lo considera una app con restricciones. Marca GHOVO como «sin restricciones» en la lista que se abre aquí.</Text>
-    <Pressable accessibilityRole="button" accessibilityLabel="Configurar batería sin restricciones" onPress={openBatterySettings} style={[s.button,s.secondary,{flexDirection:'row',gap:8}]}>
+    <Text style={s.cardTitle}>{tr("Grabar con la pantalla bloqueada")}</Text>
+    <Text style={s.caption}>{tr("En Xiaomi, POCO o Redmi, GHOVO puede cerrarse al bloquear el móvil si el sistema lo considera una app con restricciones. Marca GHOVO como «sin restricciones» en la lista que se abre aquí.")}</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel={tr("Configurar batería sin restricciones")} onPress={openBatterySettings} style={[s.button,s.secondary,{flexDirection:'row',gap:8}]}>
      <Ionicons name="battery-charging-outline" size={16} color="#FFFFFF"/>
-     <Text style={s.lightText}>Batería sin restricciones</Text>
+     <Text style={s.lightText}>{tr("Batería sin restricciones")}</Text>
     </Pressable>
    </View>}
 
@@ -185,11 +186,11 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,onPrivacy,sta
    </View>}
 
    {(!premiumPage||!account.user)&&<AccountPanel active={active}/>}
-   {!monetizationEnforced&&<Text style={s.caption}>Monetización sin activar: esta versión de pruebas mantiene los recorridos disponibles.</Text>}
+   {!monetizationEnforced&&<Text style={s.caption}>{tr('Monetización sin activar: esta versión de pruebas mantiene los recorridos disponibles.')}</Text>}
    {!premiumPage&&<View style={s.card}>
-    <Text style={s.eyebrow}>CRÉDITOS</Text>
+    <Text style={s.eyebrow}>{tr("CRÉDITOS")}</Text>
     <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingVertical:2}}>
-     <Text style={{color:'#ffffff',fontSize:15,fontWeight:'600'}}>Estado de Saldo ℹ</Text>
+     <Text style={{color:'#ffffff',fontSize:15,fontWeight:'600'}}>{tr("Estado de Saldo ℹ")}</Text>
      <Text style={{color:currentWallet?.premium?'#00e5a3':'#ffffff',fontSize:16,fontWeight:'700',fontVariant:['tabular-nums']}}>
       {currentWallet?.premium?'Premium · rutas ilimitadas':currentWallet?`${currentWallet.available} créditos disponibles`:'Saldo sin verificar'}
      </Text>
@@ -197,28 +198,28 @@ export function CreditsScreen({premiumPage,active,onHome,onPremium,onPrivacy,sta
     <Text style={s.caption}>{currentWallet?'Saldo consultado en el servidor. No caduca.':'Inicia sesión para consultar el saldo verificado de tu cuenta.'}</Text>
     {!!message&&<Text accessibilityLiveRegion="polite" style={s.muted}>{message}</Text>}
     {!!currentWallet?.reserved&&<Text style={s.muted}>{currentWallet.reserved} crédito reservado para un inicio pendiente; todavía no se ha consumido.</Text>}
-    {!!account.user&&<Action label="Actualizar saldo" disabled={busy||account.recovery} onPress={()=>void run(refresh)}/>}
-    {!!account.user&&<Pressable accessibilityRole="button" accessibilityLabel="Cerrar sesión" disabled={busy} onPress={()=>void run(logoutAccount)} style={[s.button,s.danger,{marginTop:4}]}><Text style={[s.buttonText,s.dangerText]}>Cerrar sesión</Text></Pressable>}
-    {pending&&<Action label="Revisar inicio pendiente" disabled={busy||account.recovery} onPress={()=>void run(async()=>{await recoverBilling();await refresh();})}/>}
+    {!!account.user&&<Action label={tr("Actualizar saldo")} disabled={busy||account.recovery} onPress={()=>void run(refresh)}/>}
+    {!!account.user&&<Pressable accessibilityRole="button" accessibilityLabel={tr("Cerrar sesión")} disabled={busy} onPress={()=>void run(logoutAccount)} style={[s.button,s.danger,{marginTop:4}]}><Text style={[s.buttonText,s.dangerText]}>{tr("Cerrar sesión")}</Text></Pressable>}
+    {pending&&<Action label={tr("Revisar inicio pendiente")} disabled={busy||account.recovery} onPress={()=>void run(async()=>{await recoverBilling();await refresh();})}/>}
    </View>}
    {!premiumPage&&<View style={s.card}>
-    <Text style={s.cardTitle}>Conseguir créditos</Text><Text style={s.muted}>Mira un anuncio y consigue una ruta gratis.</Text><Text style={s.caption}>1 recompensa confirmada = 1 crédito. Máximo {currentWallet?.config.dailyAdLimit??10} al día y hasta 50 acumulados. No caducan.</Text>
+    <Text style={s.cardTitle}>{tr("Conseguir créditos")}</Text><Text style={s.muted}>{tr("Mira un anuncio y consigue una ruta gratis.")}</Text><Text style={s.caption}>1 recompensa confirmada = 1 crédito. Máximo {currentWallet?.config.dailyAdLimit??10} al día y hasta 50 acumulados. No caducan.</Text>
     {currentWallet&&!currentWallet.premium&&<Text style={s.caption}>Recompensas restantes hoy: {currentWallet.adsRemaining}. La disponibilidad de anuncios depende del proveedor.</Text>}
-    <Action label="Ver anuncio para conseguir 1 crédito" disabled={!canWatchAd} onPress={onWatchAd}/>
+    <Action label={tr("Ver anuncio para conseguir 1 crédito")} disabled={!canWatchAd} onPress={onWatchAd}/>
     {!consent.canRequestAds&&<>
-      <Text style={s.caption}>Los anuncios necesitan tu consentimiento de privacidad. Puedes cambiarlo cuando quieras.</Text>
-      <Action label="Opciones de privacidad" disabled={busy} onPress={()=>void run(async()=>{await showPrivacyOptions();})}/>
+      <Text style={s.caption}>{tr("Los anuncios necesitan tu consentimiento de privacidad. Puedes cambiarlo cuando quieras.")}</Text>
+      <Action label={tr("Opciones de privacidad")} disabled={busy} onPress={()=>void run(async()=>{await showPrivacyOptions();})}/>
     </>}
-    {consent.canRequestAds&&!adsConfigured&&<Text style={s.caption}>Versión de pruebas: Google sirve anuncios de prueba, sin ingresos.</Text>}
+    {consent.canRequestAds&&!adsConfigured&&<Text style={s.caption}>{tr('Versión de pruebas: Google sirve anuncios de prueba, sin ingresos.')}</Text>}
     <Text style={s.caption}>{active?'No se permiten anuncios con una ruta activa.':!account.user?'Inicia sesión para conseguir créditos.':currentWallet?.premium?'Tu cuenta ya tiene Premium activo con rutas ilimitadas.':currentWallet&&currentWallet.adsRemaining<=0?'Has alcanzado el límite diario de anuncios recompensados.':currentWallet&&currentWallet.available>=50?'Has alcanzado el límite máximo de créditos (50).':!consent.canRequestAds?'Sin consentimiento no se puede mostrar el anuncio.':!isLoaded?'Preparando el anuncio... Espera unos instantes.':'Al completar el vídeo se sumará 1 crédito automáticamente a tu saldo.'}</Text>
-    <Action label="Pasar a Premium" disabled={busy} onPress={onPremium}/>
+    <Action label={tr("Pasar a Premium")} disabled={busy} onPress={onPremium}/>
    </View>}
-   {premiumPage&&<View style={s.card}><Text style={s.eyebrow}>PAGO ÚNICO · SIN SUSCRIPCIONES</Text><Text style={s.resultTitle}>{currentWallet?.premium?'Premium verificado':`Precio previsto: ${price}`}</Text><Text style={s.muted}>Rutas ilimitadas de por vida, sin créditos ni anuncios y con las funciones actuales de GHOVO.</Text><Text style={s.caption}>El precio definitivo lo mostrará la tienda antes de confirmar. No hay cuotas mensuales ni anuales.</Text><Action label="Comprar Premium" disabled onPress={()=>{}}/><Action label="Restaurar compra" disabled onPress={()=>{}}/><Text style={s.caption}>Compras y restauración pendientes de conectar a Google Play. No se realiza ningún cobro desde esta pantalla. Si ya eres Premium, tus créditos se conservan.</Text>{!!message&&<Text style={s.muted}>{message}</Text>}</View>}
-   {!premiumPage&&currentWallet&&!!entries.length&&<View style={s.card}><Text style={s.cardTitle}>Últimos movimientos</Text>{entries.map(entry=><View key={entry.id} style={s.row}><View style={{flex:1,gap:4}}><Text style={s.lightText}>{entry.kind==='initial'?'Créditos iniciales':entry.kind==='reward'?'Recompensa verificada':'Inicio de ruta'}</Text><Text style={s.caption}>{new Date(entry.created_at).toLocaleString('es-ES')}</Text></View><Text style={s.lightText}>{entry.delta>0?'+':''}{entry.delta}</Text></View>)}</View>}
+   {premiumPage&&<View style={s.card}><Text style={s.eyebrow}>{tr("PAGO ÚNICO · SIN SUSCRIPCIONES")}</Text><Text style={s.resultTitle}>{currentWallet?.premium?'Premium verificado':`Precio previsto: ${price}`}</Text><Text style={s.muted}>{tr("Rutas ilimitadas de por vida, sin créditos ni anuncios y con las funciones actuales de GHOVO.")}</Text><Text style={s.caption}>{tr("El precio definitivo lo mostrará la tienda antes de confirmar. No hay cuotas mensuales ni anuales.")}</Text><Action label={tr("Comprar Premium")} disabled onPress={()=>{}}/><Action label={tr("Restaurar compra")} disabled onPress={()=>{}}/><Text style={s.caption}>{tr("Compras y restauración pendientes de conectar a Google Play. No se realiza ningún cobro desde esta pantalla. Si ya eres Premium, tus créditos se conservan.")}</Text>{!!message&&<Text style={s.muted}>{message}</Text>}</View>}
+   {!premiumPage&&currentWallet&&!!entries.length&&<View style={s.card}><Text style={s.cardTitle}>{tr("Últimos movimientos")}</Text>{entries.map(entry=><View key={entry.id} style={s.row}><View style={{flex:1,gap:4}}><Text style={s.lightText}>{entry.kind==='initial'?'Créditos iniciales':entry.kind==='reward'?'Recompensa verificada':'Inicio de ruta'}</Text><Text style={s.caption}>{new Date(entry.created_at).toLocaleString('es-ES')}</Text></View><Text style={s.lightText}>{entry.delta>0?'+':''}{entry.delta}</Text></View>)}</View>}
    {!premiumPage&&!!account.user&&<View style={[s.card,{borderColor:'#5C223C'}]}>
-    <Text style={s.cardTitle}>Eliminar mi cuenta</Text>
-    <Text style={s.caption}>Se borrarán tu cuenta GHOVO, tu saldo de créditos y los recorridos guardados en este móvil. No se puede deshacer.</Text>
-    <Pressable accessibilityRole="button" accessibilityLabel="Eliminar mi cuenta" disabled={busy} onPress={confirmDelete} style={[s.button,s.danger,{opacity:busy?0.5:1}]}><Text style={[s.buttonText,s.dangerText]}>Eliminar mi cuenta</Text></Pressable>
+    <Text style={s.cardTitle}>{tr("Eliminar mi cuenta")}</Text>
+    <Text style={s.caption}>{tr("Se borrarán tu cuenta GHOVO, tu saldo de créditos y los recorridos guardados en este móvil. No se puede deshacer.")}</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel={tr("Eliminar mi cuenta")} disabled={busy} onPress={confirmDelete} style={[s.button,s.danger,{opacity:busy?0.5:1}]}><Text style={[s.buttonText,s.dangerText]}>{tr("Eliminar mi cuenta")}</Text></Pressable>
    </View>}
   </ScrollView>
  </View>;

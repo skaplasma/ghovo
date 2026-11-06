@@ -1,3 +1,4 @@
+import { t as tr } from './i18n-core';
 import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Checkpoint } from './checkpoints';
@@ -237,7 +238,7 @@ export function RouteMap({
 
       <Pressable
         accessibilityRole="link"
-        accessibilityLabel="Créditos de OpenStreetMap"
+        accessibilityLabel={tr("Créditos de OpenStreetMap")}
         style={styles.credit}
         onPress={() => {
           Linking.openURL('https://www.openstreetmap.org/copyright').catch(() => {});

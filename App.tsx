@@ -1,3 +1,4 @@
+import { t as tr } from './src/i18n-core';
 import {CreditsScreen} from './src/CreditsScreen';
 import {AccountPanel, useAccount} from './src/AccountPanel';
 import {accountConfigured} from './src/account-client';
@@ -56,7 +57,7 @@ function StartSliderButton({ disabled, onPress }: { disabled: boolean; onPress: 
       <View pointerEvents="none" style={{ position: 'absolute', top: -5, left: -5, right: -5, bottom: -5, borderRadius: 37, backgroundColor: 'rgba(139,92,246,0.28)' }} />
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Nueva ruta"
+        accessibilityLabel={tr("Nueva ruta")}
         accessibilityState={{ disabled }}
         disabled={disabled}
         onPress={onPress}
@@ -119,12 +120,12 @@ function Metric({ label, value }: { label: string; value: string }) {
 const AttemptList=memo(function AttemptList({attempts,bestId,onOpen}:{attempts:Run[];bestId?:string;onOpen:(id:string)=>void}) {
   return <>{[...attempts].reverse().map(r=><View key={r.id} style={s.attempt}>
     <View style={{flex:1}}><Text style={s.lightText}>{date(r)}</Text><Text style={s.caption}>{km(r)}{r.incomplete?' · Sin comparación final':!isComparable(r)?' · Con cortes GPS':r.id===bestId?(r.mode==='driving'?' · Referencia':' · Mejor huella'):''}</Text></View>
-    <View style={{alignItems:'flex-end',gap:4}}><Text style={s.playTime}>{clock(duration(r))}</Text><Pressable accessibilityRole="button" accessibilityLabel={`Ver detalles del viaje ${date(r)}`} onPress={()=>onOpen(r.id)} style={{minHeight:44,justifyContent:'center',paddingHorizontal:8}}><Text style={s.tabSelected}>Ver detalles ›</Text></Pressable></View>
+    <View style={{alignItems:'flex-end',gap:4}}><Text style={s.playTime}>{clock(duration(r))}</Text><Pressable accessibilityRole="button" accessibilityLabel={`Ver detalles del viaje ${date(r)}`} onPress={()=>onOpen(r.id)} style={{minHeight:44,justifyContent:'center',paddingHorizontal:8}}><Text style={s.tabSelected}>{tr("Ver detalles ›")}</Text></Pressable></View>
   </View>)}</>;
 });
 function RouteNameField({onChange,initialName}:{onChange:(value:string)=>void;initialName:()=>string}){
   const [value,setValue]=useState(initialName);
-  return <TextInput accessibilityLabel="Nombre de la ruta" style={s.input} value={value} onChangeText={text=>{setValue(text);onChange(text);}} maxLength={60} placeholder="Nombre (Opcional)" placeholderTextColor="#80949b" autoCorrect={false} returnKeyType="done" onSubmitEditing={()=>Keyboard.dismiss()}/>;
+  return <TextInput accessibilityLabel={tr("Nombre de la ruta")} style={s.input} value={value} onChangeText={text=>{setValue(text);onChange(text);}} maxLength={60} placeholder={tr("Nombre (Opcional)")} placeholderTextColor="#80949b" autoCorrect={false} returnKeyType="done" onSubmitEditing={()=>Keyboard.dismiss()}/>;
 }
 const ScreenContent=createContext<React.ReactNode>(null);
 export function GhovoScreen(){return <>{useContext(ScreenContent)}</>;}
@@ -459,8 +460,8 @@ export function AppProvider({children}:{children:React.ReactNode}) {
       content = <View style={[s.root, { justifyContent: 'center', alignItems: 'center', gap: 16 }]}>
         <StatusBar style="light" />
         <View style={s.brandMark}><Image source={require('./assets/ghovo-logo-3d-v1.png')} style={s.brandMascot} resizeMode="contain" accessible={false} /></View>
-        <Text style={s.homeTitle}>Iniciando GHOVO...</Text>
-        <Text style={s.muted}>Cargando tu sesión segura</Text>
+        <Text style={s.homeTitle}>{tr("Iniciando GHOVO...")}</Text>
+        <Text style={s.muted}>{tr("Cargando tu sesión segura")}</Text>
       </View>;
     } else if(!welcomeForm) {
       content = <WelcomeScreen onSignIn={()=>setWelcomeForm(true)} onGuest={()=>setGuestAccess(true)}/>;
@@ -468,13 +469,13 @@ export function AppProvider({children}:{children:React.ReactNode}) {
       content = <View style={s.root}>
         <StatusBar style="light" />
         <View style={s.header}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Volver a la portada" onPress={()=>setWelcomeForm(false)} style={{width:42,height:42,borderRadius:21,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
+          <Pressable accessibilityRole="button" accessibilityLabel={tr("Volver a la portada")} onPress={()=>setWelcomeForm(false)} style={{width:42,height:42,borderRadius:21,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
             <Ionicons name="arrow-back" size={20} color="#FFFFFF"/>
           </Pressable>
-          <Text style={s.cardTitle}>Entrar en GHOVO</Text>
+          <Text style={s.cardTitle}>{tr("Entrar en GHOVO")}</Text>
         </View>
         <ScrollView contentContainerStyle={[s.content, { paddingTop: 12 }]} keyboardShouldPersistTaps="handled">
-          <Text style={s.muted}>Tu cuenta guarda tus rutas, tus créditos y tu fantasma. Sin sesión no se puede grabar.</Text>
+          <Text style={s.muted}>{tr("Tu cuenta guarda tus rutas, tus créditos y tu fantasma. Sin sesión no se puede grabar.")}</Text>
           <AccountPanel active={false} />
         </ScrollView>
       </View>;
@@ -507,7 +508,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           <View style={{width:9,height:9,borderRadius:5,backgroundColor:gps.ready?'#10B981':'#EAB308'}} />
         </View>
         <View style={{flex:1,gap:1}}>
-          <Text style={{fontFamily:fonts.semibold,color:'#FFFFFF',fontSize:13}}>Ubicación actual</Text>
+          <Text style={{fontFamily:fonts.semibold,color:'#FFFFFF',fontSize:13}}>{tr("Ubicación actual")}</Text>
           <Text numberOfLines={1} style={{fontFamily:fonts.medium,color:gps.ready?'#34D399':'#FBBF24',fontSize:11.5}}>
             {gps.ready ? `GPS estable · ±${Math.round(gps.accuracy ?? 4)} m` : gps.message}
           </Text>
@@ -526,7 +527,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           <Text style={s.eyebrow}>{serviceRunning?'GRABACIÓN EN CURSO':'RUTA PENDIENTE'}</Text>
           <Text style={s.cardTitle}>{run.name}</Text>
           <Text style={s.muted}>{serviceRunning?'Tu ruta sigue grabándose.':'Vuelve a tu ruta para revisar el GPS o reanudarla.'}</Text>
-          <Button label="Volver a mi ruta" onPress={()=>{setHomeDuringRun(false);router.replace('/route');}}/>
+          <Button label={tr("Volver a mi ruta")} onPress={()=>{setHomeDuringRun(false);router.replace('/route');}}/>
         </View>
       ) : (
         <>
@@ -534,64 +535,64 @@ export function AppProvider({children}:{children:React.ReactNode}) {
 
           {/* Accesos rápidos */}
           <View style={s.quickRow}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Ir a Mis Rutas" onPress={()=>router.replace('/library')} style={s.quickCard}>
+            <Pressable accessibilityRole="button" accessibilityLabel={tr("Ir a Mis Rutas")} onPress={()=>router.replace('/library')} style={s.quickCard}>
               <Ionicons name="map" size={22} color={palette.purpleLight} />
-              <Text style={s.quickCardLabel}>Mis rutas</Text>
+              <Text style={s.quickCardLabel}>{tr("Mis rutas")}</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Ir a mi cuenta" onPress={()=>router.replace('/credits')} style={s.quickCard}>
+            <Pressable accessibilityRole="button" accessibilityLabel={tr("Ir a mi cuenta")} onPress={()=>router.replace('/credits')} style={s.quickCard}>
               <Ionicons name="person" size={22} color={palette.purpleLight} />
-              <Text style={s.quickCardLabel}>Mi cuenta</Text>
+              <Text style={s.quickCardLabel}>{tr("Mi cuenta")}</Text>
             </Pressable>
-            {__DEV__&&<Pressable accessibilityRole="button" accessibilityLabel="Abrir el simulador" onPress={()=>setSimulator(true)} style={s.quickCard}>
+            {__DEV__&&<Pressable accessibilityRole="button" accessibilityLabel={tr("Abrir el simulador")} onPress={()=>setSimulator(true)} style={s.quickCard}>
               <Ionicons name="speedometer" size={22} color={palette.purpleLight} />
-              <Text style={s.quickCardLabel}>Simulador</Text>
+              <Text style={s.quickCardLabel}>{tr("Simulador")}</Text>
             </Pressable>}
           </View>
 
           {/* Mi actividad */}
           <View style={{gap:10}}>
             <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
-              <Text style={[s.eyebrow,{color:'#8E87AB'}]}>MI ACTIVIDAD</Text>
-              <Pressable accessibilityRole="button" accessibilityLabel="Ver historial" onPress={()=>router.replace('/library')}>
-                <Text style={{fontFamily:fonts.semibold,color:palette.purpleBright,fontSize:12}}>Ver todo ›</Text>
+              <Text style={[s.eyebrow,{color:'#8E87AB'}]}>{tr("MI ACTIVIDAD")}</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel={tr("Ver historial")} onPress={()=>router.replace('/library')}>
+                <Text style={{fontFamily:fonts.semibold,color:palette.purpleBright,fontSize:12}}>{tr("Ver todo ›")}</Text>
               </Pressable>
             </View>
             <View style={{flexDirection:'row',gap:10}}>
               <View style={s.statBox}>
                 <Text style={s.statValue}>{summaries.length}</Text>
-                <Text style={s.statLabel}>Rutas</Text>
+                <Text style={s.statLabel}>{tr("Rutas")}</Text>
               </View>
               <View style={s.statBox}>
                 <Text style={s.statValue}>{decimal(activity.meters/1000,1)}</Text>
-                <Text style={s.statLabel}>km recorridos</Text>
+                <Text style={s.statLabel}>{tr("km recorridos")}</Text>
               </View>
               <View style={s.statBox}>
                 <Text style={s.statValue}>{favoriteRoutes.length}</Text>
-                <Text style={s.statLabel}>Destacadas</Text>
+                <Text style={s.statLabel}>{tr("Destacadas")}</Text>
               </View>
             </View>
           </View>
 
-          {!!pendingRecordings.length&&<View style={s.card}><Text style={s.cardTitle}>Recorridos pendientes</Text><Text style={s.caption}>Sus puntos están guardados. Puedes recuperarlos para finalizar o continuar.</Text>{pendingRecordings.map(item=><Button key={item.id} label={`Recuperar ${item.name}`} secondary disabled={disabled} onPress={()=>void act(()=>restorePending(item.id))}/>)}</View>}
+          {!!pendingRecordings.length&&<View style={s.card}><Text style={s.cardTitle}>{tr("Recorridos pendientes")}</Text><Text style={s.caption}>{tr("Sus puntos están guardados. Puedes recuperarlos para finalizar o continuar.")}</Text>{pendingRecordings.map(item=><Button key={item.id} label={`Recuperar ${item.name}`} secondary disabled={disabled} onPress={()=>void act(()=>restorePending(item.id))}/>)}</View>}
           {[{title:'Favoritas',routes:favoriteRoutes},{title:'Tus rutas habituales',routes:habits}].map(group=>group.routes.length>0&&<View key={group.title} style={{gap:12}}><Text style={s.sectionTitle}>{group.title}</Text>
-          {group.routes.map(habit=><View key={habit.reference.routeId} style={[s.card,{flexDirection:'row',alignItems:'center',padding:14,gap:12}]}><View style={{flex:1,gap:5}}><Text style={[s.cardTitle,{fontSize:16}]} numberOfLines={2}>{habit.reference.name}</Text><Text style={s.caption}>{km(habit.reference)} · {habit.attempts.length} {habit.attempts.length===1?'viaje':'viajes'}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Iniciar ${habit.reference.name}`} accessibilityState={{disabled}} disabled={disabled} onPress={()=>startHabit(habit.reference.routeId)} style={[s.button,{minHeight:44,paddingVertical:10,paddingHorizontal:14}]}><Text style={s.buttonText}>Iniciar</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Ver ${habit.reference.name}`} disabled={disabled} onPress={()=>choose(habit.reference.routeId)} style={{minHeight:44,minWidth:32,justifyContent:'center',alignItems:'center'}}><Text style={s.tabSelected}>›</Text></Pressable></View>)}</View>)}
-          {!summaries.length&&<MascotMessage title="Tu primera huella" message="Graba de A a B. Tus rutas aparecerán aquí para volver a utilizarlas."/>}
+          {group.routes.map(habit=><View key={habit.reference.routeId} style={[s.card,{flexDirection:'row',alignItems:'center',padding:14,gap:12}]}><View style={{flex:1,gap:5}}><Text style={[s.cardTitle,{fontSize:16}]} numberOfLines={2}>{habit.reference.name}</Text><Text style={s.caption}>{km(habit.reference)} · {habit.attempts.length} {habit.attempts.length===1?'viaje':'viajes'}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Iniciar ${habit.reference.name}`} accessibilityState={{disabled}} disabled={disabled} onPress={()=>startHabit(habit.reference.routeId)} style={[s.button,{minHeight:44,paddingVertical:10,paddingHorizontal:14}]}><Text style={s.buttonText}>{tr("Iniciar")}</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel={`Ver ${habit.reference.name}`} disabled={disabled} onPress={()=>choose(habit.reference.routeId)} style={{minHeight:44,minWidth:32,justifyContent:'center',alignItems:'center'}}><Text style={s.tabSelected}>›</Text></Pressable></View>)}</View>)}
+          {!summaries.length&&<MascotMessage title={tr("Tu primera huella")} message="Graba de A a B. Tus rutas aparecerán aquí para volver a utilizarlas."/>}
           {__DEV__&&<Button label={moreOptions?'Ocultar herramientas de prueba':'Herramientas de prueba'} secondary onPress={()=>setMoreOptions(value=>!value)}/>}
-          {__DEV__&&moreOptions&&<Button label="Abrir simulador" secondary disabled={disabled} onPress={()=>setSimulator(true)}/>}
+          {__DEV__&&moreOptions&&<Button label={tr("Abrir simulador")} secondary disabled={disabled} onPress={()=>setSimulator(true)}/>}
         </>
       )}
     </ScrollView>{!run&&navigation}
   </View>;
 
   else if(pathname==='/gps')content=<View style={s.root}>
-    <View style={s.header}><Button label="← Inicio" secondary onPress={goHome}/><Text style={s.cardTitle}>Ubicación</Text></View>
+    <View style={s.header}><Button label={tr("← Inicio")} secondary onPress={goHome}/><Text style={s.cardTitle}>{tr("Ubicación")}</Text></View>
     <ScrollView contentContainerStyle={s.content}>
-      <Text style={s.title}>Estado del GPS</Text><Text style={s.muted}>{gps.message}</Text>
+      <Text style={s.title}>{tr("Estado del GPS")}</Text><Text style={s.muted}>{gps.message}</Text>
       <CurrentLocation point={gps.point} now={now} message={gps.message} onRetry={gps.retry}/>
       {gps.accuracy!==undefined&&<Text style={s.lightText}>Precisión estimada: ±{Math.round(gps.accuracy)} m</Text>}
-      <Text style={s.caption}>Puedes consultar esta pantalla sin señal. Para empezar una ruta necesitamos una posición precisa y estable.</Text>
-      <Button label="Reintentar ubicación" onPress={gps.retry}/>
-      <Button label="Abrir permisos de GHOVO" secondary onPress={()=>{void Linking.openSettings().catch(()=>{});}}/>
+      <Text style={s.caption}>{tr("Puedes consultar esta pantalla sin señal. Para empezar una ruta necesitamos una posición precisa y estable.")}</Text>
+      <Button label={tr("Reintentar ubicación")} onPress={gps.retry}/>
+      <Button label={tr("Abrir permisos de GHOVO")} secondary onPress={()=>{void Linking.openSettings().catch(()=>{});}}/>
       <GpsDiagnostics/>
     </ScrollView>
   </View>;
@@ -600,15 +601,15 @@ export function AppProvider({children}:{children:React.ReactNode}) {
     {navigation}
   </View>;
   else if(detailMap&&!run&&selected)content=<View style={s.root}>
-    <View style={[s.header,{gap:12}]}><Button label="← Volver a la ruta" secondary onPress={()=>router.back()}/><Text style={[s.cardTitle,{flex:1}]} numberOfLines={1}>{reference?.name}</Text></View>
+    <View style={[s.header,{gap:12}]}><Button label={tr("← Volver a la ruta")} secondary onPress={()=>router.back()}/><Text style={[s.cardTitle,{flex:1}]} numberOfLines={1}>{reference?.name}</Text></View>
     <View style={{flex:1,marginHorizontal:12,borderRadius:18,overflow:'hidden'}}><RouteMap points={points} recording={false} preparing checkpoints={checkpoints.points}/></View>
-    <View style={{padding:16}}><Button label="Cerrar mapa" onPress={()=>router.back()}/></View>
+    <View style={{padding:16}}><Button label={tr("Cerrar mapa")} onPress={()=>router.back()}/></View>
   </View>;
   else content=<View style={s.root}>
     {run&&foreground&&keepScreenOn&&<RecordingAwake/>}
     <StatusBar style="light" />
     <View style={s.header}>
-      <Pressable accessibilityRole="button" accessibilityLabel="GHOVO · Ir a Inicio" onPress={goHome} style={{width:42,height:42,borderRadius:21,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
+      <Pressable accessibilityRole="button" accessibilityLabel={tr("GHOVO · Ir a Inicio")} onPress={goHome} style={{width:42,height:42,borderRadius:21,backgroundColor:'#1A1435',borderWidth:1,borderColor:'#2D2350',alignItems:'center',justifyContent:'center'}}>
         <Ionicons name="chevron-back" size={22} color="#FFFFFF"/>
       </Pressable>
       {run&&<Text style={[s.badge,s.liveBadge]}>● EN RUTA</Text>}
@@ -619,28 +620,28 @@ export function AppProvider({children}:{children:React.ReactNode}) {
       {!run&&section!=='library'&&<View style={s.row}><Button label={selected?'← Mis rutas':'← Inicio'} secondary onPress={()=>{if(selected)setSection('library');else{choose(null);setSection('home');}}}/></View>}
 
       {!run&&!result&&selected&&section==='route'&&<View style={{paddingHorizontal:18,paddingVertical:10,gap:8}}>
-        {detailTab!=='summary'&&<Pressable accessibilityRole="button" accessibilityLabel="Volver al detalle de la ruta" onPress={()=>setDetailTab('summary')} style={s.optionsLink}><Text style={s.tabSelected}>← {reference?.name}</Text></Pressable>}
+        {detailTab!=='summary'&&<Pressable accessibilityRole="button" accessibilityLabel={tr("Volver al detalle de la ruta")} onPress={()=>setDetailTab('summary')} style={s.optionsLink}><Text style={s.tabSelected}>← {reference?.name}</Text></Pressable>}
         <Text style={s.cardTitle} numberOfLines={1}>{detailTab==='summary'?reference?.name:detailTab==='settings'?'Ajustes de la ruta':'Historial de viajes'}</Text>
         <View style={{flexDirection:'row',gap:8}}>
           <View style={{flex:1}}><Button label={personal?.favorite ? '★ Favorita' : '☆ Favorita'} secondary disabled={disabled} onPress={() => void act(() => updateRouteDetails({ favorite: !personal?.favorite }))} /></View>
-          <View style={{flex:1}}><Button label="⤴ Compartir" secondary disabled={disabled||!reference} onPress={() => { if (reference) void act(() => shareRoute(reference)); }} /></View>
+          <View style={{flex:1}}><Button label={tr("⤴ Compartir")} secondary disabled={disabled||!reference} onPress={() => { if (reference) void act(() => shareRoute(reference)); }} /></View>
         </View>
       </View>}
       <ScrollView key={`${section}:${selected??'new'}:${detailTab}`} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
-        {!ready && !loadError && <Text style={s.muted}>Cargando tus rutas…</Text>}
+        {!ready && !loadError && <Text style={s.muted}>{tr("Cargando tus rutas…")}</Text>}
         {loadError ? <>
-          <Text style={s.title}>Revisemos tus datos</Text><Text style={s.warning}>{describeError(loadError)}</Text>
+          <Text style={s.title}>{tr("Revisemos tus datos")}</Text><Text style={s.warning}>{describeError(loadError)}</Text>
           <Text style={s.caption}>Detalle técnico: {loadError}</Text>
-          <Text style={s.muted}>No hemos borrado las rutas. Puedes reintentar la lectura o usar una copia de recuperación.</Text>
-          <Button label="Volver a leer datos" disabled={busy} onPress={()=>void act(refresh)}/>
+          <Text style={s.muted}>{tr("No hemos borrado las rutas. Puedes reintentar la lectura o usar una copia de recuperación.")}</Text>
+          <Button label={tr("Volver a leer datos")} disabled={busy} onPress={()=>void act(refresh)}/>
           <DataTools disabled={busy} onChanged={refresh}/>
-        </> : run ? <>{pendingRecovery&&<View style={s.card}><Text style={s.cardTitle}>Tienes un recorrido sin terminar</Text><Text style={s.muted}>Los puntos guardados siguen aquí. El tiempo incluye la interrupción.</Text><Button label="Continuar recorrido" disabled={disabled} onPress={()=>void act(recover)}/><Button label="Guardar pendiente y volver a Inicio" secondary disabled={disabled} onPress={discard}/></View>}<RecordingPanel run={run} now={now} distance={currentDistance} serviceRunning={serviceRunning} keepScreenOn={keepScreenOn} disabled={disabled} onToggleScreen={()=>setKeepScreenOn(value=>!value)} onRecover={()=>void act(recover)} onDiscard={discard} comparisonReference={comparisonReference} onToggleVoice={()=>void act(toggleVoice)} onHelp={()=>Alert.alert('Grabación con pantalla bloqueada','Revisa el permiso de ubicación precisa y en segundo plano. En el POCO, comprueba también que GHOVO puede trabajar en segundo plano y que su batería no esté restringida. Los nombres de estos ajustes cambian según MIUI/HyperOS.',[{text:'Cerrar'},{text:'Abrir ajustes de GHOVO',onPress:()=>{void Linking.openSettings();}}])} toStart={toStart}/></> : section === 'library' ? <>
+        </> : run ? <>{pendingRecovery&&<View style={s.card}><Text style={s.cardTitle}>{tr("Tienes un recorrido sin terminar")}</Text><Text style={s.muted}>{tr("Los puntos guardados siguen aquí. El tiempo incluye la interrupción.")}</Text><Button label={tr("Continuar recorrido")} disabled={disabled} onPress={()=>void act(recover)}/><Button label={tr("Guardar pendiente y volver a Inicio")} secondary disabled={disabled} onPress={discard}/></View>}<RecordingPanel run={run} now={now} distance={currentDistance} serviceRunning={serviceRunning} keepScreenOn={keepScreenOn} disabled={disabled} onToggleScreen={()=>setKeepScreenOn(value=>!value)} onRecover={()=>void act(recover)} onDiscard={discard} comparisonReference={comparisonReference} onToggleVoice={()=>void act(toggleVoice)} onHelp={()=>Alert.alert('Grabación con pantalla bloqueada','Revisa el permiso de ubicación precisa y en segundo plano. En el POCO, comprueba también que GHOVO puede trabajar en segundo plano y que su batería no esté restringida. Los nombres de estos ajustes cambian según MIUI/HyperOS.',[{text:'Cerrar'},{text:'Abrir ajustes de GHOVO',onPress:()=>{void Linking.openSettings();}}])} toStart={toStart}/></> : section === 'library' ? <>
           <Text style={s.title}>{tr('library.title')}</Text>
           <View style={s.row}>
           <View style={{flex:1}}>
             <TextInput accessibilityLabel={tr('library.search')} value={query} onChangeText={setQuery} placeholder={tr('library.searchPlaceholder')} placeholderTextColor="#80949b" style={s.input} maxLength={80} />
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Filtros de rutas" accessibilityState={{expanded:filterOptions}} onPress={()=>setFilterOptions(value=>!value)} style={[s.secondary,{minHeight:52,paddingHorizontal:14,justifyContent:'center'}]}>
+          <Pressable accessibilityRole="button" accessibilityLabel={tr("Filtros de rutas")} accessibilityState={{expanded:filterOptions}} onPress={()=>setFilterOptions(value=>!value)} style={[s.secondary,{minHeight:52,paddingHorizontal:14,justifyContent:'center'}]}>
             <Text style={s.tabSelected}>{favoritesOnly?'★ Filtros':'Filtros'}</Text>
           </Pressable>
         </View>
@@ -649,38 +650,38 @@ export function AppProvider({children}:{children:React.ReactNode}) {
         <View style={{flexDirection:'row',gap:8,paddingVertical:4}}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Ver todas las rutas"
+            accessibilityLabel={tr("Ver todas las rutas")}
             onPress={() => { setFavoritesOnly(false); setOrder('recent'); }}
             style={[
               {paddingVertical:8,paddingHorizontal:16,borderRadius:16,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959'},
               !favoritesOnly && order==='recent' && {backgroundColor:'#8B5CF6',borderColor:'#8B5CF6'}
             ]}
           >
-            <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>Todas</Text>
+            <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>{tr("Todas")}</Text>
           </Pressable>
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Filtrar por récords"
+            accessibilityLabel={tr("Filtrar por récords")}
             onPress={() => { setFavoritesOnly(false); setOrder('best'); }}
             style={[
               {paddingVertical:8,paddingHorizontal:16,borderRadius:16,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959'},
               !favoritesOnly && order==='distance' && {backgroundColor:'#8B5CF6',borderColor:'#8B5CF6'}
             ]}
           >
-            <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>Récords</Text>
+            <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>{tr("Récords")}</Text>
           </Pressable>
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Filtrar por favoritas"
+            accessibilityLabel={tr("Filtrar por favoritas")}
             onPress={() => setFavoritesOnly(value => !value)}
             style={[
               {paddingVertical:8,paddingHorizontal:16,borderRadius:16,backgroundColor:'#211B3C',borderWidth:1,borderColor:'#332959'},
               favoritesOnly && {backgroundColor:'#8B5CF6',borderColor:'#8B5CF6'}
             ]}
           >
-            <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>Favoritas</Text>
+            <Text style={{color:'#FFFFFF',fontSize:12,fontWeight:'700'}}>{tr("Favoritas")}</Text>
           </Pressable>
         </View>
           {filterOptions&&<>
@@ -688,7 +689,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           <View style={s.row}>{([['recent', 'Recientes'], ['name', 'Nombre'], ['distance', 'Distancia']] as const).map(([value, label]) => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: order === value }} onPress={() => setOrder(value)} style={[s.tab, order === value && s.tabActive]}><Text style={order === value ? s.tabSelected : s.caption}>{label}</Text></Pressable>)}</View>
           </>}
           {!!summaries.length && !visibleRoutes.length && <Text style={s.muted}>{favoritesOnly ? 'No hay favoritas que coincidan. Marca una ruta con la estrella o desactiva este filtro.' : 'No hay rutas con ese nombre. Prueba otra búsqueda.'}</Text>}
-          {!summaries.length && <View style={s.card}><MascotMessage title="Tu primera huella empieza aquí" message="Graba un recorrido. Aquí guardarás su trazado y los tiempos de cada salida."/></View>}
+          {!summaries.length && <View style={s.card}><MascotMessage title={tr("Tu primera huella empieza aquí")} message="Graba un recorrido. Aquí guardarás su trazado y los tiempos de cada salida."/></View>}
           {visibleRoutes.map(summary => <RouteCard
             key={summary.reference.routeId}
             summary={summary}
@@ -701,47 +702,47 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           <Button label={activityOpen?'Ocultar actividad acumulada':`Tu actividad · ${activity.routes} rutas · ${decimal(activity.meters/1000,2)} km`} secondary onPress={()=>setActivityOpen(value=>!value)}/>
           {activityOpen&&<>
           <View style={s.card}>
-            <Text style={s.cardTitle}>Tu actividad acumulada</Text>
-            <View style={s.metrics}><Metric label="Kilómetros registrados" value={decimal(activity.meters / 1000,2)} /><Metric label="Tiempo total" value={`${Math.floor(activity.milliseconds / 3600000)} h ${Math.floor(activity.milliseconds / 60000) % 60} min`} /></View>
+            <Text style={s.cardTitle}>{tr("Tu actividad acumulada")}</Text>
+            <View style={s.metrics}><Metric label={tr("Kilómetros registrados")} value={decimal(activity.meters / 1000,2)} /><Metric label={tr("Tiempo total")} value={`${Math.floor(activity.milliseconds / 3600000)} h ${Math.floor(activity.milliseconds / 60000) % 60} min`} /></View>
             <Text style={s.caption}>{activity.routes} rutas · {activity.attempts} intentos completados · {activity.days} días con actividad</Text>
-            <Text style={s.caption}>Incluye todas las repeticiones guardadas y las paradas durante cada intento.</Text>
+            <Text style={s.caption}>{tr("Incluye todas las repeticiones guardadas y las paradas durante cada intento.")}</Text>
           </View>
           </>}
           <Button label={dataOptions?'Ocultar copias y opciones':'Copias y opciones'} secondary onPress={()=>setDataOptions(value=>!value)}/>
           {dataOptions&&<DataTools disabled={disabled} onChanged={refresh} />}
         </> : <>
           {result && <View style={[s.card,s.resultCard]}>
-            <View style={s.resultHero}><Image source={require('./assets/ghovo-logo-3d-v1.png')} style={s.resultMascot} resizeMode="contain" accessible={false}/><View style={{flex:1,gap:5}}><Text style={s.resultEyebrow}>RUTA GUARDADA</Text><Text style={s.caption}>Tu huella ya está en Mis rutas.</Text></View></View>
+            <View style={s.resultHero}><Image source={require('./assets/ghovo-logo-3d-v1.png')} style={s.resultMascot} resizeMode="contain" accessible={false}/><View style={{flex:1,gap:5}}><Text style={s.resultEyebrow}>{tr("RUTA GUARDADA")}</Text><Text style={s.caption}>{tr("Tu huella ya está en Mis rutas.")}</Text></View></View>
             <Text style={s.resultTitle}>{result.run.incomplete?'Recorrido guardado':result.status === 'incomplete'?'Recorrido con interrupciones GPS':result.run.mode==='driving'?'Felicidades, has llegado':result.status === 'first' ? 'Tu primera huella en esta ruta' : result.status === 'record' ? 'Nueva mejor huella personal' : result.status === 'tie' ? 'Has igualado tu mejor tiempo' : 'Una nueva huella completada'}</Text>
             {result.run.notice?.kind==='arrival'&&<Text accessibilityLiveRegion="polite" style={s.tabSelected}>{result.run.notice.message}</Text>}
             <Text style={s.muted}>{result.run.name} · {date(result.run)}</Text>
             {(result.run.gpsGaps??recordingQuality(result.run.points).gaps)>0 && <Text style={s.warning}>Este registro contiene {result.run.gpsGaps??recordingQuality(result.run.points).gaps} interrupciones GPS de más de 30 segundos. La distancia y el trazado pueden ser incompletos.</Text>}
-            <View style={s.metrics}><Metric label="Distancia registrada" value={`${decimal(result.distance / 1000,2)} km`} /><Metric label="Duración" value={clock(result.time)} /></View>
-            {result.run.incomplete?<Text style={s.muted}>El recorrido está guardado. La llegada o el recorrido A→B completo no se han confirmado; no se compara el tiempo final ni sustituye tu referencia.</Text>:result.status==='incomplete'?<Text style={s.muted}>La ruta está guardada, pero los cortes GPS no permiten una comparación fiable.</Text>:result.difference!==null?<Text style={s.muted}>{result.difference===0?'Llegaste en el mismo tiempo que tu referencia.':`Llegaste ${decimal(Math.abs(result.difference)/1000,1)} s ${result.difference<0?'antes':'más tarde'} que la referencia elegida (${clock(duration((result.comparisonReference??result.previousBest)!))}, ${date((result.comparisonReference??result.previousBest)!)}).`}</Text>:<Text style={s.muted}>Primera ruta en este modo. Será la referencia para tus próximos viajes.</Text>}
+            <View style={s.metrics}><Metric label={tr("Distancia registrada")} value={`${decimal(result.distance / 1000,2)} km`} /><Metric label={tr("Duración")} value={clock(result.time)} /></View>
+            {result.run.incomplete?<Text style={s.muted}>{tr('El recorrido está guardado. La llegada o el recorrido A→B completo no se han confirmado; no se compara el tiempo final ni sustituye tu referencia.')}</Text>:result.status==='incomplete'?<Text style={s.muted}>{tr("La ruta está guardada, pero los cortes GPS no permiten una comparación fiable.")}</Text>:result.difference!==null?<Text style={s.muted}>{result.difference===0?'Llegaste en el mismo tiempo que tu referencia.':`Llegaste ${decimal(Math.abs(result.difference)/1000,1)} s ${result.difference<0?'antes':'más tarde'} que la referencia elegida (${clock(duration((result.comparisonReference??result.previousBest)!))}, ${date((result.comparisonReference??result.previousBest)!)}).`}</Text>:<Text style={s.muted}>{tr("Primera ruta en este modo. Será la referencia para tus próximos viajes.")}</Text>}
 
             <TripDetails run={result.run}/>
             <SplitSummary run={result.run}/>
-            <Button label="Volver a Inicio" secondary disabled={disabled} onPress={() => void act(async () => { await write('lastResult', null); choose(null);setSection('home'); })} />
+            <Button label={tr("Volver a Inicio")} secondary disabled={disabled} onPress={() => void act(async () => { await write('lastResult', null); choose(null);setSection('home'); })} />
           </View>}
           {!result&&<>
           {!selected?<>
-            <Text style={s.homeTitle}>Nueva ruta</Text>
-            <Text style={s.muted}>Pon un nombre y espera a que el GPS esté preparado.</Text>
-            <View style={{gap:8}}><Text style={s.fieldLabel}>Nombre de la ruta</Text><RouteNameField initialName={()=>name.current} onChange={value=>{name.current=value;}}/></View>
+            <Text style={s.homeTitle}>{tr("Nueva ruta")}</Text>
+            <Text style={s.muted}>{tr("Pon un nombre y espera a que el GPS esté preparado.")}</Text>
+            <View style={{gap:8}}><Text style={s.fieldLabel}>{tr("Nombre de la ruta")}</Text><RouteNameField initialName={()=>name.current} onChange={value=>{name.current=value;}}/></View>
             <View style={[s.signalCard,{minHeight:76},!gps.ready&&s.signalAttention]}><View style={{flex:1,gap:6}}><Text accessibilityLiveRegion="polite" style={s.signalTitle}>{gps.message}</Text>{gps.accuracy!==undefined&&<Text style={s.caption}>Precisión estimada: ±{Math.round(gps.accuracy)} m</Text>}</View></View>
-            {!gps.ready&&<Button label="Reintentar GPS" secondary onPress={gps.retry}/>}
-            <Pressable accessibilityRole="button" onPress={()=>{Keyboard.dismiss();router.push('/gps');}} style={s.optionsLink}><Text style={s.tabSelected}>Ver estado del GPS ›</Text></Pressable>
+            {!gps.ready&&<Button label={tr("Reintentar GPS")} secondary onPress={gps.retry}/>}
+            <Pressable accessibilityRole="button" onPress={()=>{Keyboard.dismiss();router.push('/gps');}} style={s.optionsLink}><Text style={s.tabSelected}>{tr("Ver estado del GPS ›")}</Text></Pressable>
           </>:detail&&<>
             {detailTab==='summary'&&<>
-              <View style={s.metrics}><Metric label="Distancia" value={referenceDistance}/><Metric label="Último viaje" value={clock(duration(detail.latest))}/></View>
-              <View style={[s.row,{paddingVertical:4}]}><Text style={s.caption}>Referencia</Text><Text style={s.lightText}>{comparisonReference?clock(duration(comparisonReference)):'Sin referencia compatible'}</Text></View>
+              <View style={s.metrics}><Metric label={tr("Distancia")} value={referenceDistance}/><Metric label={tr("Último viaje")} value={clock(duration(detail.latest))}/></View>
+              <View style={[s.row,{paddingVertical:4}]}><Text style={s.caption}>{tr("Referencia")}</Text><Text style={s.lightText}>{comparisonReference?clock(duration(comparisonReference)):'Sin referencia compatible'}</Text></View>
 
-          <View style={[s.signalCard,!gps.ready&&s.signalAttention]}><Text accessibilityLiveRegion="polite" style={s.signalTitle}>{gps.ready?'◎':'⌕'} {gps.message}</Text>{gps.accuracy!==undefined&&<Text style={s.caption}>Precisión estimada: ±{Math.round(gps.accuracy)} m</Text>}</View>{!gps.ready&&<><Button label="Reintentar GPS" secondary onPress={gps.retry}/>{gps.message.includes('Ajustes')&&<Button label="Abrir ajustes de ubicación" secondary onPress={()=>{void Linking.openSettings();}}/>}</>}
+          <View style={[s.signalCard,!gps.ready&&s.signalAttention]}><Text accessibilityLiveRegion="polite" style={s.signalTitle}>{gps.ready?'◎':'⌕'} {gps.message}</Text>{gps.accuracy!==undefined&&<Text style={s.caption}>Precisión estimada: ±{Math.round(gps.accuracy)} m</Text>}</View>{!gps.ready&&<><Button label={tr("Reintentar GPS")} secondary onPress={gps.retry}/>{gps.message.includes('Ajustes')&&<Button label={tr("Abrir ajustes de ubicación")} secondary onPress={()=>{void Linking.openSettings();}}/>}</>}
           {!gps.ready&&<GpsDiagnostics/>}
 
-              <View style={s.row}><View style={{flex:1}}><Button label="Ajustes" secondary onPress={()=>setDetailTab('settings')}/></View><View style={{flex:1}}><Button label="Viajes" secondary onPress={()=>setDetailTab('trips')}/></View></View>
-              <Button label="Ver mapa de la ruta" secondary onPress={()=>{Keyboard.dismiss();router.push('/map');}}/>
-              <Button label="Análisis premium" secondary onPress={()=>{Keyboard.dismiss();router.push('/insights');}}/>
+              <View style={s.row}><View style={{flex:1}}><Button label={tr("Ajustes")} secondary onPress={()=>setDetailTab('settings')}/></View><View style={{flex:1}}><Button label={tr("Viajes")} secondary onPress={()=>setDetailTab('trips')}/></View></View>
+              <Button label={tr("Ver mapa de la ruta")} secondary onPress={()=>{Keyboard.dismiss();router.push('/map');}}/>
+              <Button label={tr("Análisis premium")} secondary onPress={()=>{Keyboard.dismiss();router.push('/insights');}}/>
               {reference&&<RouteInformation key={`${reference.routeId}:${reference.mode??'legacy'}`} reference={reference} attempts={detail.attempts}/>}
             </>}
             {detailTab==='settings'&&<>
@@ -750,36 +751,36 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           {<Text style={s.caption}>Modo: {modeLabel(routeMode)}</Text>}
 
             <View style={s.card}>
-              <Text style={s.cardTitle}>Notas del recorrido</Text>
+              <Text style={s.cardTitle}>{tr("Notas del recorrido")}</Text>
               {editingNote ? <>
-                <TextInput accessibilityLabel="Notas personales del recorrido" value={noteDraft} onChangeText={setNoteDraft} maxLength={1000} multiline textAlignVertical="top" style={[s.input, { minHeight: 110 }]} placeholder="Terreno, puntos de referencia o cualquier detalle para tu próxima salida…" placeholderTextColor="#80949b" />
+                <TextInput accessibilityLabel={tr("Notas personales del recorrido")} value={noteDraft} onChangeText={setNoteDraft} maxLength={1000} multiline textAlignVertical="top" style={[s.input, { minHeight: 110 }]} placeholder={tr("Terreno, puntos de referencia o cualquier detalle para tu próxima salida…")} placeholderTextColor="#80949b" />
                 <Text style={s.caption}>{noteDraft.length}/1000 · Solo en este dispositivo</Text>
-                <Button label="Guardar notas" disabled={disabled} onPress={() => void act(() => updateRouteDetails({ note: noteDraft.trim() }))} />
-                <Button label="Cancelar" secondary disabled={disabled} onPress={() => setEditingNote(false)} />
+                <Button label={tr("Guardar notas")} disabled={disabled} onPress={() => void act(() => updateRouteDetails({ note: noteDraft.trim() }))} />
+                <Button label={tr("Cancelar")} secondary disabled={disabled} onPress={() => setEditingNote(false)} />
               </> : <><Text style={s.muted}>{personal?.note || 'Añade detalles para recordar este recorrido.'}</Text><Button label={personal?.note ? 'Editar notas' : 'Añadir notas'} secondary disabled={disabled} onPress={() => { setNoteDraft(personal?.note ?? ''); setEditingNote(true); }} /></>}
             </View>
-            {editing ? <View style={s.card}><TextInput accessibilityLabel="Nuevo nombre de la ruta" value={editName} onChangeText={setEditName} maxLength={60} style={s.input} /><Button label="Guardar nombre" disabled={disabled || !editName.trim()} onPress={() => void act(rename)} /><Button label="Cancelar" secondary onPress={() => setEditing(false)} /></View> : <Button label="Cambiar nombre de la ruta" secondary disabled={disabled} onPress={() => { setEditName(reference?.name ?? ''); setEditing(true); }} />}
-            <Button label="Eliminar ruta y sus intentos" secondary danger disabled={disabled} onPress={removeRoute} />
+            {editing ? <View style={s.card}><TextInput accessibilityLabel={tr("Nuevo nombre de la ruta")} value={editName} onChangeText={setEditName} maxLength={60} style={s.input} /><Button label={tr("Guardar nombre")} disabled={disabled || !editName.trim()} onPress={() => void act(rename)} /><Button label={tr("Cancelar")} secondary onPress={() => setEditing(false)} /></View> : <Button label={tr("Cambiar nombre de la ruta")} secondary disabled={disabled} onPress={() => { setEditName(reference?.name ?? ''); setEditing(true); }} />}
+            <Button label={tr("Eliminar ruta y sus intentos")} secondary danger disabled={disabled} onPress={removeRoute} />
 
             </>}
             {detailTab==='trips'&&<>
-            <Text style={s.sectionTitle}>Tus intentos</Text>
-            <Button label="Ver resumen del último intento" secondary disabled={disabled} onPress={() => setResultId(detail.latest.id)} />
-            <Button label="Exportar último intento a GPX" secondary disabled={disabled} onPress={() => Alert.alert('Exportar recorrido', 'El archivo GPX contiene el trazado y las horas de este intento. Elige dónde guardarlo o con quién compartirlo desde el menú del móvil.', [{ text: 'Cancelar' }, { text: 'Continuar', onPress: () => void act(() => exportGpx(detail.latest)) }])} />
+            <Text style={s.sectionTitle}>{tr("Tus intentos")}</Text>
+            <Button label={tr("Ver resumen del último intento")} secondary disabled={disabled} onPress={() => setResultId(detail.latest.id)} />
+            <Button label={tr("Exportar último intento a GPX")} secondary disabled={disabled} onPress={() => Alert.alert('Exportar recorrido', 'El archivo GPX contiene el trazado y las horas de este intento. Elige dónde guardarlo o con quién compartirlo desde el menú del móvil.', [{ text: 'Cancelar' }, { text: 'Continuar', onPress: () => void act(() => exportGpx(detail.latest)) }])} />
             <AttemptList attempts={detail.attempts} bestId={best?.id} onOpen={setResultId}/>
 <Button label={showPlayback?'Cerrar reproducción':'Reproducir recorrido'} secondary onPress={()=>{setShowPlayback(value=>!value);}}/>
               {showPlayback&&<>
           {best && <View style={s.card}>
-            <Text style={s.eyebrow}>TU FANTASMA PERSONAL</Text><Text style={s.cardTitle}>{finished ? 'Recorrido completado' : playing ? 'Reproduciendo tu mejor huella' : showGhost ? 'Reproducción en pausa' : 'Revive tu mejor recorrido'}</Text>
+            <Text style={s.eyebrow}>{tr("TU FANTASMA PERSONAL")}</Text><Text style={s.cardTitle}>{finished ? 'Recorrido completado' : playing ? 'Reproduciendo tu mejor huella' : showGhost ? 'Reproducción en pausa' : 'Revive tu mejor recorrido'}</Text>
             <Text style={s.muted}>{isComparable(best)?'El fantasma reproduce la referencia elegida.':'El fantasma reproduce esta traza de referencia, con interrupciones GPS.'} A es la salida y B la llegada.</Text>
-            <Pressable accessibilityRole="adjustable" accessibilityLabel="Posición del fantasma" accessibilityHint="Toca la barra para elegir un punto del recorrido" accessibilityValue={{ min: 0, max: 100, now: total ? Math.round(playback / total * 100) : 0, text: `${clock(playback)} de ${clock(total)}` }} accessibilityActions={[{ name: 'increment', label: 'Avanzar diez segundos' }, { name: 'decrement', label: 'Retroceder diez segundos' }]} onAccessibilityAction={event => { if (!disabled) seek(playback + (event.nativeEvent.actionName === 'increment' ? 10000 : -10000)); }} disabled={disabled} onLayout={event => { progressWidth.current = Math.max(1, event.nativeEvent.layout.width); }} onPress={event => seek(event.nativeEvent.locationX / progressWidth.current * total)} style={{ minHeight: 44, justifyContent: 'center' }}><View pointerEvents="none" style={s.progress}><View style={[s.progressFill, { width: `${total ? playback / total * 100 : 0}%` }]} /></View></Pressable>
+            <Pressable accessibilityRole="adjustable" accessibilityLabel={tr("Posición del fantasma")} accessibilityHint="Toca la barra para elegir un punto del recorrido" accessibilityValue={{ min: 0, max: 100, now: total ? Math.round(playback / total * 100) : 0, text: `${clock(playback)} de ${clock(total)}` }} accessibilityActions={[{ name: 'increment', label: 'Avanzar diez segundos' }, { name: 'decrement', label: 'Retroceder diez segundos' }]} onAccessibilityAction={event => { if (!disabled) seek(playback + (event.nativeEvent.actionName === 'increment' ? 10000 : -10000)); }} disabled={disabled} onLayout={event => { progressWidth.current = Math.max(1, event.nativeEvent.layout.width); }} onPress={event => seek(event.nativeEvent.locationX / progressWidth.current * total)} style={{ minHeight: 44, justifyContent: 'center' }}><View pointerEvents="none" style={s.progress}><View style={[s.progressFill, { width: `${total ? playback / total * 100 : 0}%` }]} /></View></Pressable>
             <View style={s.row}><Text style={s.playTime}>{clock(playback)}</Text><Text style={s.caption}>{clock(total)}</Text></View>
             <Button label={playOptions?'Ocultar ajustes de reproducción':'Ajustes de reproducción'} secondary onPress={()=>setPlayOptions(value=>!value)}/>
             {playOptions&&<><View style={s.row}>{([0.5, 1, 2, 4] as const).map(rate => <Pressable key={rate} disabled={disabled} accessibilityRole="button" accessibilityLabel={`Velocidad ${String(rate).replace('.', ',')} por`} accessibilityState={{ selected: (replay.rate ?? 1) === rate, disabled }} onPress={() => { const t = Date.now(); setNow(t); setReplay(value => changeReplayRate(value, rate, t, total)); }} style={[s.tab, (replay.rate ?? 1) === rate && s.tabActive]}><Text style={(replay.rate ?? 1) === rate ? s.tabSelected : s.caption}>{String(rate).replace('.', ',')}×</Text></Pressable>)}</View>
-            <View style={s.row}><View style={{ flex: 1 }}><Button label="−10 segundos" secondary disabled={disabled || playback <= 0} onPress={() => seek(playback - 10000)} /></View><View style={{ flex: 1 }}><Button label="+10 segundos" secondary disabled={disabled || playback >= total} onPress={() => seek(playback + 10000)} /></View></View>
+            <View style={s.row}><View style={{ flex: 1 }}><Button label={tr("−10 segundos")} secondary disabled={disabled || playback <= 0} onPress={() => seek(playback - 10000)} /></View><View style={{ flex: 1 }}><Button label={tr("+10 segundos")} secondary disabled={disabled || playback >= total} onPress={() => seek(playback + 10000)} /></View></View>
             </>}
             <Button label={finished ? 'Volver a reproducir' : playing ? 'Pausar fantasma' : showGhost ? 'Continuar reproducción' : 'Reproducir fantasma'} secondary disabled={disabled} onPress={playPause} />
-            {showGhost && <Button label="Reiniciar desde A" secondary disabled={disabled} onPress={() => { setReplay(resetReplay); setNow(Date.now()); }} />}
+            {showGhost && <Button label={tr("Reiniciar desde A")} secondary disabled={disabled} onPress={() => { setReplay(resetReplay); setNow(Date.now()); }} />}
           </View>}
 
               </>}
@@ -815,7 +816,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Guardar el recorrido para continuarlo más tarde"
+          accessibilityLabel={tr("Guardar el recorrido para continuarlo más tarde")}
           accessibilityHint="Detiene la grabación y guarda los puntos; podrás recuperarlo desde Inicio"
           onPress={discard}
           style={{
@@ -833,7 +834,7 @@ export function AppProvider({children}:{children:React.ReactNode}) {
           }}
         >
           <Text style={{ fontSize: 16 }}>💾</Text>
-          <Text style={{ color: '#E7E2FF', fontSize: 13, fontFamily: fonts.semibold }}>Guardar y salir</Text>
+          <Text style={{ color: '#E7E2FF', fontSize: 13, fontFamily: fonts.semibold }}>{tr("Guardar y salir")}</Text>
         </Pressable>
       </View>}
       {!run&&!result&&section==='route'&&(!selected||!routeMode)&&<TravelModePicker value={travelMode} onChange={setTravelMode} disabled={disabled}/>}

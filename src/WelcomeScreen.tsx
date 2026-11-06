@@ -1,4 +1,5 @@
 ﻿import React, {useState} from 'react';
+import { t as tr } from './i18n-core';
 import {Image, Pressable, ScrollView, Text, View} from 'react-native';
 import {StatusBar} from 'expo-status-bar';
 import {Ionicons} from '@expo/vector-icons';
@@ -74,7 +75,7 @@ export function WelcomeScreen({onSignIn, onGuest}: {onSignIn: () => void; onGues
         <View style={{width: 92, height: 92, borderRadius: 28, backgroundColor: '#211B3C', borderWidth: 2, borderColor: '#6A0DAD', alignItems: 'center', justifyContent: 'center'}}>
           <Image source={require('../assets/ghovo-logo-3d-v1.png')} style={{width: 90, height: 90}} resizeMode="contain" accessible={false} />
         </View>
-        <Text style={{fontFamily: fonts.extrabold, fontSize: 44, letterSpacing: 1, color: '#FFFFFF'}}>GHOVO</Text>
+        <Text style={{fontFamily: fonts.extrabold, fontSize: 44, letterSpacing: 1, color: '#FFFFFF'}}>{tr("GHOVO")}</Text>
         <Text style={{fontFamily: fonts.medium, fontSize: 15, color: '#B4AED2', textAlign: 'center'}}>{tr('welcome.tagline')}</Text>
       </View>
 
@@ -114,8 +115,8 @@ export function WelcomeScreen({onSignIn, onGuest}: {onSignIn: () => void; onGues
         </Pressable>
 
         {/* Solo para pruebas: en release no existe si no se pide expresamente por entorno. */}
-        {process.env.EXPO_PUBLIC_GUEST_ACCESS==='1'&&<Pressable accessibilityRole="button" accessibilityLabel="Entrar sin registrarse (provisional)" onPress={onGuest} style={({pressed}) => ({minHeight: 44, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1})}>
-          <Text style={{fontFamily: fonts.medium, fontSize: 13, color: '#8E87AB', textDecorationLine: 'underline'}}>Entrar sin registrarse · provisional</Text>
+        {process.env.EXPO_PUBLIC_GUEST_ACCESS==='1'&&<Pressable accessibilityRole="button" accessibilityLabel={tr("Entrar sin registrarse (provisional)")} onPress={onGuest} style={({pressed}) => ({minHeight: 44, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1})}>
+          <Text style={{fontFamily: fonts.medium, fontSize: 13, color: '#8E87AB', textDecorationLine: 'underline'}}>{tr("Entrar sin registrarse · provisional")}</Text>
         </Pressable>}
 
         <Text style={{fontFamily: fonts.regular, fontSize: 11, lineHeight: 16, color: '#6E6690', textAlign: 'center'}}>

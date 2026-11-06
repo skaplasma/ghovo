@@ -1,3 +1,4 @@
+import { t as tr } from './i18n-core';
 import {decimal} from './format';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -141,7 +142,7 @@ export function RecordingPanel({
             </>
           ) : (
             <>
-              <Text style={[styles.deltaValue,{color:palette.muted}]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>Buscando…</Text>
+              <Text style={[styles.deltaValue,{color:palette.muted}]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{tr("Buscando…")}</Text>
               <Text style={styles.deltaCaption}>{comparisonReference ? 'Comparando con tu huella' : 'Sincronizando puntos'}</Text>
             </>
           )}
@@ -153,13 +154,13 @@ export function RecordingPanel({
         <View style={[s.cockpitMetricBox, styles.metricBox]}>
           <Text style={styles.metricLabel} numberOfLines={1}>{run.referenceId && run.circuitStartedAt ? tr('panel.running') : tr('panel.time')}</Text>
           <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{clock(elapsedMs)}</Text>
-          <Text style={styles.metricUnit}>min</Text>
+          <Text style={styles.metricUnit}>{tr("min")}</Text>
         </View>
 
         <View style={[s.cockpitMetricBox, styles.metricBox]}>
           <Text style={styles.metricLabel} numberOfLines={1}>{tr('panel.distance')}</Text>
           <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{decimal(distNumKm,2)}</Text>
-          <Text style={styles.metricUnit}>km</Text>
+          <Text style={styles.metricUnit}>{tr("km")}</Text>
         </View>
 
         <View style={[s.cockpitMetricBox, styles.metricBox]}>
@@ -177,7 +178,7 @@ export function RecordingPanel({
       <View style={s.quickTogglesRow}>
         <Pressable
           accessibilityRole="switch"
-          accessibilityLabel="Mantener pantalla encendida"
+          accessibilityLabel={tr("Mantener pantalla encendida")}
           accessibilityState={{ checked: keepScreenOn, disabled }}
           disabled={disabled}
           onPress={onToggleScreen}
@@ -191,7 +192,7 @@ export function RecordingPanel({
 
         <Pressable
           accessibilityRole="switch"
-          accessibilityLabel="Avisos de voz durante la ruta"
+          accessibilityLabel={tr("Avisos de voz durante la ruta")}
           accessibilityState={{ checked: run.voiceEnabled !== false, disabled }}
           disabled={disabled}
           onPress={onToggleVoice}
@@ -236,7 +237,7 @@ export function RecordingPanel({
           onPress={onRecover}
           style={[s.button, s.secondary]}
         >
-          <Text style={s.lightText}>Recuperar señal GPS</Text>
+          <Text style={s.lightText}>{tr("Recuperar señal GPS")}</Text>
         </Pressable>
       )}
     </>

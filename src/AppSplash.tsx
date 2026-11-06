@@ -1,4 +1,5 @@
 ﻿import React, {useEffect, useState} from 'react';
+import { t as tr } from './i18n-core';
 import {Animated, Easing, Image, View} from 'react-native';
 import {palette} from './design';
 

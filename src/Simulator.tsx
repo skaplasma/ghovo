@@ -1,3 +1,4 @@
+import { t as tr } from './i18n-core';
 import {checkpointNotice,arrivalNotice} from './notices';
 import {decimal} from './format';
 import {speakNotice,stopVoice,testVoice} from './speech';
@@ -47,31 +48,31 @@ export function Simulator({onClose,origin}:{onClose:()=>void;origin?:Point}){
   },[run.notice,voiceEnabled]);
   useEffect(()=>()=>{void stopVoice();},[]);
   function reset(nextMode=mode){voiceSession.current++;lastNotice.current=undefined;void stopVoice();setPlaying(false);setMode(nextMode);setSignal('good');setSession({step:0,run:{...newSimulation(nextMode,origin),comparison:initialComparison(simulationPoint(0,origin).timestamp)}});}
-  if(locked)return <View style={{flex:1,backgroundColor:'#000',justifyContent:'center',padding:24,gap:20}}><Text style={s.title}>Pantalla bloqueada simulada</Text><Text style={s.muted}>La prueba sigue registrando en memoria si estaba en marcha. Esto no bloquea Android ni reproduce sus restricciones de batería.</Text><Control label="Desbloquear simulación" onPress={()=>setLocked(false)}/></View>;
+  if(locked)return <View style={{flex:1,backgroundColor:'#000',justifyContent:'center',padding:24,gap:20}}><Text style={s.title}>{tr("Pantalla bloqueada simulada")}</Text><Text style={s.muted}>{tr("La prueba sigue registrando en memoria si estaba en marcha. Esto no bloquea Android ni reproduce sus restricciones de batería.")}</Text><Control label={tr("Desbloquear simulación")} onPress={()=>setLocked(false)}/></View>;
   return <View style={{flex:1}}>
-    <View style={{paddingHorizontal:18,paddingBottom:12,gap:8}}><Text style={s.title}>Simulador</Text><Text style={s.warning}>DATOS DE PRUEBA · No usa el GPS ni guarda rutas o récords.</Text></View>
+    <View style={{paddingHorizontal:18,paddingBottom:12,gap:8}}><Text style={s.title}>{tr("Simulador")}</Text><Text style={s.warning}>{tr("DATOS DE PRUEBA · No usa el GPS ni guarda rutas o récords.")}</Text></View>
     <View style={[s.mapArea,{flex:.8}]}><RouteMap points={run.points} recording checkpoints={controls} ghost={run.comparison&&!run.comparison.unavailable&&simulationPoint(step,origin).timestamp-(run.lastFixAt??run.startedAt)<=15000?ghostAt(model.reference,step*1000):undefined}/></View>
     <ScrollView style={{flex:1}} contentContainerStyle={s.content}>
-      <Text style={s.muted}>Circuito ficticio de unos 3 km. Comprueba curvas, puntos rechazados y cortes sin salir de casa. No representa una carretera calculada.</Text>
+      <Text style={s.muted}>{tr("Circuito ficticio de unos 3 km. Comprueba curvas, puntos rechazados y cortes sin salir de casa. No representa una carretera calculada.")}</Text>
       <Text style={s.playTime}>{clock(step*1000)} / 03:00 · {decimal(length(run.points)/1000,2)} km</Text>
       <Text style={s.caption}>{run.points.length} puntos guardados · {run.rejectedFixes??0} rechazados · {run.gpsGaps??0} cortes detectados al recuperar señal</Text>
-      <View style={s.card}><Text style={s.cardTitle}>Comparación simulada</Text><Text style={s.muted}>{run.comparison?.difference==null||run.comparison.unavailable||simulationPoint(step,origin).timestamp-(run.lastFixAt??run.startedAt)>15000?'Comparación no disponible':`Diferencia: ${decimal(run.comparison.difference/1000,1)} s`}</Text><Text style={s.caption}>{run.comparison?.splits.length??0} controles cruzados · {run.autoCompleted?'Llegada confirmada':'Sin llegada confirmada'}</Text></View>
+      <View style={s.card}><Text style={s.cardTitle}>{tr("Comparación simulada")}</Text><Text style={s.muted}>{run.comparison?.difference==null||run.comparison.unavailable||simulationPoint(step,origin).timestamp-(run.lastFixAt??run.startedAt)>15000?'Comparación no disponible':`Diferencia: ${decimal(run.comparison.difference/1000,1)} s`}</Text><Text style={s.caption}>{run.comparison?.splits.length??0} controles cruzados · {run.autoCompleted?'Llegada confirmada':'Sin llegada confirmada'}</Text></View>
       <View style={s.row}>{[[0.9,'Referencia más rápida'],[1,'Mismo ritmo'],[1.1,'Referencia más lenta']].map(([value,label])=><View key={String(value)} style={{flex:1}}><Control label={String(label)} selected={referenceRate===value} onPress={()=>{setReferenceRate(Number(value));reset();}}/></View>)}</View>
-      {step===SIMULATION_STEPS&&<Control label="Confirmar llegada (5 s)" onPress={()=>{setSession(previous=>{const point={...simulationPoint(SIMULATION_STEPS,origin),timestamp:previous.run.lastFixAt!+5000};const comparison=advanceComparison(model,previous.run.comparison??initialComparison(previous.run.startedAt),point,previous.run.startedAt);const completed:Run={...appendFix(previous.run,point),comparison,referenceId:model.reference.id,autoCompleted:arrivalReady(comparison,point.timestamp)};if(completed.autoCompleted){completed.endedAt=point.timestamp;completed.notice=arrivalNotice(completed,model.reference);}return {...previous,run:completed};});}}/>}
+      {step===SIMULATION_STEPS&&<Control label={tr("Confirmar llegada (5 s)")} onPress={()=>{setSession(previous=>{const point={...simulationPoint(SIMULATION_STEPS,origin),timestamp:previous.run.lastFixAt!+5000};const comparison=advanceComparison(model,previous.run.comparison??initialComparison(previous.run.startedAt),point,previous.run.startedAt);const completed:Run={...appendFix(previous.run,point),comparison,referenceId:model.reference.id,autoCompleted:arrivalReady(comparison,point.timestamp)};if(completed.autoCompleted){completed.endedAt=point.timestamp;completed.notice=arrivalNotice(completed,model.reference);}return {...previous,run:completed};});}}/>}
       {run.notice&&<View accessibilityLiveRegion="polite" style={s.card}><Text style={s.cardTitle}>{run.notice.title}</Text><Text style={s.muted}>{run.notice.message}</Text></View>}
       <Control label={voiceEnabled?'Silenciar voz de prueba':'Activar voz de prueba'} selected={voiceEnabled} onPress={()=>setVoiceEnabled(value=>!value)}/>
-      <Control label="Probar aviso de voz" onPress={()=>{void testVoice().then(ok=>{if(!ok)Alert.alert('Prueba de voz','Android no ha confirmado el inicio de la voz. Prueba el ejemplo en Ajustes del móvil → Texto a voz. Si allí funciona, el fallo está en la app.');});}}/>
+      <Control label={tr("Probar aviso de voz")} onPress={()=>{void testVoice().then(ok=>{if(!ok)Alert.alert('Prueba de voz','Android no ha confirmado el inicio de la voz. Prueba el ejemplo en Ajustes del móvil → Texto a voz. Si allí funciona, el fallo está en la app.');});}}/>
       <Control label={playing&&step<SIMULATION_STEPS?'Pausar simulación':step>=SIMULATION_STEPS?'Simulación terminada':'Iniciar simulación'} disabled={step>=SIMULATION_STEPS} onPress={()=>setPlaying(value=>!value)}/>
       <View style={s.row}>{([1,5,10] as const).map(value=><View key={value} style={{flex:1}}><Control label={`${value}×`} selected={rate===value} onPress={()=>setRate(value)}/></View>)}</View>
-      <Control label="Avanzar 10 segundos" disabled={step>=SIMULATION_STEPS} onPress={()=>advance(10)}/>
-      <Control label="Simular bloqueo de pantalla" onPress={()=>setLocked(true)}/>
-      <Text style={s.sectionTitle}>Señal GPS simulada</Text>
+      <Control label={tr("Avanzar 10 segundos")} disabled={step>=SIMULATION_STEPS} onPress={()=>advance(10)}/>
+      <Control label={tr("Simular bloqueo de pantalla")} onPress={()=>setLocked(true)}/>
+      <Text style={s.sectionTitle}>{tr("Señal GPS simulada")}</Text>
       {([['good','Buena señal'],['weak','Señal imprecisa'],['lost','Sin señal']] as const).map(([value,label])=><Control key={value} label={label} selected={signal===value} onPress={()=>setSignal(value)}/>)}
-      <Text style={s.sectionTitle}>Filtro de movimiento</Text>
-      <Text style={s.caption}>El circuito circula a unos 63 km/h. El filtro a pie lo rechazará; el de coche permite registrarlo. Cambiar modo reinicia la prueba.</Text>
-      <Control label="En coche" selected={mode==='driving'} onPress={()=>reset('driving')}/><Control label="A pie" selected={mode==='walking'} onPress={()=>reset('walking')}/>
-      <Control label="Reiniciar simulador" onPress={()=>reset()}/><Control label="Salir del simulador" onPress={onClose}/>
-      <Text style={s.footnote}>No reproduce las restricciones de batería del POCO ni sustituye una prueba real de ubicación.</Text>
+      <Text style={s.sectionTitle}>{tr("Filtro de movimiento")}</Text>
+      <Text style={s.caption}>{tr('El circuito circula a unos 63 km/h. El filtro a pie lo rechazará; el de coche permite registrarlo. Cambiar modo reinicia la prueba.')}</Text>
+      <Control label={tr("En coche")} selected={mode==='driving'} onPress={()=>reset('driving')}/><Control label={tr("A pie")} selected={mode==='walking'} onPress={()=>reset('walking')}/>
+      <Control label={tr("Reiniciar simulador")} onPress={()=>reset()}/><Control label={tr("Salir del simulador")} onPress={onClose}/>
+      <Text style={s.footnote}>{tr("No reproduce las restricciones de batería del POCO ni sustituye una prueba real de ubicación.")}</Text>
     </ScrollView>
   </View>;
 }

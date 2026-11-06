@@ -1,3 +1,4 @@
+import { t as tr } from './i18n-core';
 import React from 'react';
 import {Linking, Pressable, ScrollView, Text, View} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
@@ -26,25 +27,25 @@ export const PRIVACY_BLOCKS: Block[] = [
 export function PrivacyScreen({onClose}: {onClose: () => void}) {
   return <View style={{flex: 1}}>
     <View style={s.header}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Volver" onPress={onClose} style={{width: 42, height: 42, borderRadius: 21, backgroundColor: '#1A1435', borderWidth: 1, borderColor: '#2D2350', alignItems: 'center', justifyContent: 'center'}}>
+      <Pressable accessibilityRole="button" accessibilityLabel={tr("Volver")} onPress={onClose} style={{width: 42, height: 42, borderRadius: 21, backgroundColor: '#1A1435', borderWidth: 1, borderColor: '#2D2350', alignItems: 'center', justifyContent: 'center'}}>
         <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
       </Pressable>
-      <Text style={s.cardTitle}>Privacidad</Text>
+      <Text style={s.cardTitle}>{tr("Privacidad")}</Text>
     </View>
     <ScrollView contentContainerStyle={s.content}>
-      <Text style={s.eyebrow}>TUS DATOS EN GHOVO</Text>
-      <Text style={[s.muted, {marginBottom: 4}]}>Última actualización: 4 de noviembre de 2026. Este resumen está dentro de la app; la versión completa está enlazada al final.</Text>
+      <Text style={s.eyebrow}>{tr("TUS DATOS EN GHOVO")}</Text>
+      <Text style={[s.muted, {marginBottom: 4}]}>{tr('Última actualización: 4 de noviembre de 2026. Este resumen está dentro de la app; la versión completa está enlazada al final.')}</Text>
       {PRIVACY_BLOCKS.map(block =>
         <View key={block.title} style={{gap: 4}}>
           <Text style={{fontFamily: fonts.semibold, color: palette.text, fontSize: 15}}>{block.title}</Text>
           <Text style={s.caption}>{block.body}</Text>
         </View>)}
-      <Pressable accessibilityRole="link" accessibilityLabel="Abrir la política completa en el navegador" onPress={() => { void Linking.openURL(PRIVACY_URL).catch(() => {}); }} style={[s.button, s.secondary, {flexDirection: 'row', gap: 8}]}>
+      <Pressable accessibilityRole="link" accessibilityLabel={tr("Abrir la política completa en el navegador")} onPress={() => { void Linking.openURL(PRIVACY_URL).catch(() => {}); }} style={[s.button, s.secondary, {flexDirection: 'row', gap: 8}]}>
         <Ionicons name="open-outline" size={16} color="#FFFFFF" />
-        <Text style={s.lightText}>Ver la política completa</Text>
+        <Text style={s.lightText}>{tr("Ver la política completa")}</Text>
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="Volver a Perfil" onPress={onClose} style={{minHeight: 44, alignItems: 'center', justifyContent: 'center'}}>
-        <Text style={s.caption}>Para borrar tu cuenta, usa «Eliminar mi cuenta» en Perfil.</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={tr("Volver a Perfil")} onPress={onClose} style={{minHeight: 44, alignItems: 'center', justifyContent: 'center'}}>
+        <Text style={s.caption}>{tr("Para borrar tu cuenta, usa «Eliminar mi cuenta» en Perfil.")}</Text>
       </Pressable>
     </ScrollView>
   </View>;

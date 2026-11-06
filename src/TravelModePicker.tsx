@@ -1,3 +1,4 @@
+import { t as tr } from './i18n-core';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import type { TravelMode } from './core';

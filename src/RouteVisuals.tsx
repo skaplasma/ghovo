@@ -1,3 +1,4 @@
+import { t as tr } from './i18n-core';
 import React, {memo, useMemo} from 'react';
 import {Image, StyleSheet, Text, View} from 'react-native';
 import {type Point} from './core';
@@ -28,8 +29,8 @@ export const RouteThumbnail=memo(function RouteThumbnail({points}:{points:Point[
   return <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.thumbnail}>
     <View style={styles.gridX}/><View style={styles.gridY}/>
     {drawing.lines.map((line,i)=><View key={i} style={{position:'absolute',left:line.x,top:line.y,width:line.width,height:3,borderRadius:2,backgroundColor:palette.purpleBright,transform:[{rotate:line.angle}]}}/>)}
-    {drawing.start&&<View style={[styles.pin,{left:drawing.start.x-7,top:drawing.start.y-7,backgroundColor:'#10B981'}]}><Text style={styles.pinText}>A</Text></View>}
-    {drawing.end&&<View style={[styles.pin,{left:drawing.end.x-7,top:drawing.end.y-7,backgroundColor:palette.pink}]}><Text style={styles.pinText}>B</Text></View>}
+    {drawing.start&&<View style={[styles.pin,{left:drawing.start.x-7,top:drawing.start.y-7,backgroundColor:'#10B981'}]}><Text style={styles.pinText}>{tr("A")}</Text></View>}
+    {drawing.end&&<View style={[styles.pin,{left:drawing.end.x-7,top:drawing.end.y-7,backgroundColor:palette.pink}]}><Text style={styles.pinText}>{tr("B")}</Text></View>}
   </View>;
 });
 export function MascotMessage({title,message}:{title:string;message:string}){

@@ -1,3 +1,4 @@
+import { t as tr } from './i18n-core';
 import type {Checkpoint} from './checkpoints';
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, AppState, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -53,8 +54,8 @@ const Track=memo(function Track({ id, points, color, width }: { id: string; poin
 function Pin({ point, label, color }: { point: Point; label: string; color: string }) {
   return <Marker lngLat={coordinate(point)}><View accessible accessibilityRole="image" accessibilityLabel={label} style={[styles.pin, { backgroundColor: color }]}><Text style={styles.label}>{label}</Text></View></Marker>;
 }
-function MovingPin({point,enabled}:{point:Point;enabled:boolean}){const display=useDisplayPoint(point,enabled);return <Pin point={display} label="●" color="#80d6ff"/>;}
-function MovingGhost({point,enabled}:{point:Point;enabled:boolean}){const display=useDisplayPoint(point,enabled);return <Marker lngLat={coordinate(display)}><View accessible accessibilityRole="image" accessibilityLabel="Tu fantasma personal" style={{width:48,height:48,borderRadius:24,borderWidth:2,borderColor:'#B9AEF5',backgroundColor:'#101C22',alignItems:'center',justifyContent:'center',elevation:6}}><Image source={require('../assets/ghovo-logo-3d-v1.png')} style={{width:42,height:42}} resizeMode="contain" accessible={false}/></View></Marker>;}
+function MovingPin({point,enabled}:{point:Point;enabled:boolean}){const display=useDisplayPoint(point,enabled);return <Pin point={display} label={tr("●")} color="#80d6ff"/>;}
+function MovingGhost({point,enabled}:{point:Point;enabled:boolean}){const display=useDisplayPoint(point,enabled);return <Marker lngLat={coordinate(display)}><View accessible accessibilityRole="image" accessibilityLabel={tr("Tu fantasma personal")} style={{width:48,height:48,borderRadius:24,borderWidth:2,borderColor:'#B9AEF5',backgroundColor:'#101C22',alignItems:'center',justifyContent:'center',elevation:6}}><Image source={require('../assets/ghovo-logo-3d-v1.png')} style={{width:42,height:42}} resizeMode="contain" accessible={false}/></View></Marker>;}
 export function RouteMap({ points, reference, ghost, recording,preparing=false,previewPosition,checkpoints=[] }: { points: Point[]; reference?: Point[]; ghost?: Point; recording: boolean;preparing?:boolean;previewPosition?:Point;checkpoints?:Checkpoint[] }) {
   const camera = useRef<CameraRef>(null);
   const [failed, setFailed] = useState(false);
@@ -147,25 +148,25 @@ export function RouteMap({ points, reference, ghost, recording,preparing=false,p
       {/* Lo ya recorrido, en rojo: es la línea que se sigue de un vistazo mientras grabas. */}
       <Track id="recording" points={points} color="#F43F5E" width={4} />
       {checkpoints.map(checkpoint=><Pin key={checkpoint.index} point={checkpoint.point} label={`${checkpoint.meters/1000} km`} color="#B9AEF5"/>)}
-      {first && <Pin point={first} label="A" color="#a1f27a" />}
-      {!recording && last && <Pin point={last} label="B" color="#ffc58a" />}
+      {first && <Pin point={first} label={tr("A")} color="#a1f27a" />}
+      {!recording && last && <Pin point={last} label={tr("B")} color="#ffc58a" />}
       {recording && last && <MovingPin point={last} enabled={foreground} />}
-      {!recording && position && <Pin point={position} label="Tú" color="#80d6ff" />}
+      {!recording && position && <Pin point={position} label={tr("Tú")} color="#80d6ff" />}
       {ghost && <MovingGhost point={ghost} enabled={recording&&foreground}/>}
     </Map> : <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#121C23', padding: 24, gap: 12 }}>
-      {(recording || locationMessage.startsWith('Buscando')) && <ActivityIndicator accessibilityLabel="Buscando señal GPS" color="#C0ED8B" size="large" />}
+      {(recording || locationMessage.startsWith('Buscando')) && <ActivityIndicator accessibilityLabel={tr("Buscando señal GPS")} color="#C0ED8B" size="large" />}
       <Text accessibilityLiveRegion="polite" style={{ color: '#D6E2E8', textAlign: 'center', fontSize: 14 }}>{recording ? 'Esperando los primeros puntos GPS…' : 'El mapa aparecerá al obtener tu ubicación.'}</Text>
     </View>}
-    {failed && <Text style={styles.notice}>No se pudo cargar el mapa. El registro GPS funciona de forma independiente.</Text>}
+    {failed && <Text style={styles.notice}>{tr("No se pudo cargar el mapa. El registro GPS funciona de forma independiente.")}</Text>}
     {!recording&&!preparing && <View style={{ position: 'absolute', bottom: 10, right: 10, gap: 8, alignItems: 'flex-end' }}>
-      {points.length>1&&<Pressable accessibilityRole="button" accessibilityLabel="Ver ruta completa" disabled={!mapReady} accessibilityState={{disabled:!mapReady}} style={styles.locateButton} onPress={fitCourse}><Text style={styles.locateLabel}>↗</Text></Pressable>}
+      {points.length>1&&<Pressable accessibilityRole="button" accessibilityLabel={tr("Ver ruta completa")} disabled={!mapReady} accessibilityState={{disabled:!mapReady}} style={styles.locateButton} onPress={fitCourse}><Text style={styles.locateLabel}>↗</Text></Pressable>}
       <Pressable accessibilityRole="button" accessibilityLabel={needsSettings ? 'Abrir ajustes' : 'Centrar en mi ubicación'} style={styles.locateButton} onPress={() => {
         if (needsSettings) { Linking.openSettings().catch(() => {}); return; }
         if (position) camera.current?.jumpTo({ center: coordinate(position), zoom: 15 });
         setRetry(value => value + 1);
       }}><Text style={styles.locateLabel}>{needsSettings ? '⚙' : '◎'}</Text></Pressable>
     </View>}
-    <Pressable accessibilityRole="link" accessibilityLabel="Créditos de OpenStreetMap" style={styles.credit} onPress={() => { Linking.openURL('https://www.openstreetmap.org/copyright').catch(() => {}); }}><Text style={styles.creditText}>© OpenStreetMap</Text></Pressable>
+    <Pressable accessibilityRole="link" accessibilityLabel={tr("Créditos de OpenStreetMap")} style={styles.credit} onPress={() => { Linking.openURL('https://www.openstreetmap.org/copyright').catch(() => {}); }}><Text style={styles.creditText}>© OpenStreetMap</Text></Pressable>
   </View>;
 }
 const styles = StyleSheet.create({ container: { flex: 1, minHeight: 160 }, pin: { borderRadius: 13, padding: 7, borderWidth: 2, borderColor: '#fff', minWidth: 34, alignItems: 'center', elevation: 5 }, label: { color: '#101b20', fontWeight: '900', fontSize: 12 }, credit: { position: 'absolute', bottom: 2, left: 4, paddingHorizontal: 4, paddingVertical: 2 }, creditText: { color: '#A9BAC2', fontSize: 8, opacity: 0.7 }, notice: { position: 'absolute', top: 12, left: 12, right: 12, padding: 12, borderRadius: 12, backgroundColor: '#30281fee', color: '#ffd28a' }, locationStatus: { alignSelf: 'flex-start', flexDirection:'row', alignItems:'center',gap:8, backgroundColor: '#0B1115ed', color: '#D6E2E8', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 12, fontSize: 11, lineHeight: 17, borderWidth: 1, borderColor: '#394852', maxWidth: '90%' }, statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#0F1820', borderTopWidth: 1, borderTopColor: '#1E2A33' }, locateButton: { backgroundColor: '#F2F6F7', width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, elevation: 4 }, locateLabel: { color: '#17262E', fontWeight: '900', fontSize: 17 } });

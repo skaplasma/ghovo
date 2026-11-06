@@ -1,3 +1,4 @@
+import { t as tr } from './i18n-core';
 import React, { useRef, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { appStyles as s } from './design';
@@ -34,11 +35,11 @@ export function DataTools({ disabled, onChanged }: { disabled: boolean; onChange
     ]);
   }
   return <View style={s.card}>
-    <Text style={s.eyebrow}>TUS DATOS, CONTIGO</Text><Text style={s.cardTitle}>Copias y recuperación</Text>
-    <Text style={s.muted}>La copia JSON incluye recorridos, horas, notas y favoritas. Guárdala desde el menú del móvil en un lugar de confianza; no está cifrada.</Text>
-    <ToolButton label="Guardar copia de todas mis rutas" disabled={disabled||busy} onPress={()=>void perform(async()=>{await exportLibrary();setMessage('Menú de guardado cerrado. Comprueba que conservas el archivo en el destino elegido.');})}/>
-    <ToolButton label="Importar una copia de GHOVO" disabled={disabled||busy} onPress={()=>void perform(importFile)}/>
-    <ToolButton label="Recuperar biblioteca anterior" disabled={disabled||busy} onPress={()=>void perform(recover)}/>
+    <Text style={s.eyebrow}>{tr("TUS DATOS, CONTIGO")}</Text><Text style={s.cardTitle}>{tr("Copias y recuperación")}</Text>
+    <Text style={s.muted}>{tr('La copia JSON incluye recorridos, horas, notas y favoritas. Guárdala desde el menú del móvil en un lugar de confianza; no está cifrada.')}</Text>
+    <ToolButton label={tr("Guardar copia de todas mis rutas")} disabled={disabled||busy} onPress={()=>void perform(async()=>{await exportLibrary();setMessage('Menú de guardado cerrado. Comprueba que conservas el archivo en el destino elegido.');})}/>
+    <ToolButton label={tr("Importar una copia de GHOVO")} disabled={disabled||busy} onPress={()=>void perform(importFile)}/>
+    <ToolButton label={tr("Recuperar biblioteca anterior")} disabled={disabled||busy} onPress={()=>void perform(recover)}/>
     {!!message && <Text accessibilityLiveRegion="polite" style={s.caption}>{message}</Text>}
   </View>;
 }

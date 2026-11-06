@@ -32,6 +32,13 @@ jobs:
     name: Compilar APK
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # Las credenciales viven aquí para que las vean tanto el paso que prepara la firma
+    # como el propio Gradle: si solo estuvieran en uno, Gradle no podría leerlas.
+    env:
+      KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      GHOVO_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      GHOVO_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      GHOVO_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - name: Descargar el código
         uses: actions/checkout@v4
@@ -68,19 +75,13 @@ jobs:
       # Ojo: el contexto `secrets` no se puede usar en un `if`, así que la comprobación
       # se hace dentro del propio paso: sin keystore se sigue con la firma de depuración.
       - name: Firmar con el keystore del proyecto
-        env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          GHOVO_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          GHOVO_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          GHOVO_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
             echo "Sin keystore en los secretos: se compila con la firma de depuración."
             exit 0
           fi
           echo "$KEYSTORE_BASE64" | base64 -d > "$GITHUB_WORKSPACE/ghovo-release.jks"
-          export GHOVO_KEYSTORE="$GITHUB_WORKSPACE/ghovo-release.jks"
-          node tools/sign-release.mjs
+          GHOVO_KEYSTORE="$GITHUB_WORKSPACE/ghovo-release.jks" node tools/sign-release.mjs
 
       - name: Compilar el APK
         run: |
